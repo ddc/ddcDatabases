@@ -13,7 +13,7 @@ pip install ddcDatabases
 
 
 # Databases
-+ DBSQLITE
+## DBSQLITE
 ```
 class DBSqlite(db_file_path: str, batch_size=100, echo=False, future=True)
 ```
@@ -29,7 +29,7 @@ with dbsqlite.session() as session:
 ```
 
 
-+ DBPOSTGRES
+## DBPOSTGRES
   + Using driver "psycopg2" as default
 ```
 class DBPostgres(future=True, echo=False, drivername="psycopg2", **kwargs)
@@ -52,9 +52,25 @@ with dbpostgres.session() as session:
     results = db_utils.fetchall(stmt)
 ```
 
++ DBUTILS
+  + Uses SQLAlchemy statements
+```python
+from ddcDatabases import DBUtils
+db_utils = DBUtils(session)
+db_utils.add(stmt)
+db_utils.execute(stmt)
+db_utils.fetchall(stmt)
+db_utils.fetchone(stmt)
+db_utils.fetch_value(stmt)
+```
 
-+ DBPOSTGRES ASYNC
-  + Using driver "psycopg2"
+
+## DBPOSTGRES ASYNC
+  + Using driver "asyncpg"
+```
+class DBPostgresAsync(future=True, echo=False, drivername="asyncpg", **kwargs)
+```
+
 ```python
 import sqlalchemy as sa
 from ddcDatabases import DBPostgresAsync, DBUtilsAsync
@@ -71,20 +87,6 @@ async with dbpostgres.session() as session:
     db_utils = DBUtilsAsync(session)
     results = await db_utils.fetchall(stmt)
 ```
-
-
-+ DBUTILS
-  + Uses SQLAlchemy statements
-```python
-from ddcDatabases import DBUtils
-db_utils = DBUtils(session)
-db_utils.add(stmt)
-db_utils.execute(stmt)
-db_utils.fetchall(stmt)
-db_utils.fetchone(stmt)
-db_utils.fetch_value(stmt)
-```
-
 
 + DBUTILS ASYNC
   + Uses SQLAlchemy statements
