@@ -7,10 +7,11 @@ from .sqlite import DBSqlite
 
 
 __all__ = (
+    "DBSqlite",
     "DBUtils",
     "DBPostgres",
     "DBPostgresAsync",
-    "DBSqlite"
+    "DBUtilsAsync",
 )
 
 
