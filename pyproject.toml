@@ -1,0 +1,46 @@
+[build-system]
+requires = ["poetry-core>=1.9.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry]
+name = "ddcDatabases"
+version = "1.0.0"
+description = "Custom Database Queries"
+license = "MIT"
+readme = "README.md"
+authors = ["Daniel Costa <danieldcsta@gmail.com>"]
+maintainers = ["Daniel Costa"]
+repository = "https://github.com/ddc/ddcDatabases"
+homepage = "https://github.com/ddc/ddcDatabases"
+packages = [{include = "ddcDatabases"}]
+package-mode = true
+keywords = ["python3", "databases", "ddcDatabases"]
+classifiers = [
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Development Status :: 5 - Production/Stable",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3 :: Only",
+    "Operating System :: OS Independent",
+    "Environment :: Other Environment",
+    "Intended Audience :: Developers",
+    "Natural Language :: English",
+]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+SQLAlchemy = "^2.0.29"
+
+[tool.poetry.group.test.dependencies]
+pytest = "^8.1.1"
+faker = "^25.8.0"
+coverage = "^7.4.4"
+poethepoet = "^0.26.1"
+
+[tool.poe.tasks]
+test = "poetry run coverage run -m pytest -v"
+coverage = "poetry run coverage report"
+testPublish = "poetry publish -r test-pypi"
+_build = "poetry build"
+build  = ["test", "_build"]
+_publish = "poetry publish"
+publish = ["testPublish", "_publish"]
