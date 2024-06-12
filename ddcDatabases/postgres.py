@@ -74,11 +74,11 @@ class DBPostgresAsync(DBPostgres):
 
     """
 
-    def __init__(self, future=True, echo=False, **kwargs):
-        super().__init__(future, echo, **kwargs)
+    def __init__(self, future=True, echo=False, drivername="asyncpg", ** kwargs):
+        super().__init__(future, echo, drivername, **kwargs)
 
-    def url(self, drivername="asyncpg") -> sa.engine.URL:
-        return super().uri(drivername)
+    def url(self) -> sa.engine.URL:
+        return super().uri()
 
     def engine(self) -> AsyncEngine | None:
         try:
