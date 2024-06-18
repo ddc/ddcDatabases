@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 from sqlalchemy import Boolean
-from sqlalchemy.orm import declarative_base, Mapped, mapped_column
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
-Base = declarative_base()
+class Base(DeclarativeBase):
+    pass
 
 
 class ModelTest(Base):
