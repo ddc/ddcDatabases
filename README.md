@@ -110,13 +110,13 @@ poetry build
 
 ### Run Tests
 ```shell
-poe test
+poetry run coverage run -m pytest -v
 ```
 
 
 ### Get Coverage Report
 ```shell
-poe coverage
+poetry run coverage report
 ```
 
 
