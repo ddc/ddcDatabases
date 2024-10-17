@@ -4,7 +4,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "ddcDatabases"
-version = "1.0.6"
+version = "1.0.7"
 description = "Custom Database Queries"
 license = "MIT"
 readme = "README.md"
@@ -27,10 +27,10 @@ classifiers = [
 ]
 
 [tool.poetry.dependencies]
-python = "^3.10"
-SQLAlchemy = "^2.0.29"
+python = ">=3.10,<4.0"
+SQLAlchemy = ">=2.0.29"
 
 [tool.poetry.group.test.dependencies]
-pytest = "^8.1.1"
-faker = "^25.8.0"
-coverage = "^7.4.4"
+pytest = ">=8.1.1"
+faker = ">=25.8.0"
+coverage = ">=7.4.4"
