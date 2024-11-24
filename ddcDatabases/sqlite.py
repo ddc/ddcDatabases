@@ -1,53 +1,53 @@
 # -*- encoding: utf-8 -*-
 import sys
-import sqlalchemy as sa
+from datetime import datetime
 from sqlalchemy.engine import create_engine, Engine
-from sqlalchemy.orm import Session, sessionmaker
-from .exceptions import get_exception
+from sqlalchemy.orm import Session
+from .db_utils import DBUtils
+from .settings import SQLiteSettings
 
 
-class DBSqlite:
+class Sqlite:
     """
     Class to handle sqlite databases
 
-    database = DBSqlite(DATABASE_FILE_PATH)
-    with database.session() as session:
+    with Sqlite(DATABASE_FILE_PATH) as session:
         do your stuff here
-
     """
 
-    def __init__(self, db_file_path: str, batch_size=100, echo=False, future=True):
-        self.file = db_file_path
-        self.batch_size = batch_size
-        self.echo = echo
-        self.future = future
+    def __init__(
+        self,
+        file_path: str = None,
+        echo: bool = None,
+    ):
+        _settings = SQLiteSettings()
+        self.engine = None
+        self.session = None
+        self.file_path = _settings.file_path if not file_path else file_path
+        self.echo = _settings.echo if not echo else echo
 
-    def url(self) -> str:
-        return f"sqlite:///{self.file}"
+    def __enter__(self):
+        self.engine = self._get_engine()
+        self.session = Session(self.engine)
+        self.engine.dispose()
+        db_utils = DBUtils(self.session)
+        return db_utils
 
-    def engine(self) -> Engine | None:
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.session.close()
+
+    def _get_engine(self) -> Engine | None:
         try:
-            engine = create_engine(self.url(), future=self.future, echo=self.echo).\
-                execution_options(stream_results=self.echo, isolation_level="AUTOCOMMIT")
+            _engine_args = {
+                "url": f"sqlite:///{self.file_path}",
+                "echo": self.echo,
+            }
 
-            @sa.event.listens_for(engine, "before_cursor_execute")
-            def receive_before_cursor_execute(conn,
-                                              cursor,
-                                              statement,
-                                              params,
-                                              context,
-                                              executemany):
-                cursor.arraysize = self.batch_size
+            engine = create_engine(**_engine_args)
             return engine
         except Exception as e:
-            sys.stderr.write(f"Unable to Create Database Engine: {get_exception(e)}")
-            return None
-
-    def session(self, engine: Engine = None) -> Session | None:
-        _engine = engine or self.engine()
-        if _engine is None:
-            sys.stderr.write("Unable to Create Database Session: Empty Engine")
-            return None
-        session_maker = sessionmaker(bind=_engine)
-        _engine.dispose()
-        return session_maker()
+            dt = datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3]
+            sys.stderr.write(
+                f"[{dt}]:[ERROR]:Unable to Create Database Engine | {repr(e)}"
+            )
+            raise
