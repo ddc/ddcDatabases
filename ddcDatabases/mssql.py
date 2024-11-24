@@ -10,6 +10,10 @@ from .settings import MSSQLSettings
 
 
 class MSSQL:
+    """
+    Class to handle MSSQL databases
+    """
+
     def __init__(
         self,
         host: str = None,
@@ -37,7 +41,7 @@ class MSSQL:
         self.echo = _settings.echo if not echo else echo
         self.pool_size = int(_settings.pool_size
                              if not pool_size else int(pool_size))
-        self.max_overflow = int(_settings.overflow
+        self.max_overflow = int(_settings.max_overflow
                                 if not max_overflow else int(max_overflow))
         self.odbcdriver_version = int(_settings.odbcdriver_version
                                       if not odbcdriver_version
