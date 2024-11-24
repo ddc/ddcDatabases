@@ -10,9 +10,6 @@ from .settings import SQLiteSettings
 class Sqlite:
     """
     Class to handle sqlite databases
-
-    with Sqlite(DATABASE_FILE_PATH) as session:
-        do your stuff here
     """
 
     def __init__(
