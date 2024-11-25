@@ -2,14 +2,14 @@
 import sys
 from datetime import datetime
 from sqlalchemy.engine import create_engine, Engine
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, sessionmaker
 from .db_utils import DBUtils
 from .settings import SQLiteSettings
 
 
 class Sqlite:
     """
-    Class to handle sqlite databases
+    Class to handle Sqlite connections
     """
 
     def __init__(
@@ -18,17 +18,21 @@ class Sqlite:
         echo: bool = None,
     ):
         _settings = SQLiteSettings()
-        self.engine = None
         self.session = None
         self.file_path = _settings.file_path if not file_path else file_path
         self.echo = _settings.echo if not echo else echo
 
     def __enter__(self):
-        self.engine = self._get_engine()
-        self.session = Session(self.engine)
-        self.engine.dispose()
-        db_utils = DBUtils(self.session)
-        return db_utils
+        engine = self._get_engine()
+        session_maker = sessionmaker(bind=engine,
+                                     class_=Session,
+                                     autoflush=True,
+                                     expire_on_commit=True)
+        engine.dispose()
+        with session_maker.begin() as session:
+            self.session = session
+            db_utils = DBUtils(self.session)
+            return db_utils
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.session.close()

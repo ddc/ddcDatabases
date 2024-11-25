@@ -1,14 +1,64 @@
-# -*- encoding: utf-8 -*-
+# -*- coding: utf-8 -*-
+import sys
+from datetime import datetime
+import sqlalchemy as sa
+from sqlalchemy.engine import URL
 from sqlalchemy.engine.result import MappingResult
-from sqlalchemy.ext.asyncio import AsyncMappingResult
+from sqlalchemy.ext.asyncio import AsyncMappingResult, AsyncSession
+from sqlalchemy.orm import Session
 from .exceptions import (
     DBDeleteAllDataException,
     DBExecuteException,
     DBFetchAllException,
     DBFetchValueException,
     DBInsertBulkException,
-    DBInsertSingleException
+    DBInsertSingleException,
 )
+
+
+class TestConnections:
+    def __init__(
+        self,
+        sync_session: Session = None,
+        async_session: AsyncSession = None,
+        host_url: URL = "",
+    ):
+        self.dt = datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3]
+        self.sync_session = sync_session
+        self.async_session = async_session
+        self.host_url = host_url
+
+    def test_connection_sync(self) -> None:
+        try:
+            self.sync_session.execute(sa.text("SELECT 1"))
+            sys.stdout.write(
+                f"[{self.dt}]:[INFO]:Connection to database successful | "
+                f"{self.host_url}\n"
+            )
+        except Exception as e:
+            self.sync_session.close()
+            sys.stderr.write(
+                f"[{self.dt}]:[ERROR]:Connection to datatabse failed | "
+                f"{self.host_url} | "
+                f"{repr(e)}\n"
+            )
+            raise
+
+    async def test_connection_async(self) -> None:
+        try:
+            await self.async_session.execute(sa.text("SELECT 1"))
+            sys.stdout.write(
+                f"[{self.dt}]:[INFO]:Connection to database successful | "
+                f"{self.host_url}\n"
+            )
+        except Exception as e:
+            await self.async_session.close()
+            sys.stderr.write(
+                f"[{self.dt}]:[ERROR]:Connection to datatabse failed | "
+                f"{self.host_url} | "
+                f"{repr(e)}\n"
+            )
+            raise
 
 
 class DBUtils:

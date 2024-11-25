@@ -26,12 +26,22 @@ classifiers = [
     "Natural Language :: English",
 ]
 
+[tool.poetry.group.test]
+optional = true
+
 [tool.poetry.dependencies]
 python = ">=3.10,<4.0"
 pydantic-settings = ">=2.6.1"
 SQLAlchemy = ">=2.0.36"
 pyodbc = ">=5.2.0"
 aioodbc = ">=0.5.0"
+psycopg2 = "^2.9.10"
+asyncpg = "^0.30.0"
+
+[tool.poetry.extras]
+mssql = [ "pyodbc", "aioodbc" ]
+pgsql = [ "psycopg2", "asyncpg" ]
+all = [ "pyodbc", "aioodbc", "psycopg2", "asyncpg" ]
 
 [tool.poetry.group.test.dependencies]
 pytest = ">=8.3.3"

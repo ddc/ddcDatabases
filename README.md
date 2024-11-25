@@ -6,30 +6,63 @@
 [![Build Status](https://img.shields.io/endpoint.svg?url=https%3A//actions-badge.atrox.dev/ddc/ddcDatabases/badge?ref=main&style=plastic&label=build&logo=none)](https://actions-badge.atrox.dev/ddc/ddcDatabases/goto?ref=main)
 
 
-# Install
+# Install All databases dependencies
 ```shell
-pip install ddcDatabases
+pip install ddcDatabases[all]
+```
+
+# Install MSSQL
+```shell
+pip install ddcDatabases[mssql]
+```
+
+
+# Install PostgreSQL
+```shell
+pip install ddcDatabases[pgsql]
 ```
 
 
 # Databases
-## DBSQLITE
+
+
+## SQLITE
 ```
-class DBSqlite(db_file_path: str, batch_size=100, echo=False, future=True)
+class Sqlite(db_file_path: str, echo=False)
 ```
 
 ```python
 import sqlalchemy as sa
-from ddcDatabases import DBSqlite, DBUtils
-dbsqlite = DBSqlite(database_file_path)
-with dbsqlite.session() as session:
+from ddcDatabases.sqlite import Sqlite
+with Sqlite() as session:
     stmt = sa.select(Table).where(Table.id == 1)
-    db_utils = DBUtils(session)
-    results = db_utils.fetchall(stmt)
+    results = session.fetchall(stmt)
 ```
 
 
-## DBPOSTGRES
+
+
+
+## MSSQL
+```
+class MSSQL(db_file_path: str, echo=False)
+```
+
+```python
+import sqlalchemy as sa
+from ddcDatabases.mssql import MSSQL
+with MSSQL() as session:
+    stmt = sa.select(Table).where(Table.id == 1)
+    results = session.fetchall(stmt)
+```
+
+
+
+
+
+
+
+## PostgreSQL
   + Using driver "psycopg2" as default
 ```
 class DBPostgres(future=True, echo=False, drivername="psycopg2", **kwargs)
@@ -101,23 +134,19 @@ await db_utils.fetch_value(stmt)
 ```
 
 
+
 # Source Code
 ### Build
 ```shell
-poetry build
+poetry build -f wheel
 ```
 
 
-### Run Tests
+### Run Tests and Get Coverage Report
 ```shell
-poetry run coverage run -m pytest -v
+poetry run coverage run --omit=./tests/* --source=./ddcDatabases -m pytest -v && poetry run coverage report
 ```
 
-
-### Get Coverage Report
-```shell
-poetry run coverage report
-```
 
 
 # License

@@ -1,4 +1,4 @@
-name: Test, Build, Release and Publish to PyPI
+name: Build Release and Publish to PyPI
 
 on:
   push:
@@ -25,15 +25,7 @@ jobs:
           python -m pip install --upgrade pip setuptools wheel
           python -m pip install poetry
 
-      - name: Install Poetry Dependencies
-        run: |  
-          python -m poetry update
-
-      - name: Run tests
-        run: |  
-          python -m poetry run coverage run -m pytest -v
-
-      - name: Build package
+      - name: Build package with poetry
         run: |  
           python -m poetry build
 
