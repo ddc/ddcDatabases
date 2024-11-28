@@ -25,6 +25,19 @@ jobs:
           python -m pip install --upgrade pip setuptools wheel
           python -m pip install poetry
 
+      - name: Install poetry dependencies
+        run: |  
+          python -m poetry update --with test
+          python -m poetry install --extras all
+
+      - name: Run tests
+        run: |  
+          python -m poetry run coverage run --omit=./tests/* --source=./ddcDatabases -m pytest -v
+
+      - name: Generate Coverage Report
+        run: |  
+          python -m poetry run coverage report
+
       - name: Build package with poetry
         run: |  
           python -m poetry build
