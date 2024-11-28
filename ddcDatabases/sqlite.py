@@ -1,53 +1,59 @@
 # -*- encoding: utf-8 -*-
 import sys
-import sqlalchemy as sa
+from contextlib import contextmanager
+from datetime import datetime
+from typing import Optional
 from sqlalchemy.engine import create_engine, Engine
 from sqlalchemy.orm import Session, sessionmaker
-from .exceptions import get_exception
+from .settings import SQLiteSettings
 
 
-class DBSqlite:
+class Sqlite:
     """
-    Class to handle sqlite databases
-
-    database = DBSqlite(DATABASE_FILE_PATH)
-    with database.session() as session:
-        do your stuff here
-
+    Class to handle Sqlite connections
     """
 
-    def __init__(self, db_file_path: str, batch_size=100, echo=False, future=True):
-        self.file = db_file_path
-        self.batch_size = batch_size
-        self.echo = echo
-        self.future = future
+    def __init__(
+        self,
+        file_path: Optional[str] = None,
+        echo: Optional[bool] = None,
+    ):
+        _settings = SQLiteSettings()
+        self.temp_engine = None
+        self.session = None
+        self.file_path = file_path or _settings.file_path
+        self.echo = echo or _settings.echo
 
-    def url(self) -> str:
-        return f"sqlite:///{self.file}"
+    def __enter__(self):
+        with self.engine() as self.temp_engine:
+            session_maker = sessionmaker(bind=self.temp_engine,
+                                         class_=Session,
+                                         autoflush=True,
+                                         expire_on_commit=True)
 
+        with session_maker.begin() as self.session:
+            return self.session
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if self.session:
+            self.session.close()
+        if self.temp_engine:
+            self.temp_engine.dispose()
+
+    @contextmanager
     def engine(self) -> Engine | None:
         try:
-            engine = create_engine(self.url(), future=self.future, echo=self.echo).\
-                execution_options(stream_results=self.echo, isolation_level="AUTOCOMMIT")
-
-            @sa.event.listens_for(engine, "before_cursor_execute")
-            def receive_before_cursor_execute(conn,
-                                              cursor,
-                                              statement,
-                                              params,
-                                              context,
-                                              executemany):
-                cursor.arraysize = self.batch_size
-            return engine
+            _engine_args = {
+                "url": f"sqlite:///{self.file_path}",
+                "echo": self.echo,
+            }
+            _engine = create_engine(**_engine_args)
+            yield _engine
         except Exception as e:
-            sys.stderr.write(f"Unable to Create Database Engine: {get_exception(e)}")
-            return None
-
-    def session(self, engine: Engine = None) -> Session | None:
-        _engine = engine or self.engine()
-        if _engine is None:
-            sys.stderr.write("Unable to Create Database Session: Empty Engine")
-            return None
-        session_maker = sessionmaker(bind=_engine)
-        _engine.dispose()
-        return session_maker()
+            dt = datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3]
+            sys.stderr.write(
+                f"[{dt}]:"
+                "[ERROR]:Unable to Create Database Engine | "
+                f"{repr(e)}"
+            )
+            raise
