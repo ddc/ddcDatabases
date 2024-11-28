@@ -4,7 +4,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "ddcDatabases"
-version = "1.0.9"
+version = "1.0.10"
 description = "Custom Database Queries"
 license = "MIT"
 readme = "README.md"
@@ -32,8 +32,8 @@ optional = true
 [tool.poetry.dependencies]
 python = ">=3.10,<4.0"
 aioodbc = ">=0.5.0"
-asyncpg = "^0.30.0"
-psycopg2 = "^2.9.10"
+asyncpg = ">=0.30.0"
+psycopg2 = ">=2.9.10"
 pydantic-settings = ">=2.6.1"
 pyodbc = ">=5.2.0"
 SQLAlchemy = ">=2.0.36"

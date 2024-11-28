@@ -1,4 +1,4 @@
-name: Build Release and Publish to PyPI
+name: Test, Build, Create a Release and Publish to PyPI
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
       - main
 
 jobs:
-  build:
+  test_and_build:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -48,10 +48,10 @@ jobs:
           name: python-package-distributions
           path: dist/
 
-  release:
+  create_release:
     runs-on: ubuntu-latest
     needs:
-      - build
+      - test_and_build
     env:
       GITHUB_TOKEN: ${{ github.token }}
     steps:
@@ -73,7 +73,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: release
     needs:
-      - release
+      - create_release
     permissions:
       id-token: write
     steps:
@@ -91,7 +91,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: release
     needs:
-      - release
+      - create_release
     permissions:
       id-token: write
     steps:
