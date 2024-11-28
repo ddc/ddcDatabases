@@ -23,5 +23,5 @@ class SqliteDal:
             stmt = sa.select(*self.columns).where(ModelTest.id == test_id)
             results = self.db_utils.fetchall(stmt)
             return results
-        except DBFetchAllException as e:
+        except DBFetchAllException:
             return None

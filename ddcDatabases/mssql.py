@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from contextlib import asynccontextmanager, contextmanager
-from typing import Optional
+from typing import AsyncGenerator, Generator, Optional
 from sqlalchemy.engine import create_engine, Engine, URL
 from sqlalchemy.ext.asyncio import (
     AsyncEngine,
@@ -99,7 +99,7 @@ class MSSQL:
             await self.temp_engine.dispose()
 
     @contextmanager
-    def engine(self) -> Engine:
+    def engine(self) -> Generator:
         _connection_url = URL.create(
             **self.connection_url,
             drivername=self.sync_driver
@@ -112,7 +112,7 @@ class MSSQL:
         yield engine
 
     @asynccontextmanager
-    async def async_engine(self) -> AsyncEngine:
+    async def async_engine(self) -> AsyncGenerator:
         _connection_url = URL.create(
             **self.connection_url,
             drivername=self.async_driver
