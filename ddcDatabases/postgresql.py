@@ -93,8 +93,8 @@ class PostgreSQL:
         _engine_args = {
             "url": _connection_url,
         }
-        engine = create_engine(**_engine_args)
-        yield engine
+        _engine = create_engine(**_engine_args)
+        yield _engine
 
     @asynccontextmanager
     async def async_engine(self) -> AsyncGenerator:
@@ -105,8 +105,8 @@ class PostgreSQL:
         _engine_args = {
             "url": _connection_url,
         }
-        engine = create_async_engine(**_engine_args)
-        yield engine
+        _engine = create_async_engine(**_engine_args)
+        yield _engine
 
     def _test_connection_sync(self, session: Session) -> None:
         host_url = URL.create(

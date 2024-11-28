@@ -47,8 +47,8 @@ class Sqlite:
                 "url": f"sqlite:///{self.file_path}",
                 "echo": self.echo,
             }
-            engine = create_engine(**_engine_args)
-            yield engine
+            _engine = create_engine(**_engine_args)
+            yield _engine
         except Exception as e:
             dt = datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3]
             sys.stderr.write(

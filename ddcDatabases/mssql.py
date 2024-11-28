@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from contextlib import asynccontextmanager, contextmanager
-from typing import AsyncGenerator, Generator, Optional
+from typing import Optional
 from sqlalchemy.engine import create_engine, Engine, URL
 from sqlalchemy.ext.asyncio import (
     AsyncEngine,
@@ -99,7 +99,7 @@ class MSSQL:
             await self.temp_engine.dispose()
 
     @contextmanager
-    def engine(self) -> Generator:
+    def engine(self) -> Engine:
         _connection_url = URL.create(
             **self.connection_url,
             drivername=self.sync_driver
@@ -107,12 +107,12 @@ class MSSQL:
         _engine_args = {
             "url": _connection_url,
         }
-        engine = create_engine(**_engine_args)
-        engine.update_execution_options(schema_translate_map={None: self.schema})
-        yield engine
+        _engine = create_engine(**_engine_args)
+        _engine.update_execution_options(schema_translate_map={None: self.schema})
+        yield _engine
 
     @asynccontextmanager
-    async def async_engine(self) -> AsyncGenerator:
+    async def async_engine(self) -> AsyncEngine:
         _connection_url = URL.create(
             **self.connection_url,
             drivername=self.async_driver
@@ -120,9 +120,9 @@ class MSSQL:
         _engine_args = {
             "url": _connection_url,
         }
-        engine = create_async_engine(**_engine_args)
-        engine.update_execution_options(schema_translate_map={None: self.schema})
-        yield engine
+        _engine = create_async_engine(**_engine_args)
+        _engine.update_execution_options(schema_translate_map={None: self.schema})
+        yield _engine
 
     def _test_connection_sync(self, session: Session) -> None:
         host_url = URL.create(
