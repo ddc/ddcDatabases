@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
 from faker import Faker
-from ddcDatabases import DBSqlite
 
 
-database_engine = DBSqlite(":memory:").engine()
+db_filename = "test.db"
 
 
 def _set_randoms():

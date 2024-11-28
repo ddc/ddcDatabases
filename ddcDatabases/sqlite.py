@@ -1,9 +1,10 @@
 # -*- encoding: utf-8 -*-
 import sys
+from contextlib import contextmanager
 from datetime import datetime
+from typing import Optional
 from sqlalchemy.engine import create_engine, Engine
 from sqlalchemy.orm import Session, sessionmaker
-from .db_utils import DBUtils
 from .settings import SQLiteSettings
 
 
@@ -14,41 +15,45 @@ class Sqlite:
 
     def __init__(
         self,
-        file_path: str = None,
-        echo: bool = None,
+        file_path: Optional[str] = None,
+        echo: Optional[bool] = None,
     ):
         _settings = SQLiteSettings()
+        self.temp_engine = None
         self.session = None
-        self.file_path = _settings.file_path if not file_path else file_path
-        self.echo = _settings.echo if not echo else echo
+        self.file_path = file_path or _settings.file_path
+        self.echo = echo or _settings.echo
 
     def __enter__(self):
-        engine = self._get_engine()
-        session_maker = sessionmaker(bind=engine,
-                                     class_=Session,
-                                     autoflush=True,
-                                     expire_on_commit=True)
-        engine.dispose()
-        with session_maker.begin() as session:
-            self.session = session
-            db_utils = DBUtils(self.session)
-            return db_utils
+        with self.engine() as self.temp_engine:
+            session_maker = sessionmaker(bind=self.temp_engine,
+                                         class_=Session,
+                                         autoflush=True,
+                                         expire_on_commit=True)
+
+        with session_maker.begin() as self.session:
+            return self.session
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        self.session.close()
+        if self.session:
+            self.session.close()
+        if self.temp_engine:
+            self.temp_engine.dispose()
 
-    def _get_engine(self) -> Engine | None:
+    @contextmanager
+    def engine(self) -> Engine | None:
         try:
             _engine_args = {
                 "url": f"sqlite:///{self.file_path}",
                 "echo": self.echo,
             }
-
             engine = create_engine(**_engine_args)
-            return engine
+            yield engine
         except Exception as e:
             dt = datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3]
             sys.stderr.write(
-                f"[{dt}]:[ERROR]:Unable to Create Database Engine | {repr(e)}"
+                f"[{dt}]:"
+                "[ERROR]:Unable to Create Database Engine | "
+                f"{repr(e)}"
             )
             raise

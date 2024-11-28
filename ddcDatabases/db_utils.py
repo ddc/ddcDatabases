@@ -2,9 +2,9 @@
 import sys
 from datetime import datetime
 import sqlalchemy as sa
+from sqlalchemy import RowMapping
 from sqlalchemy.engine import URL
-from sqlalchemy.engine.result import MappingResult
-from sqlalchemy.ext.asyncio import AsyncMappingResult, AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
 from .exceptions import (
     DBDeleteAllDataException,
@@ -65,7 +65,7 @@ class DBUtils:
     def __init__(self, session):
         self.session = session
 
-    def fetchall(self, stmt) -> MappingResult:
+    def fetchall(self, stmt) -> list[RowMapping]:
         cursor = None
         try:
             cursor = self.session.execute(stmt)
@@ -129,7 +129,7 @@ class DBUtilsAsync:
     def __init__(self, session):
         self.session = session
 
-    async def fetchall(self, stmt) -> AsyncMappingResult:
+    async def fetchall(self, stmt) -> list[RowMapping]:
         cursor = None
         try:
             cursor = await self.session.execute(stmt)

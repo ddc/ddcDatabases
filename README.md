@@ -23,20 +23,41 @@ pip install ddcDatabases[pgsql]
 ```
 
 
+
 # Databases
++ Parameters for all classes are declared as OPTIONAL falling back to [.env](.env.example) file\
++ All examples are using [db_utils.py](ddcDatabases/db_utils.py)\
++ By default a session is always open\
++ But the engine can be available, examples bellow
+
+
 
 
 ## SQLITE
 ```
-class Sqlite(db_file_path: str, echo=False)
+class Sqlite(
+    file_path: Optional[str] = None,
+    echo: Optional[bool] = None,
+)
 ```
 
+#### Session
 ```python
 import sqlalchemy as sa
-from ddcDatabases.sqlite import Sqlite
+from ddcDatabases import DBUtils, Sqlite
 with Sqlite() as session:
+    utils = DBUtils(session)
     stmt = sa.select(Table).where(Table.id == 1)
-    results = session.fetchall(stmt)
+    results = utils.fetchall(stmt)
+    for row in results:
+        print(row)
+```
+
+#### Sync Engine
+```python
+from ddcDatabases import Sqlite
+with Sqlite().engine() as engine:
+    ...
 ```
 
 
@@ -45,93 +66,130 @@ with Sqlite() as session:
 
 ## MSSQL
 ```
-class MSSQL(db_file_path: str, echo=False)
+class MSSQL(        
+    host: Optional[str] = None,
+    port: Optional[int] = None,
+    username: Optional[str] = None,
+    password: Optional[str] = None,
+    database: Optional[str] = None,
+    schema: Optional[str] = None,
+    echo: Optional[bool] = None,
+    pool_size: Optional[int] = None,
+    max_overflow: Optional[int] = None
+)
 ```
 
+#### Sync Example
 ```python
 import sqlalchemy as sa
-from ddcDatabases.mssql import MSSQL
+from ddcDatabases import DBUtils, MSSQL
 with MSSQL() as session:
     stmt = sa.select(Table).where(Table.id == 1)
-    results = session.fetchall(stmt)
+    db_utils = DBUtils(session)
+    results = db_utils.fetchall(stmt)
+    for row in results:
+        print(row)
 ```
 
+#### Async Example
+```python
+import sqlalchemy as sa
+from ddcDatabases import DBUtilsAsync, MSSQL
+async with MSSQL() as session:
+    stmt = sa.select(Table).where(Table.id == 1)
+    db_utils = DBUtilsAsync(session)
+    results = await db_utils.fetchall(stmt)
+    for row in results:
+        print(row)
+```
 
+#### Sync Engine
+```python
+from ddcDatabases import MSSQL
+with MSSQL().engine() as engine:
+    ...
+```
+
+#### Async Engine
+```python
+from ddcDatabases import MSSQL
+async with MSSQL().async_engine() as engine:
+    ...
+```
 
 
 
 
 
 ## PostgreSQL
-  + Using driver "psycopg2" as default
++ Using driver [psycopg2](https://pypi.org/project/psycopg2/) as default
 ```
-class DBPostgres(future=True, echo=False, drivername="psycopg2", **kwargs)
+class DBPostgres(
+    host: Optional[str] = None,
+    port: Optional[int] = None,
+    username: Optional[str] = None,
+    password: Optional[str] = None,
+    database: Optional[str] = None,
+    echo: Optional[bool] = None,
+)
 ```
 
+#### Sync Example
 ```python
 import sqlalchemy as sa
-from ddcDatabases import DBPostgres, DBUtils
-db_configs = {
-    "username": username,
-    "password": password,
-    "host": host,
-    "port": port,
-    "database": database
-}
-dbpostgres = DBPostgres(**db_configs)
-with dbpostgres.session() as session:
+from ddcDatabases import DBUtils, PostgreSQL
+with PostgreSQL() as session:
     stmt = sa.select(Table).where(Table.id == 1)
     db_utils = DBUtils(session)
     results = db_utils.fetchall(stmt)
+    for row in results:
+        print(row)
 ```
 
-+ DBUTILS
-  + Uses SQLAlchemy statements
-```python
-from ddcDatabases import DBUtils
-db_utils = DBUtils(session)
-db_utils.add(stmt)
-db_utils.execute(stmt)
-db_utils.fetchall(stmt)
-db_utils.fetchone(stmt)
-db_utils.fetch_value(stmt)
-```
-
-
-## DBPOSTGRES ASYNC
-  + Using driver "asyncpg"
-```
-class DBPostgresAsync(future=True, echo=False, drivername="asyncpg", **kwargs)
-```
-
+#### Async Example
 ```python
 import sqlalchemy as sa
-from ddcDatabases import DBPostgresAsync, DBUtilsAsync
-db_configs = {
-    "username": username,
-    "password": password,
-    "host": host,
-    "port": port,
-    "database": database
-}
-dbpostgres = DBPostgresAsync(**db_configs)
-async with dbpostgres.session() as session:
+from ddcDatabases import DBUtilsAsync, PostgreSQL
+async with PostgreSQL() as session:
     stmt = sa.select(Table).where(Table.id == 1)
     db_utils = DBUtilsAsync(session)
     results = await db_utils.fetchall(stmt)
+    for row in results:
+        print(row)
 ```
 
-+ DBUTILS ASYNC
-  + Uses SQLAlchemy statements
+#### Sync Engine
 ```python
-from ddcDatabases import DBUtilsAsync
-db_utils = DBUtilsAsync(session)
-await db_utils.add(stmt)
-await db_utils.execute(stmt)
-await db_utils.fetchall(stmt)
-await db_utils.fetchone(stmt)
-await db_utils.fetch_value(stmt)
+from ddcDatabases import PostgreSQL
+with PostgreSQL().engine() as engine:
+    ...
 ```
+
+#### Async Engine
+```python
+from ddcDatabases import PostgreSQL
+async with PostgreSQL().async_engine() as engine:
+    ...
+```
+
+
+
+
+## DBUtils and DBUtilsAsync
++ Take an open session as parameter
++ Can use SQLAlchemy statements
++ Execute function can be used to update, insert or any SQLAlchemy.text
+```python
+from ddcDatabases import DBUtils
+db_utils = DBUtils(session)
+db_utils.fetchall(stmt)                     # returns a list of RowMapping
+db_utils.fetchvalue(stmt)                   # fetch a single value, returning as string
+db_utils.insert(stmt)                       # insert into model table
+db_utils.deleteall(model)                   # delete all records from model
+db_utils.insertbulk(model, list[dict])      # insert records into model from a list of dicts
+db_utils.execute(stmt)                      # this is the actual execute from session
+```
+
 
 
 

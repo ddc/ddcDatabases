@@ -1,15 +1,18 @@
 import logging
 from importlib.metadata import version
 from typing import Literal, NamedTuple
+from .db_utils import DBUtils, DBUtilsAsync
 from .mssql import MSSQL
 from .postgresql import PostgreSQL
 from .sqlite import Sqlite
 
 
 __all__ = (
-    "Sqlite",
-    "PostgreSQL",
+    "DBUtils",
+    "DBUtilsAsync",
     "MSSQL",
+    "PostgreSQL",
+    "Sqlite",
 )
 
 
