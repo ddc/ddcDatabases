@@ -4,8 +4,8 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "ddcDatabases"
-version = "1.0.11"
-description = "Custom Database Connection and Queries"
+version = "1.0.12"
+description = "Databases Connection and Queries"
 license = "MIT"
 readme = "README.md"
 authors = ["Daniel Costa <danieldcsta@gmail.com>"]
@@ -53,4 +53,11 @@ all = [ "pyodbc", "aioodbc", "psycopg2", "asyncpg" ]
 [tool.poetry.group.test.dependencies]
 coverage = ">=7.6.8"
 faker = ">=33.0.0"
+poethepoet = ">=0.31.1"
 pytest = ">=8.3.3"
+
+[tool.poe.tasks]
+_test = "poetry run coverage run --omit=./tests/* --source=./ddcDatabases -m pytest -v"
+_coverage = "poetry run coverage report"
+tests = ["_test", "_coverage"]
+test = ["tests"]

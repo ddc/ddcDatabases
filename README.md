@@ -1,4 +1,4 @@
-# Few Utility Functions
+# Databases Connection and Queries
 
 [![License](https://img.shields.io/github/license/ddc/ddcDatabases.svg)](https://github.com/ddc/ddcDatabases/blob/master/LICENSE)
 [![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://www.python.org)
@@ -7,15 +7,19 @@
 [![Build Status](https://img.shields.io/endpoint.svg?url=https%3A//actions-badge.atrox.dev/ddc/ddcDatabases/badge?ref=main&label=build&logo=none)](https://actions-badge.atrox.dev/ddc/ddcDatabases/goto?ref=main)
 
 
+
 # Install All databases dependencies
 ```shell
 pip install ddcDatabases[all]
 ```
 
+
+
 # Install MSSQL
 ```shell
 pip install ddcDatabases[mssql]
 ```
+
 
 
 # Install PostgreSQL
@@ -26,7 +30,7 @@ pip install ddcDatabases[pgsql]
 
 
 # Databases
-+ Parameters for all classes are declared as OPTIONAL falling back to [.env](.env.example) file
++ Parameters for all classes are declared as OPTIONAL falling back to [.env](./ddcDatabases/.env.example) file
 + All examples are using [db_utils.py](ddcDatabases/db_utils.py)
 + By default, the MSSQL class will open a session to the database, but the engine can be available
 
@@ -201,9 +205,10 @@ poetry build -f wheel
 
 
 
-# Run Tests and Get Coverage Report
+# Run Tests and Get Coverage Report using Poe
 ```shell
-poetry run coverage run --omit=./tests/* --source=./ddcDatabases -m pytest -v && poetry run coverage report
+poetry update --with test
+poe tests
 ```
 
 
