@@ -1,10 +1,10 @@
 [build-system]
-requires = ["poetry-core>=1.9.0"]
+requires = ["poetry-core>=1.9.1"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "ddcDatabases"
-version = "1.0.12"
+version = "1.0.13"
 description = "Databases Connection and Queries"
 license = "MIT"
 readme = "README.md"
@@ -40,15 +40,15 @@ optional = true
 python = ">=3.10,<4.0"
 aioodbc = ">=0.5.0"
 asyncpg = ">=0.30.0"
-psycopg2 = ">=2.9.10"
+psycopg2-binary = ">=2.9.10"
 pydantic-settings = ">=2.6.1"
 pyodbc = ">=5.2.0"
 SQLAlchemy = ">=2.0.36"
 
 [tool.poetry.extras]
 mssql = [ "pyodbc", "aioodbc" ]
-pgsql = [ "psycopg2", "asyncpg" ]
-all = [ "pyodbc", "aioodbc", "psycopg2", "asyncpg" ]
+pgsql = [ "psycopg2-binary", "asyncpg" ]
+all = [ "pyodbc", "aioodbc", "psycopg2-binary", "asyncpg" ]
 
 [tool.poetry.group.test.dependencies]
 coverage = ">=7.6.8"

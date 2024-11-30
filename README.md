@@ -30,7 +30,7 @@ pip install ddcDatabases[pgsql]
 
 
 # Databases
-+ Parameters for all classes are declared as OPTIONAL falling back to [.env](./ddcDatabases/.env.example) file
++ Parameters for all classes are declared as OPTIONAL falling back to [.env](./ddcDatabases/.env.example)  file variables
 + All examples are using [db_utils.py](ddcDatabases/db_utils.py)
 + By default, the MSSQL class will open a session to the database, but the engine can be available
 
