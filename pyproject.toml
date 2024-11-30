@@ -4,17 +4,24 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "ddcDatabases"
-version = "1.0.10"
-description = "Custom Database Queries"
+version = "1.0.11"
+description = "Custom Database Connection and Queries"
 license = "MIT"
 readme = "README.md"
 authors = ["Daniel Costa <danieldcsta@gmail.com>"]
 maintainers = ["Daniel Costa"]
 repository = "https://github.com/ddc/ddcDatabases"
-homepage = "https://github.com/ddc/ddcDatabases"
+homepage = "https://pypi.org/project/ddcDatabases"
 packages = [{include = "ddcDatabases"}]
 package-mode = true
-keywords = ["python3", "databases", "ddcDatabases"]
+keywords = [
+    "python3", "python-3", "python",
+    "databases", "database",
+    "sqlite", "sqlite3", "sqlite3-database",
+    "mssql", "mssql-database",
+    "postgres", "postgresql", "postgresql-database",
+    "postgressql","ddcDatabases"
+]
 classifiers = [
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Development Status :: 5 - Production/Stable",

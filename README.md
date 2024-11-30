@@ -1,9 +1,10 @@
 # Few Utility Functions
 
-[![License](https://img.shields.io/github/license/ddc/ddcDatabases.svg?style=plastic)](https://github.com/ddc/ddcDatabases/blob/master/LICENSE)
-[![Python](https://img.shields.io/badge/Python-3.10+-blue.svg?style=plastic)](https://www.python.org)
-[![PyPi](https://img.shields.io/pypi/v/ddcDatabases.svg?style=plastic)](https://pypi.python.org/pypi/ddcDatabases)
-[![Build Status](https://img.shields.io/endpoint.svg?url=https%3A//actions-badge.atrox.dev/ddc/ddcDatabases/badge?ref=main&style=plastic&label=build&logo=none)](https://actions-badge.atrox.dev/ddc/ddcDatabases/goto?ref=main)
+[![License](https://img.shields.io/github/license/ddc/ddcDatabases.svg)](https://github.com/ddc/ddcDatabases/blob/master/LICENSE)
+[![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://www.python.org)
+[![PyPi](https://img.shields.io/pypi/v/ddcDatabases.svg)](https://pypi.python.org/pypi/ddcDatabases)
+[![PyPI Downloads](https://static.pepy.tech/badge/ddcDatabases)](https://pepy.tech/projects/ddcDatabases)
+[![Build Status](https://img.shields.io/endpoint.svg?url=https%3A//actions-badge.atrox.dev/ddc/ddcDatabases/badge?ref=main&label=build&logo=none)](https://actions-badge.atrox.dev/ddc/ddcDatabases/goto?ref=main)
 
 
 # Install All databases dependencies
@@ -32,7 +33,7 @@ pip install ddcDatabases[pgsql]
 
 
 
-## SQLITE
+# SQLITE
 ```
 class Sqlite(
     file_path: Optional[str] = None,
@@ -63,7 +64,7 @@ with Sqlite().engine() as engine:
 
 
 
-## MSSQL
+# MSSQL
 ```
 class MSSQL(        
     host: Optional[str] = None,
@@ -120,7 +121,7 @@ async with MSSQL().async_engine() as engine:
 
 
 
-## PostgreSQL
+# PostgreSQL
 + Using driver [psycopg2](https://pypi.org/project/psycopg2/) as default
 ```
 class DBPostgres(
@@ -174,7 +175,7 @@ async with PostgreSQL().async_engine() as engine:
 
 
 
-## DBUtils and DBUtilsAsync
+# DBUtils and DBUtilsAsync
 + Take an open session as parameter
 + Can use SQLAlchemy statements
 + Execute function can be used to update, insert or any SQLAlchemy.text
@@ -199,7 +200,8 @@ poetry build -f wheel
 ```
 
 
-### Run Tests and Get Coverage Report
+
+# Run Tests and Get Coverage Report
 ```shell
 poetry run coverage run --omit=./tests/* --source=./ddcDatabases -m pytest -v && poetry run coverage report
 ```
@@ -208,3 +210,10 @@ poetry run coverage run --omit=./tests/* --source=./ddcDatabases -m pytest -v &&
 
 # License
 Released under the [MIT License](LICENSE)
+
+
+
+# Buy me a cup of coffee
++ [GitHub Sponsor](https://github.com/sponsors/ddc)
++ [ko-fi](https://ko-fi.com/ddcsta)
++ [Paypal](https://www.paypal.com/ncp/payment/6G9Z78QHUD4RJ)
