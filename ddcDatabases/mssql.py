@@ -28,6 +28,8 @@ class MSSQL:
         echo: Optional[bool] = None,
         pool_size: Optional[int] = None,
         max_overflow: Optional[int] = None,
+        autoflush: Optional[bool] = None,
+        expire_on_commit: Optional[bool] = None,
     ):
         _settings = MSSQLSettings()
         self.host = host or _settings.host
@@ -40,6 +42,8 @@ class MSSQL:
         self.pool_size = pool_size or int(_settings.pool_size)
         self.max_overflow = max_overflow or int(_settings.max_overflow)
 
+        self.autoflush = autoflush
+        self.expire_on_commit = expire_on_commit
         self.temp_engine: Optional[Engine | AsyncEngine] = None
         self.session: Optional[Session | AsyncSession] = None
         self.async_driver = _settings.async_driver
@@ -69,8 +73,8 @@ class MSSQL:
         with self.engine() as self.temp_engine:
             session_maker = sessionmaker(bind=self.temp_engine,
                                          class_=Session,
-                                         autoflush=True,
-                                         expire_on_commit=True)
+                                         autoflush=self.autoflush or True,
+                                         expire_on_commit=self.expire_on_commit or True)
         with session_maker.begin() as self.session:
             self._test_connection_sync(self.session)
             return self.session
@@ -85,8 +89,8 @@ class MSSQL:
         async with self.async_engine() as self.temp_engine:
             session_maker = sessionmaker(bind=self.temp_engine,
                                          class_=AsyncSession,
-                                         autoflush=True,
-                                         expire_on_commit=False)
+                                         autoflush=self.autoflush or True,
+                                         expire_on_commit=self.expire_on_commit or False)
         async with session_maker.begin() as self.session:
             await self._test_connection_async(self.session)
             return self.session

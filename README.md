@@ -1,10 +1,11 @@
 # Databases Connection and Queries
 
-[![License](https://img.shields.io/github/license/ddc/ddcDatabases.svg)](https://github.com/ddc/ddcDatabases/blob/master/LICENSE)
-[![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://www.python.org)
+[![License](https://img.shields.io/pypi/l/ddcDatabases)](https://github.com/ddc/ddcDatabases/blob/master/LICENSE)
+[![Python](https://img.shields.io/pypi/pyversions/ddcDatabases.svg)](https://www.python.org)
 [![PyPi](https://img.shields.io/pypi/v/ddcDatabases.svg)](https://pypi.python.org/pypi/ddcDatabases)
 [![PyPI Downloads](https://static.pepy.tech/badge/ddcDatabases)](https://pepy.tech/projects/ddcDatabases)
 [![codecov](https://codecov.io/github/ddc/ddcDatabases/graph/badge.svg?token=E942EZII4Q)](https://codecov.io/github/ddc/ddcDatabases)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![Build Status](https://img.shields.io/endpoint.svg?url=https%3A//actions-badge.atrox.dev/ddc/ddcDatabases/badge?ref=main&label=build&logo=none)](https://actions-badge.atrox.dev/ddc/ddcDatabases/goto?ref=main)
 
 
@@ -34,7 +35,14 @@ pip install ddcDatabases[pgsql]
 + Parameters for all classes are declared as OPTIONAL falling back to [.env](./ddcDatabases/.env.example)  file variables
 + All examples are using [db_utils.py](ddcDatabases/db_utils.py)
 + By default, the MSSQL class will open a session to the database, but the engine can be available
-
++ SYNC sessions defaults:
+  + `autoflush is True`
+  + `expire_on_commit is True`
+  + `echo is False`
++ ASYNC sessions defaults:
+  + `autoflush is True`
+  + `expire_on_commit is False`
+  + `echo is False`
 
 
 
