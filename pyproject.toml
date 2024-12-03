@@ -37,13 +37,13 @@ classifiers = [
 optional = true
 
 [tool.poetry.dependencies]
-python = ">=3.10,<4.0"
-aioodbc = ">=0.5.0"
-asyncpg = ">=0.30.0"
-psycopg2-binary = ">=2.9.10"
-pydantic-settings = ">=2.6.1"
-pyodbc = ">=5.2.0"
-SQLAlchemy = ">=2.0.36"
+python = ">=3.10,<=3.13"
+aioodbc = "^0.5.0"
+asyncpg = "^0.30.0"
+psycopg2-binary = "^2.9.10"
+pydantic-settings = "^2.6.1"
+pyodbc = "^5.2.0"
+SQLAlchemy = "^2.0.36"
 
 [tool.poetry.extras]
 mssql = [ "pyodbc", "aioodbc" ]
