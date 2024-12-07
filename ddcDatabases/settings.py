@@ -22,7 +22,7 @@ class PostgreSQLSettings(BaseSettings):
 
     host: Optional[str] = Field(default="localhost")
     port: Optional[int] = Field(default=5432)
-    username: Optional[str] = Field(default="postgres")
+    user: Optional[str] = Field(default="postgres")
     password: Optional[str] = Field(default="postgres")
     database: Optional[str] = Field(default="postgres")
 
@@ -38,7 +38,7 @@ class MSSQLSettings(BaseSettings):
 
     host: Optional[str] = Field(default="localhost")
     port: Optional[int] = Field(default=1433)
-    username: Optional[str] = Field(default="sa")
+    user: Optional[str] = Field(default="sa")
     password: Optional[str] = Field(default=None)
     db_schema: Optional[str] = Field(default="dbo")
     database: Optional[str] = Field(default="master")

@@ -2,10 +2,12 @@
 import sqlalchemy as sa
 from ddcDatabases import DBUtils
 from ddcDatabases.exceptions import DBFetchAllException
-from tests.models.sqlite_model import ModelTest
+from tests.models.test_model import ModelTest
 
 
-class SqliteDal:
+class TestModelDal:
+    """ Data Abstraction Layer """
+
     def __init__(self, db_session):
         self.columns = [x for x in ModelTest.__table__.columns]
         self.db_utils = DBUtils(db_session)
@@ -14,8 +16,8 @@ class SqliteDal:
         stmt = sa.update(ModelTest).where(ModelTest.id == test_id).values(name=name)
         self.db_utils.execute(stmt)
 
-    def update_enable(self, status: bool, test_id: int):
-        stmt = sa.update(ModelTest).where(ModelTest.id == test_id).values(enable=status)
+    def update_enabled(self, status: bool, test_id: int):
+        stmt = sa.update(ModelTest).where(ModelTest.id == test_id).values(enabled=status)
         self.db_utils.execute(stmt)
 
     def get(self, test_id: int):

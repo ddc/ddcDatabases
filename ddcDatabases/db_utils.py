@@ -1,11 +1,17 @@
 # -*- coding: utf-8 -*-
 import sys
+from contextlib import asynccontextmanager, contextmanager
 from datetime import datetime
+from typing import AsyncGenerator, Generator, Optional
 import sqlalchemy as sa
 from sqlalchemy import RowMapping
-from sqlalchemy.engine import URL
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import Session
+from sqlalchemy.engine import create_engine, Engine, URL
+from sqlalchemy.ext.asyncio import (
+    AsyncEngine,
+    AsyncSession,
+    create_async_engine,
+)
+from sqlalchemy.orm import Session, sessionmaker
 from .exceptions import (
     DBDeleteAllDataException,
     DBExecuteException,
@@ -16,7 +22,99 @@ from .exceptions import (
 )
 
 
+class BaseConn:
+
+    def __init__(
+        self,
+        connection_url,
+        engine_args,
+        autoflush,
+        expire_on_commit,
+        sync_driver,
+        async_driver,
+    ):
+        self.connection_url = connection_url
+        self.engine_args = engine_args
+        self.autoflush = autoflush
+        self.expire_on_commit = expire_on_commit
+        self.sync_driver = sync_driver
+        self.async_driver = async_driver
+        self.temp_engine: Optional[Engine | AsyncEngine] = None
+        self.session: Optional[Session | AsyncSession] = None
+
+    def __enter__(self):
+        with self.engine() as self.temp_engine:
+            session_maker = sessionmaker(
+                bind=self.temp_engine,
+                class_=Session,
+                autoflush=self.autoflush or True,
+                expire_on_commit=self.expire_on_commit or True,
+            )
+        with session_maker.begin() as self.session:
+            self._test_connection_sync(self.session)
+            return self.session
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if self.session:
+            self.session.close()
+        if self.temp_engine:
+            self.temp_engine.dispose()
+
+    async def __aenter__(self):
+        async with self.async_engine() as self.temp_engine:
+            session_maker = sessionmaker(
+                bind=self.temp_engine,
+                class_=AsyncSession,
+                autoflush=self.autoflush or True,
+                expire_on_commit=self.expire_on_commit or False,
+            )
+        async with session_maker.begin() as self.session:
+            await self._test_connection_async(self.session)
+            return self.session
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        if self.session:
+            await self.session.close()
+        if self.temp_engine:
+            await self.temp_engine.dispose()
+
+    @contextmanager
+    def engine(self) -> Generator:
+        _connection_url = URL.create(drivername=self.sync_driver, **self.connection_url)
+        _engine_args = {
+            "url": _connection_url,
+            **self.engine_args,
+        }
+        _engine = create_engine(**_engine_args)
+        yield _engine
+        _engine.dispose()
+
+    @asynccontextmanager
+    async def async_engine(self) -> AsyncGenerator:
+        _connection_url = URL.create(drivername=self.async_driver, **self.connection_url)
+        _engine_args = {
+            "url": _connection_url,
+            **self.engine_args,
+        }
+        _engine = create_async_engine(**_engine_args)
+        yield _engine
+        await _engine.dispose()
+
+    def _test_connection_sync(self, session: Session) -> None:
+        del self.connection_url["password"]
+        _connection_url = URL.create(**self.connection_url, drivername=self.sync_driver)
+        test_connection = TestConnections(sync_session=session, host_url=_connection_url)
+        test_connection.test_connection_sync()
+
+    async def _test_connection_async(self, session: AsyncSession) -> None:
+        del self.connection_url["password"]
+        _connection_url = URL.create(**self.connection_url, drivername=self.async_driver)
+        test_connection = TestConnections(async_session=session, host_url=_connection_url)
+        await test_connection.test_connection_async()
+
+
 class TestConnections:
+
     def __init__(
         self,
         sync_session: Session = None,
@@ -31,37 +129,24 @@ class TestConnections:
     def test_connection_sync(self) -> None:
         try:
             self.sync_session.execute(sa.text("SELECT 1"))
-            sys.stdout.write(
-                f"[{self.dt}]:[INFO]:Connection to database successful | "
-                f"{self.host_url}\n"
-            )
+            sys.stdout.write(f"[{self.dt}]:[INFO]:Connection to database successful | {self.host_url}\n")
         except Exception as e:
             self.sync_session.close()
-            sys.stderr.write(
-                f"[{self.dt}]:[ERROR]:Connection to datatabse failed | "
-                f"{self.host_url} | "
-                f"{repr(e)}\n"
-            )
+            sys.stderr.write(f"[{self.dt}]:[ERROR]:Connection to datatabse failed | {self.host_url} | {repr(e)}\n")
             raise
 
     async def test_connection_async(self) -> None:
         try:
             await self.async_session.execute(sa.text("SELECT 1"))
-            sys.stdout.write(
-                f"[{self.dt}]:[INFO]:Connection to database successful | "
-                f"{self.host_url}\n"
-            )
+            sys.stdout.write(f"[{self.dt}]:[INFO]:Connection to database successful | {self.host_url}\n")
         except Exception as e:
             await self.async_session.close()
-            sys.stderr.write(
-                f"[{self.dt}]:[ERROR]:Connection to datatabse failed | "
-                f"{self.host_url} | "
-                f"{repr(e)}\n"
-            )
+            sys.stderr.write(f"[{self.dt}]:[ERROR]:Connection to datatabse failed | {self.host_url} | {repr(e)}\n")
             raise
 
 
 class DBUtils:
+
     def __init__(self, session):
         self.session = session
 
@@ -126,6 +211,7 @@ class DBUtils:
 
 
 class DBUtilsAsync:
+
     def __init__(self, session):
         self.session = session
 
