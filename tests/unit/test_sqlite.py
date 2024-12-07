@@ -4,7 +4,7 @@ import pytest
 from ddcDatabases import Sqlite
 from tests.dal.sqlite_dal import SqliteDal
 from tests.data.base_data import db_filename
-from tests.models.sqlite_model import ModelTest
+from tests.models.test_model import ModelTest
 
 
 class TestSQLite:
