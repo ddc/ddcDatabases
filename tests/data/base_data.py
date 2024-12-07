@@ -10,7 +10,7 @@ def _set_randoms():
     return {
         "id": _faker.random_int(min=1, max=9999999),
         "name": _faker.uuid4(),
-        "enable": _faker.pybool(),
+        "enabled": _faker.pybool(),
     }
 
 

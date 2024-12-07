@@ -46,4 +46,4 @@ class TestSQLite:
         for st in status:
             test_dal.update_enabled(st, _id)
             results = test_dal.get(_id)
-            assert results[0]["enable"] is st
+            assert results[0]["enabled"] is st
