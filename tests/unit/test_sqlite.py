@@ -3,19 +3,19 @@ import os
 import pytest
 from ddcDatabases import Sqlite
 from tests.dal.test_model_dal import TestModelDal
-from tests.data.base_data import db_filename
+from tests.data.base_data import sqlite_filename
 from tests.models.test_model import ModelTest
 
 
 class TestSQLite:
     @classmethod
     def setup_class(cls):
-        with Sqlite(db_filename).engine() as engine:
+        with Sqlite(sqlite_filename).engine() as engine:
             ModelTest.__table__.create(engine)
 
     @classmethod
     def teardown_class(cls):
-        os.remove(db_filename)
+        os.remove(sqlite_filename)
 
     @pytest.fixture(autouse=True, scope="class")
     def test_insert(self, sqlite_session, fake_test_data):

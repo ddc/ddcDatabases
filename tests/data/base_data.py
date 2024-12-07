@@ -2,7 +2,7 @@
 from faker import Faker
 
 
-db_filename = "test.db"
+sqlite_filename = "test.db"
 
 
 def _set_randoms():

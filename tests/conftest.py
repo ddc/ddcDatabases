@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 import pytest
 from ddcDatabases import Sqlite
-from tests.data.base_data import db_filename, get_fake_test_data
+from tests.data.base_data import sqlite_filename, get_fake_test_data
 
 
 @pytest.fixture(name="sqlite_session", scope="session")
 def sqlite_session():
-    with Sqlite(db_filename) as session:
+    with Sqlite(sqlite_filename) as session:
         yield session
 
 
