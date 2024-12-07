@@ -44,6 +44,7 @@ psycopg2-binary = "^2.9.10"
 pydantic-settings = "^2.6.1"
 pyodbc = "^5.2.0"
 SQLAlchemy = "^2.0.36"
+pytest = "^8.3.4"
 
 [tool.poetry.extras]
 mssql = [ "pyodbc", "aioodbc" ]
@@ -51,10 +52,11 @@ pgsql = [ "psycopg2-binary", "asyncpg" ]
 all = [ "pyodbc", "aioodbc", "psycopg2-binary", "asyncpg" ]
 
 [tool.poetry.group.test.dependencies]
-coverage = ">=7.6.8"
-faker = ">=33.0.0"
-poethepoet = ">=0.31.1"
-pytest = ">=8.3.4"
+coverage = "^7.6.8"
+faker = "^33.0.0"
+poethepoet = "^0.31.1"
+pytest = "^8.3.4"
+pytest-postgresql = "^6.1.1"
 
 [tool.poe.tasks]
 _test = "poetry run coverage run --omit=./tests/* --source=./ddcDatabases -m pytest -v"

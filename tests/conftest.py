@@ -4,8 +4,8 @@ from ddcDatabases import Sqlite
 from tests.data.base_data import db_filename, get_fake_test_data
 
 
-@pytest.fixture(name="db_session", scope="session")
-def db_session():
+@pytest.fixture(name="sqlite_db_session", scope="session")
+def sqlite_db_session():
     with Sqlite(db_filename) as session:
         yield session
 
