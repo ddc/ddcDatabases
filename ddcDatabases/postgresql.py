@@ -31,7 +31,7 @@ class PostgreSQL(BaseConn):
         self.sync_driver = _settings.sync_driver
         self.connection_url = {
             "host": host or _settings.host,
-            "port": port or int(_settings.port),
+            "port":  int(port or _settings.port),
             "database": database or _settings.database,
             "username": user or _settings.user,
             "password": password or _settings.password,

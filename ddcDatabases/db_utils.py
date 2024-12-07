@@ -3,7 +3,6 @@ import sys
 from contextlib import asynccontextmanager, contextmanager
 from datetime import datetime
 from typing import AsyncGenerator, Generator, Optional
-
 import sqlalchemy as sa
 from sqlalchemy import RowMapping
 from sqlalchemy.engine import create_engine, Engine, URL
@@ -13,7 +12,6 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
 )
 from sqlalchemy.orm import Session, sessionmaker
-
 from .exceptions import (
     DBDeleteAllDataException,
     DBExecuteException,
@@ -82,7 +80,7 @@ class BaseConn:
 
     @contextmanager
     def engine(self) -> Generator:
-        _connection_url = URL.create(**self.connection_url, drivername=self.sync_driver)
+        _connection_url = URL.create(drivername=self.sync_driver, **self.connection_url)
         _engine_args = {
             "url": _connection_url,
             **self.engine_args,
@@ -93,7 +91,7 @@ class BaseConn:
 
     @asynccontextmanager
     async def async_engine(self) -> AsyncGenerator:
-        _connection_url = URL.create(**self.connection_url, drivername=self.async_driver)
+        _connection_url = URL.create(drivername=self.async_driver, **self.connection_url)
         _engine_args = {
             "url": _connection_url,
             **self.engine_args,
