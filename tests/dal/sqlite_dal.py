@@ -14,6 +14,10 @@ class SqliteDal:
         stmt = sa.update(ModelTest).where(ModelTest.id == test_id).values(name=name)
         self.db_utils.execute(stmt)
 
+    def update_enable(self, status: bool, test_id: int):
+        stmt = sa.update(ModelTest).where(ModelTest.id == test_id).values(enable=status)
+        self.db_utils.execute(stmt)
+
     def get(self, test_id: int):
         try:
             stmt = sa.select(*self.columns).where(ModelTest.id == test_id)

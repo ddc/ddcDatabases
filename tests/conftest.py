@@ -11,7 +11,6 @@ def sqlite_db_session():
 
 
 @pytest.fixture(name="fake_test_data", scope="session")
-def fake_test_data(db_session):
-    # init
+def fake_test_data(sqlite_db_session):
     fdata = get_fake_test_data()
     yield fdata
