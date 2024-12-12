@@ -49,6 +49,7 @@ class Sqlite:
             }
             _engine = create_engine(**_engine_args)
             yield _engine
+            _engine.dispose()
         except Exception as e:
             dt = datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3]
             sys.stderr.write(
