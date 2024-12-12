@@ -4,7 +4,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "ddcDatabases"
-version = "1.0.15"
+version = "1.0.16"
 description = "Databases Connection and Queries"
 license = "MIT"
 readme = "README.md"
@@ -37,7 +37,7 @@ classifiers = [
 optional = true
 
 [tool.poetry.dependencies]
-python = ">=3.10,<3.14"
+python = "^3.10"
 aioodbc = "^0.5.0"
 asyncpg = "^0.30.0"
 psycopg2-binary = "^2.9.10"
@@ -52,11 +52,10 @@ pgsql = [ "psycopg2-binary", "asyncpg" ]
 all = [ "pyodbc", "aioodbc", "psycopg2-binary", "asyncpg" ]
 
 [tool.poetry.group.test.dependencies]
-coverage = "^7.6.8"
-faker = "^33.0.0"
+coverage = "^7.6.9"
+faker = "^33.1.0"
 poethepoet = "^0.31.1"
 pytest = "^8.3.4"
-pytest-postgresql = "^6.1.1"
 
 [tool.poe.tasks]
 _test = "poetry run coverage run --omit=./tests/* --source=./ddcDatabases -m pytest -v"

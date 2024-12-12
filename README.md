@@ -4,11 +4,10 @@
 [![Python](https://img.shields.io/pypi/pyversions/ddcDatabases.svg)](https://www.python.org)
 [![PyPi](https://img.shields.io/pypi/v/ddcDatabases.svg)](https://pypi.python.org/pypi/ddcDatabases)
 [![PyPI Downloads](https://static.pepy.tech/badge/ddcDatabases)](https://pepy.tech/projects/ddcDatabases)
-
-[//]: # ([![codecov]&#40;https://codecov.io/github/ddc/ddcDatabases/graph/badge.svg?token=E942EZII4Q&#41;]&#40;https://codecov.io/github/ddc/ddcDatabases&#41;)
-
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![Build Status](https://img.shields.io/endpoint.svg?url=https%3A//actions-badge.atrox.dev/ddc/ddcDatabases/badge?ref=main&label=build&logo=none)](https://actions-badge.atrox.dev/ddc/ddcDatabases/goto?ref=main)
+
+[//]: # ([![codecov]&#40;https://codecov.io/github/ddc/ddcDatabases/graph/badge.svg?token=E942EZII4Q&#41;]&#40;https://codecov.io/github/ddc/ddcDatabases&#41;)
 
 
 
