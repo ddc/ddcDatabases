@@ -23,7 +23,6 @@ from .exceptions import (
 
 
 class BaseConn:
-
     def __init__(
         self,
         connection_url,
@@ -80,7 +79,10 @@ class BaseConn:
 
     @contextmanager
     def engine(self) -> Generator:
-        _connection_url = URL.create(drivername=self.sync_driver, **self.connection_url)
+        _connection_url = URL.create(
+            drivername=self.sync_driver,
+            **self.connection_url,
+        )
         _engine_args = {
             "url": _connection_url,
             **self.engine_args,
@@ -91,7 +93,10 @@ class BaseConn:
 
     @asynccontextmanager
     async def async_engine(self) -> AsyncGenerator:
-        _connection_url = URL.create(drivername=self.async_driver, **self.connection_url)
+        _connection_url = URL.create(
+            drivername=self.async_driver,
+            **self.connection_url,
+        )
         _engine_args = {
             "url": _connection_url,
             **self.engine_args,
@@ -102,51 +107,77 @@ class BaseConn:
 
     def _test_connection_sync(self, session: Session) -> None:
         del self.connection_url["password"]
-        _connection_url = URL.create(**self.connection_url, drivername=self.sync_driver)
-        test_connection = TestConnections(sync_session=session, host_url=_connection_url)
+        _connection_url = URL.create(
+            **self.connection_url,
+            drivername=self.sync_driver,
+        )
+        test_connection = TestConnections(
+            sync_session=session,
+            host_url=_connection_url,
+        )
         test_connection.test_connection_sync()
 
     async def _test_connection_async(self, session: AsyncSession) -> None:
         del self.connection_url["password"]
-        _connection_url = URL.create(**self.connection_url, drivername=self.async_driver)
-        test_connection = TestConnections(async_session=session, host_url=_connection_url)
+        _connection_url = URL.create(
+            **self.connection_url,
+            drivername=self.async_driver,
+        )
+        test_connection = TestConnections(
+            async_session=session,
+            host_url=_connection_url,
+        )
         await test_connection.test_connection_async()
 
 
 class TestConnections:
-
     def __init__(
         self,
         sync_session: Session = None,
         async_session: AsyncSession = None,
         host_url: URL = "",
     ):
-        self.dt = datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3]
         self.sync_session = sync_session
         self.async_session = async_session
         self.host_url = host_url
+        self.dt = datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3]
+        self.successful_msg = "[INFO]:Connection to database successful"
+        self.failed_msg = "[ERROR]:Connection to database failed"
 
     def test_connection_sync(self) -> None:
         try:
             self.sync_session.execute(sa.text("SELECT 1"))
-            sys.stdout.write(f"[{self.dt}]:[INFO]:Connection to database successful | {self.host_url}\n")
+            sys.stdout.write(
+                f"[{self.dt}]:{self.successful_msg} | "
+                f"{self.host_url}\n"
+            )
         except Exception as e:
             self.sync_session.close()
-            sys.stderr.write(f"[{self.dt}]:[ERROR]:Connection to datatabse failed | {self.host_url} | {repr(e)}\n")
+            sys.stderr.write(
+                f"[{self.dt}]:{self.failed_msg} | "
+                f"{self.host_url} | "
+                f"{repr(e)}\n"
+            )
             raise
 
     async def test_connection_async(self) -> None:
         try:
             await self.async_session.execute(sa.text("SELECT 1"))
-            sys.stdout.write(f"[{self.dt}]:[INFO]:Connection to database successful | {self.host_url}\n")
+            sys.stdout.write(
+                f"[{self.dt}]:{self.successful_msg} | "
+                f"{self.host_url}\n"
+            )
         except Exception as e:
             await self.async_session.close()
-            sys.stderr.write(f"[{self.dt}]:[ERROR]:Connection to datatabse failed | {self.host_url} | {repr(e)}\n")
+            sys.stderr.write(
+                f"[{self.dt}]:{self.failed_msg} | "
+                f"{self.host_url} | "
+                f"{repr(e)}\n"
+            )
             raise
 
 
 class DBUtils:
-
     def __init__(self, session):
         self.session = session
 
@@ -211,7 +242,6 @@ class DBUtils:
 
 
 class DBUtilsAsync:
-
     def __init__(self, session):
         self.session = session
 

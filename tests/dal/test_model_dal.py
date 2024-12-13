@@ -5,7 +5,7 @@ from ddcDatabases.exceptions import DBFetchAllException
 from tests.models.test_model import ModelTest
 
 
-class TestModelDal:
+class ModelDalTest:
     """ Data Abstraction Layer """
 
     def __init__(self, db_session):

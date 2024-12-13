@@ -50,8 +50,11 @@ pip install ddcDatabases[pgsql]
 # SQLITE
 ```
 class Sqlite(
-    file_path: Optional[str] = None,
+    filepath: Optional[str] = None,
     echo: Optional[bool] = None,
+    autoflush: Optional[bool] = None,
+    expire_on_commit: Optional[bool] = None,
+    extra_engine_args: Optional[dict] = None,
 )
 ```
 
@@ -83,13 +86,16 @@ with Sqlite().engine() as engine:
 class MSSQL(        
     host: Optional[str] = None,
     port: Optional[int] = None,
-    username: Optional[str] = None,
+    user: Optional[str] = None,
     password: Optional[str] = None,
     database: Optional[str] = None,
     schema: Optional[str] = None,
     echo: Optional[bool] = None,
     pool_size: Optional[int] = None,
-    max_overflow: Optional[int] = None
+    max_overflow: Optional[int] = None,
+    autoflush: Optional[bool] = None,
+    expire_on_commit: Optional[bool] = None,
+    extra_engine_args: Optional[dict] = None,
 )
 ```
 
@@ -141,10 +147,13 @@ async with MSSQL().async_engine() as engine:
 class DBPostgres(
     host: Optional[str] = None,
     port: Optional[int] = None,
-    username: Optional[str] = None,
+    user: Optional[str] = None,
     password: Optional[str] = None,
     database: Optional[str] = None,
     echo: Optional[bool] = None,
+    autoflush: Optional[bool] = None,
+    expire_on_commit: Optional[bool] = None,
+    engine_args: Optional[dict] = None,
 )
 ```
 

@@ -25,6 +25,7 @@ class MSSQL(BaseConn):
         max_overflow: Optional[int] = None,
         autoflush: Optional[bool] = None,
         expire_on_commit: Optional[bool] = None,
+        extra_engine_args: Optional[dict] = None,
     ):
         _settings = MSSQLSettings()
         if not _settings.user or not _settings.password:
@@ -41,7 +42,7 @@ class MSSQL(BaseConn):
         self.odbcdriver_version = int(_settings.odbcdriver_version)
         self.connection_url = {
             "host": host or _settings.host,
-            "port":  int(port or _settings.port),
+            "port": int(port or _settings.port),
             "database": database or _settings.database,
             "username": user or _settings.user,
             "password": password or _settings.password,
@@ -50,10 +51,12 @@ class MSSQL(BaseConn):
                 "TrustServerCertificate": "yes",
             },
         }
+        self.extra_engine_args = extra_engine_args or {}
         self.engine_args = {
             "pool_size": self.pool_size,
             "max_overflow": self.max_overflow,
             "echo": self.echo,
+            **self.extra_engine_args,
         }
 
         super().__init__(
@@ -73,7 +76,10 @@ class MSSQL(BaseConn):
             drivername=self.sync_driver,
             query={"schema": self.schema},
         )
-        test_connection = TestConnections(sync_session=session, host_url=_connection_url)
+        test_connection = TestConnections(
+            sync_session=session,
+            host_url=_connection_url,
+        )
         test_connection.test_connection_sync()
 
     async def _test_connection_async(self, session: AsyncSession) -> None:
@@ -84,5 +90,8 @@ class MSSQL(BaseConn):
             drivername=self.async_driver,
             query={"schema": self.schema},
         )
-        test_connection = TestConnections(async_session=session, host_url=_connection_url)
+        test_connection = TestConnections(
+            async_session=session,
+            host_url=_connection_url,
+        )
         await test_connection.test_connection_async()
