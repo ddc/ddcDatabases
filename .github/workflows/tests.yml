@@ -1,4 +1,4 @@
-name: Run Unit Tests
+name: Run Pytest
 
 on:
   push:
@@ -8,7 +8,7 @@ on:
       - "!main"
 
 jobs:
-  run_tests:
+  pytest:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -33,7 +33,7 @@ jobs:
 
       - name: Run tests
         run: |  
-          python -m poetry run coverage run --omit=./tests/* --source=./ddcDatabases -m pytest -v
+          python -m poetry run coverage run --omit=./tests/* -m pytest -v
 
       - name: Generate Coverage Report
         run: |  
@@ -44,3 +44,4 @@ jobs:
 #        uses: codecov/codecov-action@v5
 #        with:
 #            token: ${{ secrets.CODECOV_TOKEN }}
+#            slug: ddc/ddcDatabases

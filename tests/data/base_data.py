@@ -2,9 +2,6 @@
 from faker import Faker
 
 
-sqlite_filename = "test.db"
-
-
 def _set_randoms():
     _faker = Faker(locale="en_US")
     return {

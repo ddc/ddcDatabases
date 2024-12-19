@@ -2,9 +2,10 @@
 requires = ["poetry-core>=1.9.1"]
 build-backend = "poetry.core.masonry.api"
 
+
 [tool.poetry]
 name = "ddcDatabases"
-version = "1.0.17"
+version = "1.0.18"
 description = "Databases Connection and Queries"
 license = "MIT"
 readme = "README.md"
@@ -33,8 +34,10 @@ classifiers = [
     "Natural Language :: English",
 ]
 
+
 [tool.poetry.group.test]
 optional = true
+
 
 [tool.poetry.dependencies]
 python = "^3.10"
@@ -46,10 +49,12 @@ pyodbc = "^5.2.0"
 SQLAlchemy = "^2.0.36"
 pytest = "^8.3.4"
 
+
 [tool.poetry.extras]
 mssql = [ "pyodbc", "aioodbc" ]
 pgsql = [ "psycopg2-binary", "asyncpg" ]
 all = [ "pyodbc", "aioodbc", "psycopg2-binary", "asyncpg" ]
+
 
 [tool.poetry.group.test.dependencies]
 coverage = "^7.6.9"
@@ -57,9 +62,16 @@ faker = "^33.1.0"
 poethepoet = "^0.31.1"
 pytest = "^8.3.4"
 
+
+[tool.coverage.run]
+omit = [
+    "tests/*",
+]
+
+
 [tool.poe.tasks]
-_test = "poetry run coverage run --omit=./tests/* --source=./ddcDatabases -m pytest -v"
-_coverage_report = "poetry run coverage report"
-_coverage_xml = "poetry run coverage xml"
+_test = "coverage run -m pytest -v"
+_coverage_report = "coverage report"
+_coverage_xml = "coverage xml"
 tests = ["_test", "_coverage_report", "_coverage_xml"]
 test = ["tests"]

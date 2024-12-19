@@ -1,11 +1,12 @@
 # Databases Connection and Queries
 
+[![Donate](https://img.shields.io/badge/Donate-PayPal-brightgreen.svg?style=plastic)](https://www.paypal.com/ncp/payment/6G9Z78QHUD4RJ)
 [![License](https://img.shields.io/pypi/l/ddcDatabases)](https://github.com/ddc/ddcDatabases/blob/master/LICENSE)
-[![Python](https://img.shields.io/pypi/pyversions/ddcDatabases.svg)](https://www.python.org)
 [![PyPi](https://img.shields.io/pypi/v/ddcDatabases.svg)](https://pypi.python.org/pypi/ddcDatabases)
 [![PyPI Downloads](https://static.pepy.tech/badge/ddcDatabases)](https://pepy.tech/projects/ddcDatabases)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![Build Status](https://img.shields.io/endpoint.svg?url=https%3A//actions-badge.atrox.dev/ddc/ddcDatabases/badge?ref=main&label=build&logo=none)](https://actions-badge.atrox.dev/ddc/ddcDatabases/goto?ref=main)
+[![Python](https://img.shields.io/pypi/pyversions/ddcDatabases.svg)](https://www.python.org)
 
 [//]: # ([![codecov]&#40;https://codecov.io/github/ddc/ddcDatabases/graph/badge.svg?token=E942EZII4Q&#41;]&#40;https://codecov.io/github/ddc/ddcDatabases&#41;)
 
@@ -35,7 +36,7 @@ pip install ddcDatabases[pgsql]
 # Databases
 + Parameters for all classes are declared as OPTIONAL falling back to [.env](./ddcDatabases/.env.example)  file variables
 + All examples are using [db_utils.py](ddcDatabases/db_utils.py)
-+ By default, the MSSQL class will open a session to the database, but the engine can be available
++ By default, the MSSQL class will open a session to the database, but the engine can be available at `session.bind`
 + SYNC sessions defaults:
   + `autoflush is True`
   + `expire_on_commit is True`
@@ -73,7 +74,8 @@ with Sqlite() as session:
 #### Sync Engine
 ```python
 from ddcDatabases import Sqlite
-with Sqlite().engine() as engine:
+with Sqlite() as session:
+    engine = session.bind
     ...
 ```
 
@@ -126,14 +128,16 @@ async with MSSQL() as session:
 #### Sync Engine
 ```python
 from ddcDatabases import MSSQL
-with MSSQL().engine() as engine:
+with MSSQL() as session:
+    engine = session.bind
     ...
 ```
 
 #### Async Engine
 ```python
 from ddcDatabases import MSSQL
-async with MSSQL().async_engine() as engine:
+async with MSSQL() as session:
+    engine = await session.bind
     ...
 ```
 
@@ -184,14 +188,16 @@ async with PostgreSQL() as session:
 #### Sync Engine
 ```python
 from ddcDatabases import PostgreSQL
-with PostgreSQL().engine() as engine:
+with PostgreSQL() as session:
+    engine = session.bind
     ...
 ```
 
 #### Async Engine
 ```python
 from ddcDatabases import PostgreSQL
-async with PostgreSQL().async_engine() as engine:
+async with PostgreSQL() as session:
+    engine = await session.bind
     ...
 ```
 
