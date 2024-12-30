@@ -1,4 +1,4 @@
-# Databases Session Connections and Queries
+# Databases Session Connections and ORM Queries
 
 [![Donate](https://img.shields.io/badge/Donate-PayPal-brightgreen.svg?style=plastic)](https://www.paypal.com/ncp/payment/6G9Z78QHUD4RJ)
 [![License](https://img.shields.io/pypi/l/ddcDatabases)](https://github.com/ddc/ddcDatabases/blob/master/LICENSE)
@@ -12,7 +12,14 @@
 
 
 
-# Install All databases dependencies
+# Install only sqlite
+```shell
+pip install ddcDatabases
+```
+
+
+
+# Install All databases
 ```shell
 pip install ddcDatabases[all]
 ```
@@ -26,9 +33,23 @@ pip install ddcDatabases[mssql]
 
 
 
+# Install MYSQL
+```shell
+pip install ddcDatabases[mysql]
+```
+
+
+
 # Install PostgreSQL
 ```shell
 pip install ddcDatabases[pgsql]
+```
+
+
+
+# Install MONGODB
+```shell
+pip install ddcDatabases[mongodb]
 ```
 
 

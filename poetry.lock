@@ -1048,7 +1048,7 @@ files = [
 ]
 
 [extras]
-all = ["aiomysql", "aioodbc", "asyncpg", "psycopg2-binary", "pymysql", "pyodbc"]
+all = ["aiomysql", "aioodbc", "asyncpg", "psycopg2-binary", "pymongo", "pymysql", "pyodbc"]
 mongodb = ["pymongo"]
 mssql = ["aioodbc", "pyodbc"]
 mysql = ["aiomysql", "pymysql"]
@@ -1057,4 +1057,4 @@ pgsql = ["asyncpg", "psycopg2-binary"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "5f02e867a4add0ee8bd872eb3f7cea14a9c2d404314551606351283106909c89"
+content-hash = "b03795e11a0fe6c9f31ed786a78403145ee20dc80851ad591cbe63566fe14399"
