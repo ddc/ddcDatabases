@@ -27,29 +27,33 @@ class Sqlite:
         self.autoflush = autoflush
         self.expire_on_commit = expire_on_commit
         self.extra_engine_args = extra_engine_args or {}
-        self.temp_engine = None
+        self.is_connected = False
         self.session = None
+        self._temp_engine = None
+
 
     def __enter__(self):
-        with self.engine() as self.temp_engine:
+        with self._get_engine() as self._temp_engine:
             session_maker = sessionmaker(
-                bind=self.temp_engine,
+                bind=self._temp_engine,
                 class_=Session,
                 autoflush=self.autoflush or True,
                 expire_on_commit=self.expire_on_commit or True,
             )
 
         with session_maker.begin() as self.session:
+            self.is_connected = True
             return self.session
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         if self.session:
             self.session.close()
-        if self.temp_engine:
-            self.temp_engine.dispose()
+        if self._temp_engine:
+            self._temp_engine.dispose()
+        self.is_connected = False
 
     @contextmanager
-    def engine(self) -> Engine | None:
+    def _get_engine(self) -> Engine | None:
         try:
             _engine_args = {
                 "url": f"sqlite:///{self.filepath}",

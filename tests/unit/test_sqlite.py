@@ -15,7 +15,8 @@ class TestSQLite:
         pass
 
     def test_sqlite(self, sqlite_session, fake_test_data):
-        ModelTest.__table__.create(sqlite_session.bind)
+        sqlite_engine = sqlite_session.bind
+        ModelTest.__table__.create(sqlite_engine)
         sqlite_session.add(ModelTest(**fake_test_data))
         config_dal = ModelDalTest(sqlite_session)
         config_id = fake_test_data["id"]

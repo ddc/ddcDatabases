@@ -3,11 +3,11 @@ from typing import Optional
 from sqlalchemy.engine import URL
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
-from .db_utils import BaseConn, TestConnections
+from .db_utils import BaseConnection, TestConnections
 from .settings import MSSQLSettings
 
 
-class MSSQL(BaseConn):
+class MSSQL(BaseConnection):
     """
     Class to handle MSSQL connections
     """
@@ -29,7 +29,7 @@ class MSSQL(BaseConn):
     ):
         _settings = MSSQLSettings()
         if not _settings.user or not _settings.password:
-            raise RuntimeError("Missing username or password")
+            raise RuntimeError("Missing username/password")
 
         self.schema = schema or _settings.db_schema
         self.echo = echo or _settings.echo

@@ -51,3 +51,35 @@ class MSSQLSettings(BaseSettings):
     sync_driver: Optional[str] = Field(default="mssql+pyodbc")
 
     model_config = SettingsConfigDict(env_prefix="MSSQL_", env_file=".env", extra="allow")
+
+
+class MySQLSettings(BaseSettings):
+    """settings defined here with fallback to reading ENV variables"""
+
+    host: Optional[str] = Field(default="localhost")
+    port: Optional[int] = Field(default=3306)
+    user: Optional[str] = Field(default="root")
+    password: Optional[str] = Field(default="root")
+    database: Optional[str] = Field(default="dev")
+
+    echo: Optional[bool] = Field(default=False)
+    async_driver: Optional[str] = Field(default="mysql+aiomysql")
+    sync_driver: Optional[str] = Field(default="mysql+pymysql")
+
+    model_config = SettingsConfigDict(env_prefix="MYSQL_", env_file=".env", extra="allow")
+
+
+class MongoDBSettings(BaseSettings):
+    """settings defined here with fallback to reading ENV variables"""
+
+    host: Optional[str] = Field(default="localhost")
+    port: Optional[int] = Field(default=27017)
+    user: Optional[str] = Field(default="admin")
+    password: Optional[str] = Field(default="admin")
+    database: Optional[str] = Field(default="admin")
+
+    batch_size: Optional[int] = Field(default=2865)
+    limit: Optional[int] = Field(default=0)
+    sync_driver: Optional[str] = Field(default="mongodb")
+
+    model_config = SettingsConfigDict(env_prefix="MONGODB_", env_file=".env", extra="allow")

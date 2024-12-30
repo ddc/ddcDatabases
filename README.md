@@ -1,4 +1,4 @@
-# Databases Connection and Queries
+# Databases Session Connections and Queries
 
 [![Donate](https://img.shields.io/badge/Donate-PayPal-brightgreen.svg?style=plastic)](https://www.paypal.com/ncp/payment/6G9Z78QHUD4RJ)
 [![License](https://img.shields.io/pypi/l/ddcDatabases)](https://github.com/ddc/ddcDatabases/blob/master/LICENSE)
@@ -71,14 +71,6 @@ with Sqlite() as session:
         print(row)
 ```
 
-#### Sync Engine
-```python
-from ddcDatabases import Sqlite
-with Sqlite() as session:
-    engine = session.bind
-    ...
-```
-
 
 
 
@@ -125,30 +117,14 @@ async with MSSQL() as session:
         print(row)
 ```
 
-#### Sync Engine
-```python
-from ddcDatabases import MSSQL
-with MSSQL() as session:
-    engine = session.bind
-    ...
+
+
+
+
+
+# PostgreSQL or MySQL
 ```
-
-#### Async Engine
-```python
-from ddcDatabases import MSSQL
-async with MSSQL() as session:
-    engine = await session.bind
-    ...
-```
-
-
-
-
-
-# PostgreSQL
-+ Using driver [psycopg2](https://pypi.org/project/psycopg2/) as default
-```
-class DBPostgres(
+class PostgreSQL(
     host: Optional[str] = None,
     port: Optional[int] = None,
     user: Optional[str] = None,
@@ -161,7 +137,7 @@ class DBPostgres(
 )
 ```
 
-#### Sync Example
+#### Sync Examples
 ```python
 import sqlalchemy as sa
 from ddcDatabases import DBUtils, PostgreSQL
@@ -172,6 +148,17 @@ with PostgreSQL() as session:
     for row in results:
         print(row)
 ```
+```python
+import sqlalchemy as sa
+from ddcDatabases import DBUtils, MySQL
+with MySQL() as session:
+    stmt = sa.text("SELECT * FROM users")
+    db_utils = DBUtils(session)
+    results = db_utils.fetchall(stmt)
+    for row in results:
+        print(row)
+```
+
 
 #### Async Example
 ```python
@@ -185,6 +172,47 @@ async with PostgreSQL() as session:
         print(row)
 ```
 
+
+
+
+
+# MongoDB
+```
+class PostgreSQL(
+    host: Optional[str] = None,
+    port: Optional[int] = None,
+    user: Optional[str] = None,
+    password: Optional[str] = None,
+    database: Optional[str] = None,
+    batch_size: Optional[int] = None,
+    limit: Optional[int] = None,
+)
+```
+#### Sync Example using arguments instead of .env file
+```python
+credentials = {
+    "host": "127.0.0.1",
+    "user": "admin",
+    "password": "admin",
+    "database": "admin",
+}
+
+from ddcDatabases import MongoDB
+from bson.objectid import ObjectId
+with MongoDB(**credentials) as mongodb:
+    query = {"_id": ObjectId("6772cf60f27e7e068e9d8985")}
+    collection = "movies"
+    with mongodb.cursor(collection, query) as cursor:
+        for each in cursor:
+            print(each)
+```
+
+
+
+
+# ORM Engines
+Using PostgreSQL as example
+
 #### Sync Engine
 ```python
 from ddcDatabases import PostgreSQL
@@ -204,7 +232,7 @@ async with PostgreSQL() as session:
 
 
 
-# DBUtils and DBUtilsAsync
+# ORM DBUtils and DBUtilsAsync
 + Take an open session as parameter
 + Can use SQLAlchemy statements
 + Execute function can be used to update, insert or any SQLAlchemy.text

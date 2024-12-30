@@ -22,7 +22,7 @@ from .exceptions import (
 )
 
 
-class BaseConn:
+class BaseConnection:
     def __init__(
         self,
         connection_url,
@@ -36,49 +36,54 @@ class BaseConn:
         self.engine_args = engine_args
         self.autoflush = autoflush
         self.expire_on_commit = expire_on_commit
-        self.sync_driver = sync_driver
-        self.async_driver = async_driver
-        self.temp_engine: Optional[Engine | AsyncEngine] = None
+        self.sync_driver = sync_driver or None
+        self.async_driver = async_driver or None
         self.session: Optional[Session | AsyncSession] = None
+        self.is_connected = False
+        self._temp_engine: Optional[Engine | AsyncEngine] = None
 
     def __enter__(self):
-        with self.engine() as self.temp_engine:
+        with self._get_engine() as self._temp_engine:
             session_maker = sessionmaker(
-                bind=self.temp_engine,
+                bind=self._temp_engine,
                 class_=Session,
                 autoflush=self.autoflush or True,
                 expire_on_commit=self.expire_on_commit or True,
             )
         with session_maker.begin() as self.session:
             self._test_connection_sync(self.session)
+            self.is_connected = True
             return self.session
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         if self.session:
             self.session.close()
-        if self.temp_engine:
-            self.temp_engine.dispose()
+        if self._temp_engine:
+            self._temp_engine.dispose()
+        self.is_connected = False
 
     async def __aenter__(self):
-        async with self.async_engine() as self.temp_engine:
+        async with self._get_async_engine() as self._temp_engine:
             session_maker = sessionmaker(
-                bind=self.temp_engine,
+                bind=self._temp_engine,
                 class_=AsyncSession,
                 autoflush=self.autoflush or True,
                 expire_on_commit=self.expire_on_commit or False,
             )
         async with session_maker.begin() as self.session:
             await self._test_connection_async(self.session)
+            self.is_connected = True
             return self.session
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         if self.session:
             await self.session.close()
-        if self.temp_engine:
-            await self.temp_engine.dispose()
+        if self._temp_engine:
+            await self._temp_engine.dispose()
+        self.is_connected = False
 
     @contextmanager
-    def engine(self) -> Generator:
+    def _get_engine(self) -> Generator:
         _connection_url = URL.create(
             drivername=self.sync_driver,
             **self.connection_url,
@@ -92,7 +97,7 @@ class BaseConn:
         _engine.dispose()
 
     @asynccontextmanager
-    async def async_engine(self) -> AsyncGenerator:
+    async def _get_async_engine(self) -> AsyncGenerator:
         _connection_url = URL.create(
             drivername=self.async_driver,
             **self.connection_url,
