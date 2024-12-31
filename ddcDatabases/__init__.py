@@ -2,9 +2,9 @@ import logging
 from importlib.metadata import version
 from typing import Literal, NamedTuple
 from .db_utils import DBUtils, DBUtilsAsync
-from .mongodb import MongoDB
 from .mssql import MSSQL
 from .mysql import MySQL
+from .oracle import Oracle
 from .postgresql import PostgreSQL
 from .sqlite import Sqlite
 
@@ -12,9 +12,9 @@ from .sqlite import Sqlite
 __all__ = (
     "DBUtils",
     "DBUtilsAsync",
-    "MongoDB",
     "MSSQL",
     "MySQL",
+    "Oracle",
     "PostgreSQL",
     "Sqlite",
 )

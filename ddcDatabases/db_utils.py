@@ -151,7 +151,11 @@ class TestConnections:
 
     def test_connection_sync(self) -> None:
         try:
-            self.sync_session.execute(sa.text("SELECT 1"))
+            if "oracle" in self.sync_session.bind.url:
+                _text = "SELECT 1 FROM dual"
+            else:
+                _text = "SELECT 1"
+            self.sync_session.execute(sa.text(_text))
             sys.stdout.write(
                 f"[{self.dt}]:{self.successful_msg} | "
                 f"{self.host_url}\n"
@@ -167,7 +171,11 @@ class TestConnections:
 
     async def test_connection_async(self) -> None:
         try:
-            await self.async_session.execute(sa.text("SELECT 1"))
+            if "oracle" in self.async_session.bind.url:
+                _text = "SELECT 1 FROM dual"
+            else:
+                _text = "SELECT 1"
+            await self.async_session.execute(sa.text(_text))
             sys.stdout.write(
                 f"[{self.dt}]:{self.successful_msg} | "
                 f"{self.host_url}\n"

@@ -47,6 +47,13 @@ pip install ddcDatabases[pgsql]
 
 
 
+# Install Oracle
+```shell
+pip install ddcDatabases[oracle]
+```
+
+
+
 # Install MONGODB
 ```shell
 pip install ddcDatabases[mongodb]
@@ -196,6 +203,45 @@ async with PostgreSQL() as session:
 
 
 
+# Oracle
+```
+class Oracle(
+    host: Optional[str] = None,
+    port: Optional[int] = None,
+    user: Optional[str] = None,
+    password: Optional[str] = None,
+    servicename: Optional[str] = None,
+    echo: Optional[bool] = None,
+    autoflush: Optional[bool] = None,
+    expire_on_commit: Optional[bool] = None,
+    extra_engine_args: Optional[dict] = None,
+```
+#### Sync Example using arguments instead of .env file
+```python
+credentials = {
+    "host": "127.0.0.1",
+    "user": "system",
+    "password": "oracle",
+    "servicename": "xe",
+    "echo": False,
+}
+
+import sqlalchemy as sa
+from ddcDatabases import DBUtils, Oracle
+with Oracle(**credentials) as session:
+    stmt = sa.text("SELECT * FROM system.help")
+    db_utils = DBUtils(session)
+    results = db_utils.fetchall(stmt)
+    for row in results:
+        print(row)
+```
+
+
+
+
+
+
+
 
 # MongoDB
 ```
@@ -218,7 +264,7 @@ credentials = {
     "database": "admin",
 }
 
-from ddcDatabases import MongoDB
+from ddcDatabases.mongodb import MongoDB
 from bson.objectid import ObjectId
 with MongoDB(**credentials) as mongodb:
     query = {"_id": ObjectId("6772cf60f27e7e068e9d8985")}
@@ -227,6 +273,10 @@ with MongoDB(**credentials) as mongodb:
         for each in cursor:
             print(each)
 ```
+
+
+
+
 
 
 

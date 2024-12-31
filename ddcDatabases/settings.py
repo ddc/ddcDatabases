@@ -83,3 +83,18 @@ class MongoDBSettings(BaseSettings):
     sync_driver: Optional[str] = Field(default="mongodb")
 
     model_config = SettingsConfigDict(env_prefix="MONGODB_", env_file=".env", extra="allow")
+
+
+class OracleSettings(BaseSettings):
+    """settings defined here with fallback to reading ENV variables"""
+
+    host: Optional[str] = Field(default="localhost")
+    port: Optional[int] = Field(default=1521)
+    user: Optional[str] = Field(default="system")
+    password: Optional[str] = Field(default="oracle")
+    servicename: Optional[str] = Field(default="xe")
+
+    echo: Optional[bool] = Field(default=False)
+    sync_driver: Optional[str] = Field(default="oracle+cx_oracle")
+
+    model_config = SettingsConfigDict(env_prefix="ORACLE_", env_file=".env", extra="allow")

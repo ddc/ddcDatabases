@@ -5,7 +5,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "ddcDatabases"
-version = "1.0.20"
+version = "1.0.21"
 description = "Databases Connection and Queries"
 license = "MIT"
 readme = "README.md"
@@ -21,6 +21,7 @@ keywords = [
     "mongodb", "mongodb-database",
     "mssql", "mssql-database",
     "mysql", "mysql-database",
+    "oracle", "oracle-database",
     "pgsql", "postgres", "postgresql", "postgressql", "postgresql-database",
     "sqlite", "sqlite3", "sqlite3-database",
 ]
@@ -45,6 +46,7 @@ python = "^3.10"
 aioodbc = "^0.5.0"
 asyncpg = "^0.30.0"
 aiomysql = "^0.2.0"
+cx-oracle = "^8.3.0"
 greenlet = "^3.1.1"
 pymongo = "^4.10.1"
 pymysql = "^1.1.1"
@@ -55,11 +57,12 @@ SQLAlchemy = "^2.0.36"
 
 
 [tool.poetry.extras]
-mongodb = [ "pymongo" ]
-mssql = [ "pyodbc", "aioodbc" ]
-mysql = [ "pymysql", "aiomysql" ]
-pgsql = [ "psycopg2-binary", "asyncpg" ]
-all = [ "pymongo", "pyodbc", "aioodbc", "pymysql", "aiomysql", "psycopg2-binary", "asyncpg" ]
+mongodb = ["pymongo"]
+mssql = ["pyodbc", "aioodbc"]
+mysql = ["pymysql", "aiomysql"]
+oracle = ["cx-oracle"]
+pgsql = ["psycopg2-binary", "asyncpg"]
+all = ["pymongo", "pyodbc", "aioodbc", "pymysql", "aiomysql", "cx-oracle", "psycopg2-binary", "asyncpg"]
 
 
 [tool.poetry.group.test.dependencies]
