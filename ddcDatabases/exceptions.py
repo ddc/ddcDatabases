@@ -7,6 +7,7 @@ class CustomBaseException(Exception):
     def __init__(self, msg):
         dt = datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3]
         sys.stderr.write(f"[{dt}]:[ERROR]:{repr(msg)}")
+        raise msg
 
 
 class DBFetchAllException(CustomBaseException):

@@ -146,20 +146,16 @@ class TestConnections:
         self.async_session = async_session
         self.host_url = host_url
         self.dt = datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3]
-        self.successful_msg = "[INFO]:Connection to database successful"
         self.failed_msg = "[ERROR]:Connection to database failed"
 
-    def test_connection_sync(self) -> None:
+    def test_connection_sync(self) -> bool:
         try:
             if "oracle" in self.sync_session.bind.url:
                 _text = "SELECT 1 FROM dual"
             else:
                 _text = "SELECT 1"
             self.sync_session.execute(sa.text(_text))
-            sys.stdout.write(
-                f"[{self.dt}]:{self.successful_msg} | "
-                f"{self.host_url}\n"
-            )
+            return True
         except Exception as e:
             self.sync_session.close()
             sys.stderr.write(
@@ -169,17 +165,14 @@ class TestConnections:
             )
             raise
 
-    async def test_connection_async(self) -> None:
+    async def test_connection_async(self) -> bool:
         try:
             if "oracle" in self.async_session.bind.url:
                 _text = "SELECT 1 FROM dual"
             else:
                 _text = "SELECT 1"
             await self.async_session.execute(sa.text(_text))
-            sys.stdout.write(
-                f"[{self.dt}]:{self.successful_msg} | "
-                f"{self.host_url}\n"
-            )
+            return True
         except Exception as e:
             await self.async_session.close()
             sys.stderr.write(
