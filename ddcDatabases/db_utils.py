@@ -146,7 +146,7 @@ class TestConnections:
         self.async_session = async_session
         self.host_url = host_url
         self.dt = datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3]
-        self.failed_msg = "[ERROR]:Connection to database failed"
+        self.failed_msg = "Connection to database failed"
 
     def test_connection_sync(self) -> bool:
         try:
@@ -159,11 +159,11 @@ class TestConnections:
         except Exception as e:
             self.sync_session.close()
             sys.stderr.write(
-                f"[{self.dt}]:{self.failed_msg} | "
+                f"[{self.dt}]:[ERROR]:{self.failed_msg} | "
                 f"{self.host_url} | "
                 f"{repr(e)}\n"
             )
-            raise
+            raise ConnectionRefusedError(f"{self.failed_msg} | {repr(e)}")
 
     async def test_connection_async(self) -> bool:
         try:
@@ -176,11 +176,11 @@ class TestConnections:
         except Exception as e:
             await self.async_session.close()
             sys.stderr.write(
-                f"[{self.dt}]:{self.failed_msg} | "
+                f"[{self.dt}]:[ERROR]:{self.failed_msg} | "
                 f"{self.host_url} | "
                 f"{repr(e)}\n"
             )
-            raise
+            raise ConnectionRefusedError(f"{self.failed_msg} | {repr(e)}")
 
 
 class DBUtils:
