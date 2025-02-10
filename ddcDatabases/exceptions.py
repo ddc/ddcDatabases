@@ -1,12 +1,14 @@
-# -*- encoding: utf-8 -*-
+# -*- coding: utf-8 -*-
 import sys
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 class CustomBaseException(Exception):
     def __init__(self, msg):
-        dt = datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3]
-        sys.stderr.write(f"[{dt}]:[ERROR]:{repr(msg)}")
+        now = datetime.now(timezone.utc)
+        dt = now.strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3]
+        utc_offset = now.strftime("%z")
+        sys.stderr.write(f"[{dt}{utc_offset}]:[ERROR]:{repr(msg)}\n")
         raise msg
 
 
