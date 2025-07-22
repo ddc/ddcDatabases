@@ -1,7 +1,7 @@
 # -*- encoding: utf-8 -*-
 from typing import Optional
 from .db_utils import BaseConnection
-from .settings import PostgreSQLSettings
+from .settings import get_postgresql_settings
 
 
 class PostgreSQL(BaseConnection):
@@ -21,7 +21,7 @@ class PostgreSQL(BaseConnection):
         expire_on_commit: Optional[bool] = None,
         extra_engine_args: Optional[dict] = None,
     ):
-        _settings = PostgreSQLSettings()
+        _settings = get_postgresql_settings()
         if not _settings.user or not _settings.password:
             raise RuntimeError("Missing username/password")
 

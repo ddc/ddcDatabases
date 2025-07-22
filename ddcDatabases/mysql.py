@@ -1,7 +1,7 @@
 # -*- encoding: utf-8 -*-
 from typing import Optional
 from .db_utils import BaseConnection
-from .settings import MySQLSettings
+from .settings import get_mysql_settings
 
 
 class MySQL(BaseConnection):
@@ -21,7 +21,7 @@ class MySQL(BaseConnection):
         expire_on_commit: Optional[bool] = None,
         extra_engine_args: Optional[dict] = None,
     ):
-        _settings = MySQLSettings()
+        _settings = get_mysql_settings()
         if not _settings.user or not _settings.password:
             raise RuntimeError("Missing username/password")
 

@@ -3,8 +3,8 @@ from typing import Optional
 from sqlalchemy.engine import URL
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
-from .db_utils import BaseConnection, TestConnections
-from .settings import MSSQLSettings
+from .db_utils import BaseConnection, ConnectionTester
+from .settings import get_mssql_settings
 
 
 class MSSQL(BaseConnection):
@@ -27,7 +27,7 @@ class MSSQL(BaseConnection):
         expire_on_commit: Optional[bool] = None,
         extra_engine_args: Optional[dict] = None,
     ):
-        _settings = MSSQLSettings()
+        _settings = get_mssql_settings()
         if not _settings.user or not _settings.password:
             raise RuntimeError("Missing username/password")
 
@@ -76,7 +76,7 @@ class MSSQL(BaseConnection):
             drivername=self.sync_driver,
             query={"schema": self.schema},
         )
-        test_connection = TestConnections(
+        test_connection = ConnectionTester(
             sync_session=session,
             host_url=_connection_url,
         )
@@ -90,7 +90,7 @@ class MSSQL(BaseConnection):
             drivername=self.async_driver,
             query={"schema": self.schema},
         )
-        test_connection = TestConnections(
+        test_connection = ConnectionTester(
             async_session=session,
             host_url=_connection_url,
         )

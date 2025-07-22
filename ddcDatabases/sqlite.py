@@ -5,7 +5,7 @@ from datetime import datetime
 from typing import Optional
 from sqlalchemy.engine import create_engine, Engine
 from sqlalchemy.orm import Session, sessionmaker
-from .settings import SQLiteSettings
+from .settings import get_sqlite_settings
 
 
 class Sqlite:
@@ -21,7 +21,7 @@ class Sqlite:
         expire_on_commit: Optional[bool] = None,
         extra_engine_args: Optional[dict] = None,
     ):
-        _settings = SQLiteSettings()
+        _settings = get_sqlite_settings()
         self.filepath = filepath or _settings.file_path
         self.echo = echo or _settings.echo
         self.autoflush = autoflush

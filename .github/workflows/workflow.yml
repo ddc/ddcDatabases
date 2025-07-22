@@ -1,111 +1,84 @@
-name: Test, Build, Create a Release and Publish to PyPI
+name: CI/CD Pipeline
 
 on:
   push:
-    branches:
-      - master
-      - main
+    branches: [main, master]
+    tags: ['v*']
+
 
 jobs:
-  test_and_build:
+  release:
+    name: Build and Release
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: ["3.x"]
+    if: startsWith(github.ref, 'refs/tags/v')
+    permissions:
+      contents: write
     steps:
-      - uses: actions/checkout@master
+      - uses: actions/checkout@v4
 
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@master
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: "3.13"
 
       - name: Install Poetry
-        run: |  
-          python -m pip install --upgrade pip setuptools wheel
-          python -m pip install poetry
-
-      - name: Install poetry dependencies
-        run: |  
-          python -m poetry update --with test
-          python -m poetry install --extras all
-
-      - name: Run tests
-        run: |  
-          python -m poetry run coverage run --omit=./tests/* -m pytest -v
-
-      - name: Generate Coverage Report
-        run: |  
-          python -m poetry run coverage report
-          python -m poetry run coverage xml
-
-#      - name: Upload coverage reports to Codecov
-#        uses: codecov/codecov-action@v5
-#        with:
-#            token: ${{ secrets.CODECOV_TOKEN }}
-#            slug: ddc/ddcDatabases
-
-      - name: Build package with poetry
-        run: |  
-          python -m poetry build
-
-      - name: Store the distribution packages to publish to pypi
-        uses: actions/upload-artifact@master
+        uses: snok/install-poetry@v1
         with:
-          name: python-package-distributions
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+
+      - name: Install build dependencies only
+        run: poetry install --only main --no-interaction --no-ansi
+
+      - name: Build package
+        run: poetry build
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: Release ${{ github.ref_name }}
+          body: Automated release for version ${{ github.ref_name }}
+          draft: false
+          prerelease: false
+          files: |
+            dist/*.whl
+            dist/*.tar.gz
+
+      - name: Upload artifacts for PyPI
+        uses: actions/upload-artifact@v4
+        with:
+          name: python-packages
           path: dist/
+          retention-days: 7
 
-  create_release:
+  publish:
+    name: Publish to PyPI
     runs-on: ubuntu-latest
-    needs:
-      - test_and_build
-    env:
-      GITHUB_TOKEN: ${{ github.token }}
-    steps:
-      - id: release
-        uses: rymndhng/release-on-push-action@master
-        with:
-          bump_version_scheme: patch # major | minor | patch
-          tag_prefix: v
-          release_name: "Version <RELEASE_VERSION>"
-          release_body: ${{ steps.release.outputs.tag_name }}
-
-      - name: Check Output Parameters
-        run: |
-          echo "Got tag name ${{ steps.release.outputs.tag_name }}"
-          echo "Got release version ${{ steps.release.outputs.version }}"
-          echo "Upload release artifacts to ${{ steps.release.outputs.upload_url }}"
-
-  publish-to-test-pypi:
-    runs-on: ubuntu-latest
+    needs: release
+    if: startsWith(github.ref, 'refs/tags/v')
     environment: release
-    needs:
-      - create_release
     permissions:
       id-token: write
     steps:
-      - name: Download all the dists
-        uses: actions/download-artifact@master
+      - name: Download package artifacts
+        uses: actions/download-artifact@v4
         with:
-          name: python-package-distributions
-          path: dist/
-      - name: Publish distribution to TestPyPI
+          name: python-packages
+          path: dist
+
+      - name: Publish to TestPyPI
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           repository-url: https://test.pypi.org/legacy/
+          packages-dir: dist/
+          skip-existing: true
+          verbose: true
+          attestations: false
 
-  publish-to-pypi:
-    runs-on: ubuntu-latest
-    environment: release
-    needs:
-      - create_release
-    permissions:
-      id-token: write
-    steps:
-      - name: Download all the dists
-        uses: actions/download-artifact@master
-        with:
-          name: python-package-distributions
-          path: dist/
-      - name: Publish distribution to PyPI
+      - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: dist/
+          skip-existing: true
+          verbose: true
+          attestations: false

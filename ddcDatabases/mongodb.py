@@ -4,7 +4,7 @@ from contextlib import contextmanager
 from datetime import datetime
 from typing import Optional
 from pymongo import ASCENDING, DESCENDING, MongoClient
-from .settings import MongoDBSettings
+from .settings import get_mongodb_settings
 
 
 class MongoDB:
@@ -22,7 +22,7 @@ class MongoDB:
         batch_size: Optional[int] = None,
         limit: Optional[int] = None,
     ):
-        _settings = MongoDBSettings()
+        _settings = get_mongodb_settings()
         if not _settings.user or not _settings.password:
             raise RuntimeError("Missing username/password")
 

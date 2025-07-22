@@ -2,7 +2,7 @@
 import sqlalchemy as sa
 from ddcDatabases import DBUtils
 from ddcDatabases.exceptions import DBFetchAllException
-from tests.models.model_test import ModelTest
+from tests.models.test_models import ModelTest
 
 
 class ModelDalTest:

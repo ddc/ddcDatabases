@@ -1,11 +1,10 @@
 [build-system]
-requires = ["poetry-core>=1.9.1"]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"
-
 
 [tool.poetry]
 name = "ddcDatabases"
-version = "1.0.24"
+version = "1.0.25"
 description = "Database ORM Connections and Queries"
 license = "MIT"
 readme = "README.md"
@@ -36,10 +35,8 @@ classifiers = [
     "Natural Language :: English",
 ]
 
-
 [tool.poetry.group.test]
 optional = true
-
 
 [tool.poetry.dependencies]
 python = "^3.10"
@@ -47,14 +44,13 @@ aioodbc = "^0.5.0"
 asyncpg = "^0.30.0"
 aiomysql = "^0.2.0"
 cx-oracle = "^8.3.0"
-greenlet = "^3.1.1"
-pymongo = "^4.11"
+greenlet = "^3.2.3"
+pymongo = "^4.13.2"
 pymysql = "^1.1.1"
 psycopg2-binary = "^2.9.10"
-pydantic-settings = "^2.7.0"
+pydantic-settings = "^2.10.1"
 pyodbc = "^5.2.0"
-SQLAlchemy = "^2.0.36"
-
+SQLAlchemy = "^2.0.41"
 
 [tool.poetry.extras]
 mongodb = ["pymongo"]
@@ -64,19 +60,17 @@ oracle = ["cx-oracle"]
 pgsql = ["psycopg2-binary", "asyncpg"]
 all = ["pymongo", "pyodbc", "aioodbc", "pymysql", "aiomysql", "cx-oracle", "psycopg2-binary", "asyncpg"]
 
-
 [tool.poetry.group.test.dependencies]
-coverage = "^7.6.9"
-faker = "^33.1.0"
-poethepoet = "^0.31.1"
-pytest = "^8.3.4"
-
+coverage = "^7.9.2"
+faker = "^37.4.2"
+poethepoet = "^0.36.0"
+pytest = "^8.4.1"
+pytest-asyncio = "^1.1.0"
 
 [tool.coverage.run]
 omit = [
     "tests/*",
 ]
-
 
 [tool.poe.tasks]
 _test = "coverage run -m pytest -v"
