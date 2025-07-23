@@ -2,7 +2,7 @@
 import sys
 from contextlib import asynccontextmanager, contextmanager
 from datetime import datetime
-from typing import AsyncGenerator, Generator, Optional
+from typing import AsyncGenerator, Generator
 import sqlalchemy as sa
 from sqlalchemy import RowMapping
 from sqlalchemy.engine import create_engine, Engine, URL
@@ -38,9 +38,9 @@ class BaseConnection:
         self.expire_on_commit = expire_on_commit
         self.sync_driver = sync_driver or None
         self.async_driver = async_driver or None
-        self.session: Optional[Session | AsyncSession] = None
+        self.session: Session | AsyncSession | None = None
         self.is_connected = False
-        self._temp_engine: Optional[Engine | AsyncEngine] = None
+        self._temp_engine: Engine | AsyncEngine | None = None
 
     def __enter__(self):
         with self._get_engine() as self._temp_engine:

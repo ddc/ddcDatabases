@@ -2,7 +2,6 @@
 import sys
 from contextlib import contextmanager
 from datetime import datetime
-from typing import Optional
 from pymongo import ASCENDING, DESCENDING, MongoClient
 from .settings import get_mongodb_settings
 
@@ -14,13 +13,13 @@ class MongoDB:
 
     def __init__(
         self,
-        host: Optional[str] = None,
-        port: Optional[int] = None,
-        user: Optional[str] = None,
-        password: Optional[str] = None,
-        database: Optional[str] = None,
-        batch_size: Optional[int] = None,
-        limit: Optional[int] = None,
+        host: str | None = None,
+        port: int | None = None,
+        user: str | None = None,
+        password: str | None = None,
+        database: str | None = None,
+        batch_size: int | None = None,
+        limit: int | None = None,
     ):
         _settings = get_mongodb_settings()
         if not _settings.user or not _settings.password:

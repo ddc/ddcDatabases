@@ -2,7 +2,6 @@
 import sys
 from contextlib import contextmanager
 from datetime import datetime
-from typing import Optional
 from sqlalchemy.engine import create_engine, Engine
 from sqlalchemy.orm import Session, sessionmaker
 from .settings import get_sqlite_settings
@@ -15,11 +14,11 @@ class Sqlite:
 
     def __init__(
         self,
-        filepath: Optional[str] = None,
-        echo: Optional[bool] = None,
-        autoflush: Optional[bool] = None,
-        expire_on_commit: Optional[bool] = None,
-        extra_engine_args: Optional[dict] = None,
+        filepath: str | None = None,
+        echo: bool | None = None,
+        autoflush: bool | None = None,
+        expire_on_commit: bool | None = None,
+        extra_engine_args: dict | None = None,
     ):
         _settings = get_sqlite_settings()
         self.filepath = filepath or _settings.file_path
