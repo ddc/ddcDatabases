@@ -4,7 +4,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "ddcDatabases"
-version = "1.0.25"
+version = "2.0.0"
 description = "Database ORM Connections and Queries"
 license = "MIT"
 readme = "README.md"
