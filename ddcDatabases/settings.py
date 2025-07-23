@@ -1,100 +1,147 @@
 # -*- coding: utf-8 -*-
-from typing import Optional
+from typing import TypeVar, Callable
+from functools import lru_cache
 from dotenv import load_dotenv
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
-load_dotenv()
+# Type variable for generic settings factory
+T = TypeVar('T', bound=BaseSettings)
+
+# Constants
+SQLALCHEMY_ECHO_DESCRIPTION = "Enable SQLAlchemy query logging"
+DATABASE_HOST_DESCRIPTION = "Database host"
+DATABASE_PORT_DESCRIPTION = "Database port"
+DATABASE_USERNAME_DESCRIPTION = "Database username"
+DATABASE_PASSWORD_DESCRIPTION = "Database password"
+DATABASE_NAME_DESCRIPTION = "Database name"
+ASYNC_DATABASE_DRIVER_DESCRIPTION = "Async database driver"
+SYNC_DATABASE_DRIVER_DESCRIPTION = "Sync database driver"
+
+# Lazy loading flag for dotenv - thread-safe singleton pattern
+_dotenv_loaded = False
 
 
-class SQLiteSettings(BaseSettings):
-    """settings defined here with fallback to reading ENV variables"""
-
-    file_path: Optional[str] = Field(default="sqlite.db")
-    echo: Optional[bool] = Field(default=False)
-
-    model_config = SettingsConfigDict(env_prefix="SQLITE_", env_file=".env", extra="allow")
-
-
-class PostgreSQLSettings(BaseSettings):
-    """settings defined here with fallback to reading ENV variables"""
-
-    host: Optional[str] = Field(default="localhost")
-    port: Optional[int] = Field(default=5432)
-    user: Optional[str] = Field(default="postgres")
-    password: Optional[str] = Field(default="postgres")
-    database: Optional[str] = Field(default="postgres")
-
-    echo: Optional[bool] = Field(default=False)
-    async_driver: Optional[str] = Field(default="postgresql+asyncpg")
-    sync_driver: Optional[str] = Field(default="postgresql+psycopg2")
-
-    model_config = SettingsConfigDict(env_prefix="POSTGRESQL_", env_file=".env", extra="allow")
+def _ensure_dotenv_loaded() -> None:
+    """Ensure dotenv is loaded only once in a thread-safe manner."""
+    global _dotenv_loaded
+    if not _dotenv_loaded:
+        load_dotenv()
+        _dotenv_loaded = True
 
 
-class MSSQLSettings(BaseSettings):
-    """settings defined here with fallback to reading ENV variables"""
-
-    host: Optional[str] = Field(default="localhost")
-    port: Optional[int] = Field(default=1433)
-    user: Optional[str] = Field(default="sa")
-    password: Optional[str] = Field(default=None)
-    db_schema: Optional[str] = Field(default="dbo")
-    database: Optional[str] = Field(default="master")
-
-    echo: Optional[bool] = Field(default=False)
-    pool_size: Optional[int] = Field(default=20)
-    max_overflow: Optional[int] = Field(default=10)
-    odbcdriver_version: Optional[int] = Field(default=18)
-    async_driver: Optional[str] = Field(default="mssql+aioodbc")
-    sync_driver: Optional[str] = Field(default="mssql+pyodbc")
-
-    model_config = SettingsConfigDict(env_prefix="MSSQL_", env_file=".env", extra="allow")
+def _create_cached_settings_factory(settings_class: type[T]) -> Callable[[], T]:
+    """Factory function to create cached settings getters with proper type hints."""
+    @lru_cache(maxsize=1)
+    def get_settings() -> T:
+        _ensure_dotenv_loaded()
+        return settings_class()
+    return get_settings
 
 
-class MySQLSettings(BaseSettings):
-    """settings defined here with fallback to reading ENV variables"""
-
-    host: Optional[str] = Field(default="localhost")
-    port: Optional[int] = Field(default=3306)
-    user: Optional[str] = Field(default="root")
-    password: Optional[str] = Field(default="root")
-    database: Optional[str] = Field(default="dev")
-
-    echo: Optional[bool] = Field(default=False)
-    async_driver: Optional[str] = Field(default="mysql+aiomysql")
-    sync_driver: Optional[str] = Field(default="mysql+pymysql")
-
-    model_config = SettingsConfigDict(env_prefix="MYSQL_", env_file=".env", extra="allow")
+class _BaseDBSettings(BaseSettings):
+    """Base class for database settings with common configuration."""
+    
+    model_config = SettingsConfigDict(env_file=".env", extra="allow")
 
 
-class MongoDBSettings(BaseSettings):
-    """settings defined here with fallback to reading ENV variables"""
+class SQLiteSettings(_BaseDBSettings):
+    """SQLite database settings with environment variable fallback."""
 
-    host: Optional[str] = Field(default="localhost")
-    port: Optional[int] = Field(default=27017)
-    user: Optional[str] = Field(default="admin")
-    password: Optional[str] = Field(default="admin")
-    database: Optional[str] = Field(default="admin")
+    file_path: str = Field(default="sqlite.db", description="Path to SQLite database file")
+    echo: bool = Field(default=False, description=SQLALCHEMY_ECHO_DESCRIPTION)
 
-    batch_size: Optional[int] = Field(default=2865)
-    limit: Optional[int] = Field(default=0)
-    sync_driver: Optional[str] = Field(default="mongodb")
-
-    model_config = SettingsConfigDict(env_prefix="MONGODB_", env_file=".env", extra="allow")
+    model_config = SettingsConfigDict(env_prefix="SQLITE_")
 
 
-class OracleSettings(BaseSettings):
-    """settings defined here with fallback to reading ENV variables"""
+class PostgreSQLSettings(_BaseDBSettings):
+    """PostgreSQL database settings with environment variable fallback."""
 
-    host: Optional[str] = Field(default="localhost")
-    port: Optional[int] = Field(default=1521)
-    user: Optional[str] = Field(default="system")
-    password: Optional[str] = Field(default="oracle")
-    servicename: Optional[str] = Field(default="xe")
+    host: str = Field(default="localhost", description=DATABASE_HOST_DESCRIPTION)
+    port: int = Field(default=5432, description=DATABASE_PORT_DESCRIPTION)
+    user: str = Field(default="postgres", description=DATABASE_USERNAME_DESCRIPTION)
+    password: str = Field(default="postgres", description=DATABASE_PASSWORD_DESCRIPTION)
+    database: str = Field(default="postgres", description=DATABASE_NAME_DESCRIPTION)
 
-    echo: Optional[bool] = Field(default=False)
-    sync_driver: Optional[str] = Field(default="oracle+cx_oracle")
+    echo: bool = Field(default=False, description=SQLALCHEMY_ECHO_DESCRIPTION)
+    async_driver: str = Field(default="postgresql+asyncpg", description=ASYNC_DATABASE_DRIVER_DESCRIPTION)
+    sync_driver: str = Field(default="postgresql+psycopg2", description=SYNC_DATABASE_DRIVER_DESCRIPTION)
 
-    model_config = SettingsConfigDict(env_prefix="ORACLE_", env_file=".env", extra="allow")
+    model_config = SettingsConfigDict(env_prefix="POSTGRESQL_")
+
+
+class MSSQLSettings(_BaseDBSettings):
+    """Microsoft SQL Server settings with environment variable fallback."""
+
+    host: str = Field(default="localhost", description=DATABASE_HOST_DESCRIPTION)
+    port: int = Field(default=1433, description=DATABASE_PORT_DESCRIPTION)
+    user: str = Field(default="sa", description=DATABASE_USERNAME_DESCRIPTION)
+    password: str | None = Field(default=None, description=DATABASE_PASSWORD_DESCRIPTION)
+    db_schema: str = Field(default="dbo", description="Database schema")
+    database: str = Field(default="master", description=DATABASE_NAME_DESCRIPTION)
+
+    echo: bool = Field(default=False, description=SQLALCHEMY_ECHO_DESCRIPTION)
+    pool_size: int = Field(default=20, description="Connection pool size")
+    max_overflow: int = Field(default=10, description="Max overflow connections")
+    odbcdriver_version: int = Field(default=18, description="ODBC driver version")
+    async_driver: str = Field(default="mssql+aioodbc", description=ASYNC_DATABASE_DRIVER_DESCRIPTION)
+    sync_driver: str = Field(default="mssql+pyodbc", description=SYNC_DATABASE_DRIVER_DESCRIPTION)
+
+    model_config = SettingsConfigDict(env_prefix="MSSQL_")
+
+
+class MySQLSettings(_BaseDBSettings):
+    """MySQL database settings with environment variable fallback."""
+
+    host: str = Field(default="localhost", description=DATABASE_HOST_DESCRIPTION)
+    port: int = Field(default=3306, description=DATABASE_PORT_DESCRIPTION)
+    user: str = Field(default="root", description=DATABASE_USERNAME_DESCRIPTION)
+    password: str = Field(default="root", description=DATABASE_PASSWORD_DESCRIPTION)
+    database: str = Field(default="dev", description=DATABASE_NAME_DESCRIPTION)
+
+    echo: bool = Field(default=False, description=SQLALCHEMY_ECHO_DESCRIPTION)
+    async_driver: str = Field(default="mysql+aiomysql", description=ASYNC_DATABASE_DRIVER_DESCRIPTION)
+    sync_driver: str = Field(default="mysql+pymysql", description=SYNC_DATABASE_DRIVER_DESCRIPTION)
+
+    model_config = SettingsConfigDict(env_prefix="MYSQL_")
+
+
+class MongoDBSettings(_BaseDBSettings):
+    """MongoDB settings with environment variable fallback."""
+
+    host: str = Field(default="localhost", description=DATABASE_HOST_DESCRIPTION)
+    port: int = Field(default=27017, description=DATABASE_PORT_DESCRIPTION)
+    user: str = Field(default="admin", description=DATABASE_USERNAME_DESCRIPTION)
+    password: str = Field(default="admin", description=DATABASE_PASSWORD_DESCRIPTION)
+    database: str = Field(default="admin", description=DATABASE_NAME_DESCRIPTION)
+
+    batch_size: int = Field(default=2865, description="Batch size for operations")
+    limit: int = Field(default=0, description="Query result limit (0 = no limit)")
+    sync_driver: str = Field(default="mongodb", description="MongoDB driver")
+
+    model_config = SettingsConfigDict(env_prefix="MONGODB_")
+
+
+class OracleSettings(_BaseDBSettings):
+    """Oracle database settings with environment variable fallback."""
+
+    host: str = Field(default="localhost", description=DATABASE_HOST_DESCRIPTION)
+    port: int = Field(default=1521, description=DATABASE_PORT_DESCRIPTION)
+    user: str = Field(default="system", description=DATABASE_USERNAME_DESCRIPTION)
+    password: str = Field(default="oracle", description=DATABASE_PASSWORD_DESCRIPTION)
+    servicename: str = Field(default="xe", description="Oracle service name")
+
+    echo: bool = Field(default=False, description=SQLALCHEMY_ECHO_DESCRIPTION)
+    sync_driver: str = Field(default="oracle+cx_oracle", description="Oracle database driver")
+
+    model_config = SettingsConfigDict(env_prefix="ORACLE_")
+
+
+# Create optimized cached getter functions using the factory
+get_sqlite_settings = _create_cached_settings_factory(SQLiteSettings)
+get_postgresql_settings = _create_cached_settings_factory(PostgreSQLSettings)
+get_mssql_settings = _create_cached_settings_factory(MSSQLSettings)
+get_mysql_settings = _create_cached_settings_factory(MySQLSettings)
+get_mongodb_settings = _create_cached_settings_factory(MongoDBSettings)
+get_oracle_settings = _create_cached_settings_factory(OracleSettings)

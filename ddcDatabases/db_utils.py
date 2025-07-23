@@ -2,7 +2,7 @@
 import sys
 from contextlib import asynccontextmanager, contextmanager
 from datetime import datetime
-from typing import AsyncGenerator, Generator, Optional
+from typing import AsyncGenerator, Generator
 import sqlalchemy as sa
 from sqlalchemy import RowMapping
 from sqlalchemy.engine import create_engine, Engine, URL
@@ -38,9 +38,9 @@ class BaseConnection:
         self.expire_on_commit = expire_on_commit
         self.sync_driver = sync_driver or None
         self.async_driver = async_driver or None
-        self.session: Optional[Session | AsyncSession] = None
+        self.session: Session | AsyncSession | None = None
         self.is_connected = False
-        self._temp_engine: Optional[Engine | AsyncEngine] = None
+        self._temp_engine: Engine | AsyncEngine | None = None
 
     def __enter__(self):
         with self._get_engine() as self._temp_engine:
@@ -90,6 +90,11 @@ class BaseConnection:
         )
         _engine_args = {
             "url": _connection_url,
+            "pool_size": 10,
+            "max_overflow": 20,
+            "pool_pre_ping": True,
+            "pool_recycle": 3600,  # Recycle connections after 1 hour
+            "query_cache_size": 1000,  # Enable query cache
             **self.engine_args,
         }
         _engine = create_engine(**_engine_args)
@@ -104,6 +109,9 @@ class BaseConnection:
         )
         _engine_args = {
             "url": _connection_url,
+            "pool_size": 10,
+            "max_overflow": 20,
+            "pool_recycle": 3600,  # Recycle connections after 1 hour
             **self.engine_args,
         }
         _engine = create_async_engine(**_engine_args)
@@ -111,31 +119,33 @@ class BaseConnection:
         await _engine.dispose()
 
     def _test_connection_sync(self, session: Session) -> None:
-        del self.connection_url["password"]
+        _connection_url_copy = self.connection_url.copy()
+        _connection_url_copy.pop("password", None)
         _connection_url = URL.create(
-            **self.connection_url,
+            **_connection_url_copy,
             drivername=self.sync_driver,
         )
-        test_connection = TestConnections(
+        test_connection = ConnectionTester(
             sync_session=session,
             host_url=_connection_url,
         )
         test_connection.test_connection_sync()
 
     async def _test_connection_async(self, session: AsyncSession) -> None:
-        del self.connection_url["password"]
+        _connection_url_copy = self.connection_url.copy()
+        _connection_url_copy.pop("password", None)
         _connection_url = URL.create(
-            **self.connection_url,
+            **_connection_url_copy,
             drivername=self.async_driver,
         )
-        test_connection = TestConnections(
+        test_connection = ConnectionTester(
             async_session=session,
             host_url=_connection_url,
         )
         await test_connection.test_connection_async()
 
 
-class TestConnections:
+class ConnectionTester:
     def __init__(
         self,
         sync_session: Session = None,
@@ -150,7 +160,7 @@ class TestConnections:
 
     def test_connection_sync(self) -> bool:
         try:
-            if "oracle" in self.sync_session.bind.url:
+            if "oracle" in str(self.sync_session.bind.url):
                 _text = "SELECT 1 FROM dual"
             else:
                 _text = "SELECT 1"
@@ -167,7 +177,7 @@ class TestConnections:
 
     async def test_connection_async(self) -> bool:
         try:
-            if "oracle" in self.async_session.bind.url:
+            if "oracle" in str(self.async_session.bind.url):
                 _text = "SELECT 1 FROM dual"
             else:
                 _text = "SELECT 1"
@@ -188,27 +198,24 @@ class DBUtils:
         self.session = session
 
     def fetchall(self, stmt) -> list[RowMapping]:
-        cursor = None
         try:
             cursor = self.session.execute(stmt)
-            return cursor.mappings().all()
+            result = cursor.mappings().all()
+            cursor.close()
+            return result
         except Exception as e:
             self.session.rollback()
             raise DBFetchAllException(e)
-        finally:
-            cursor.close() if cursor is not None else None
 
     def fetchvalue(self, stmt) -> str | None:
-        cursor = None
         try:
             cursor = self.session.execute(stmt)
             result = cursor.fetchone()
+            cursor.close()
             return str(result[0]) if result is not None else None
         except Exception as e:
             self.session.rollback()
             raise DBFetchValueException(e)
-        finally:
-            cursor.close() if cursor is not None else None
 
     def insert(self, stmt) -> None:
         try:
@@ -252,27 +259,24 @@ class DBUtilsAsync:
         self.session = session
 
     async def fetchall(self, stmt) -> list[RowMapping]:
-        cursor = None
         try:
             cursor = await self.session.execute(stmt)
-            return cursor.mappings().all()
+            result = cursor.mappings().all()
+            cursor.close()
+            return result
         except Exception as e:
             await self.session.rollback()
             raise DBFetchAllException(e)
-        finally:
-            cursor.close() if cursor is not None else None
 
     async def fetchvalue(self, stmt) -> str | None:
-        cursor = None
         try:
             cursor = await self.session.execute(stmt)
             result = cursor.fetchone()
+            cursor.close()
             return str(result[0]) if result is not None else None
         except Exception as e:
             await self.session.rollback()
             raise DBFetchValueException(e)
-        finally:
-            cursor.close() if cursor is not None else None
 
     async def insert(self, stmt) -> None:
         try:
@@ -294,7 +298,7 @@ class DBUtilsAsync:
 
     async def deleteall(self, model) -> None:
         try:
-            await self.session.query(model).delete()
+            await self.session.execute(sa.delete(model))
         except Exception as e:
             await self.session.rollback()
             raise DBDeleteAllDataException(e)

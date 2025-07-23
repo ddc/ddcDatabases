@@ -1,10 +1,9 @@
 # -*- coding: utf-8 -*-
-from typing import Optional
 from sqlalchemy.engine import URL
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
-from .db_utils import BaseConnection, TestConnections
-from .settings import MSSQLSettings
+from .db_utils import BaseConnection, ConnectionTester
+from .settings import get_mssql_settings
 
 
 class MSSQL(BaseConnection):
@@ -14,20 +13,20 @@ class MSSQL(BaseConnection):
 
     def __init__(
         self,
-        host: Optional[str] = None,
-        port: Optional[int] = None,
-        user: Optional[str] = None,
-        password: Optional[str] = None,
-        database: Optional[str] = None,
-        schema: Optional[str] = None,
-        echo: Optional[bool] = None,
-        pool_size: Optional[int] = None,
-        max_overflow: Optional[int] = None,
-        autoflush: Optional[bool] = None,
-        expire_on_commit: Optional[bool] = None,
-        extra_engine_args: Optional[dict] = None,
+        host: str | None = None,
+        port: int | None = None,
+        user: str | None = None,
+        password: str | None = None,
+        database: str | None = None,
+        schema: str | None = None,
+        echo: bool | None = None,
+        pool_size: int | None = None,
+        max_overflow: int | None = None,
+        autoflush: bool | None = None,
+        expire_on_commit: bool | None = None,
+        extra_engine_args: dict | None = None,
     ):
-        _settings = MSSQLSettings()
+        _settings = get_mssql_settings()
         if not _settings.user or not _settings.password:
             raise RuntimeError("Missing username/password")
 
@@ -76,7 +75,7 @@ class MSSQL(BaseConnection):
             drivername=self.sync_driver,
             query={"schema": self.schema},
         )
-        test_connection = TestConnections(
+        test_connection = ConnectionTester(
             sync_session=session,
             host_url=_connection_url,
         )
@@ -90,7 +89,7 @@ class MSSQL(BaseConnection):
             drivername=self.async_driver,
             query={"schema": self.schema},
         )
-        test_connection = TestConnections(
+        test_connection = ConnectionTester(
             async_session=session,
             host_url=_connection_url,
         )

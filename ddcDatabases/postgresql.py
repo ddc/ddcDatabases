@@ -1,7 +1,6 @@
 # -*- encoding: utf-8 -*-
-from typing import Optional
 from .db_utils import BaseConnection
-from .settings import PostgreSQLSettings
+from .settings import get_postgresql_settings
 
 
 class PostgreSQL(BaseConnection):
@@ -11,17 +10,17 @@ class PostgreSQL(BaseConnection):
 
     def __init__(
         self,
-        host: Optional[str] = None,
-        port: Optional[int] = None,
-        user: Optional[str] = None,
-        password: Optional[str] = None,
-        database: Optional[str] = None,
-        echo: Optional[bool] = None,
-        autoflush: Optional[bool] = None,
-        expire_on_commit: Optional[bool] = None,
-        extra_engine_args: Optional[dict] = None,
+        host: str | None = None,
+        port: int | None = None,
+        user: str | None = None,
+        password: str | None = None,
+        database: str | None = None,
+        echo: bool | None = None,
+        autoflush: bool | None = None,
+        expire_on_commit: bool | None = None,
+        extra_engine_args: dict | None = None,
     ):
-        _settings = PostgreSQLSettings()
+        _settings = get_postgresql_settings()
         if not _settings.user or not _settings.password:
             raise RuntimeError("Missing username/password")
 

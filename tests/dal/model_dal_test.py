@@ -2,14 +2,14 @@
 import sqlalchemy as sa
 from ddcDatabases import DBUtils
 from ddcDatabases.exceptions import DBFetchAllException
-from tests.models.model_test import ModelTest
+from tests.models.test_models import ModelTest
 
 
 class ModelDalTest:
     """ Data Abstraction Layer """
 
     def __init__(self, db_session):
-        self.columns = [x for x in ModelTest.__table__.columns]
+        self.columns = list(ModelTest.__table__.columns)
         self.db_utils = DBUtils(db_session)
 
     def update_name(self, name: str, test_id: int):

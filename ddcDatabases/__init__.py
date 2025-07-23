@@ -2,6 +2,7 @@ import logging
 from importlib.metadata import version
 from typing import Literal, NamedTuple
 from .db_utils import DBUtils, DBUtilsAsync
+from .mongodb import MongoDB
 from .mssql import MSSQL
 from .mysql import MySQL
 from .oracle import Oracle
@@ -12,6 +13,7 @@ from .sqlite import Sqlite
 __all__ = (
     "DBUtils",
     "DBUtilsAsync",
+    "MongoDB",
     "MSSQL",
     "MySQL",
     "Oracle",
@@ -25,7 +27,7 @@ __author__ = "Daniel Costa"
 __email__ = "danieldcsta@gmail.com>"
 __license__ = "MIT"
 __copyright__ = "Copyright 2024-present ddc"
-_req_python_version = (3, 10, 0)
+_req_python_version = (3, 12, 0)
 
 
 try:
