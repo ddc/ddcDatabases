@@ -98,7 +98,7 @@ class TestOracle:
     def test_test_connection_sync_oracle(self):
         """Test connection test for Oracle database"""
         mock_session = MagicMock()
-        mock_session.bind.url = "oracle://user@host/xe"
+        mock_session.bind.url = "oracle://user:password@host/xe"
         
         test_conn = ConnectionTester(sync_session=mock_session)
         result = test_conn.test_connection_sync()
@@ -113,7 +113,7 @@ class TestOracle:
     async def test_test_connection_async_oracle(self):
         """Test async connection test for Oracle database"""
         mock_session = AsyncMock()
-        mock_session.bind.url = "oracle://user@host/xe"
+        mock_session.bind.url = "oracle://user:password@host/xe"
         
         test_conn = ConnectionTester(async_session=mock_session)
         result = await test_conn.test_connection_async()

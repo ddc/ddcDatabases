@@ -704,7 +704,7 @@ class TestConnectionTesterCoverage:
     def test_sync_oracle_connection(self):
         """Test Oracle-specific query in sync connection - Line 164"""
         mock_session = MagicMock()
-        mock_session.bind.url = "oracle://user@host/xe"
+        mock_session.bind.url = "oracle://user:password@host/xe"
         
         tester = ConnectionTester(sync_session=mock_session)
         result = tester.test_connection_sync()
@@ -719,7 +719,7 @@ class TestConnectionTesterCoverage:
     async def test_async_oracle_connection(self):
         """Test Oracle-specific query in async connection - Lines 181, 185"""
         mock_session = AsyncMock()
-        mock_session.bind.url = "oracle://user@host/xe"
+        mock_session.bind.url = "oracle://user:password@host/xe"
         
         tester = ConnectionTester(async_session=mock_session)
         result = await tester.test_connection_async()
