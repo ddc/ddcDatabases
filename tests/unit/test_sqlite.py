@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
-import pytest
 import tempfile
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
+import pytest
 import sqlalchemy as sa
+from sqlalchemy import Boolean, Column, Integer, String
 from sqlalchemy.orm import declarative_base
-from sqlalchemy import Column, Integer, String, Boolean
+from ddcDatabases import DBUtils, Sqlite
 
-from ddcDatabases import Sqlite, DBUtils
 
 Base = declarative_base()
 

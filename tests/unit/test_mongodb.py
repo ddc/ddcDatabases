@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
-import pytest
-import sys
 from io import StringIO
-from unittest.mock import patch, MagicMock, call
+from unittest.mock import MagicMock, patch
+import pytest
 from ddcDatabases.mongodb import MongoDB
 
 

@@ -1,20 +1,19 @@
 # -*- coding: utf-8 -*-
 import os
-import pytest
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 from ddcDatabases.settings import (
-    get_sqlite_settings,
-    get_postgresql_settings, 
+    get_mongodb_settings,
     get_mssql_settings,
     get_mysql_settings,
-    get_mongodb_settings,
     get_oracle_settings,
-    SQLiteSettings,
-    PostgreSQLSettings,
+    get_postgresql_settings,
+    get_sqlite_settings,
+    MongoDBSettings,
     MSSQLSettings,
     MySQLSettings,
-    MongoDBSettings,
     OracleSettings,
+    PostgreSQLSettings,
+    SQLiteSettings
 )
 
 

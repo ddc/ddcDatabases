@@ -1,12 +1,8 @@
 # -*- coding: utf-8 -*-
-import pytest
-import tempfile
-from unittest.mock import patch, MagicMock
-import sqlalchemy as sa
+from unittest.mock import patch
+from sqlalchemy import Boolean, Column, Integer, String
 from sqlalchemy.orm import declarative_base
-from sqlalchemy import Column, Integer, String, Boolean
 
-from ddcDatabases import Sqlite, DBUtils
 
 Base = declarative_base()
 
@@ -24,8 +20,8 @@ class TestSettingsEdgeCases:
     @patch('ddcDatabases.settings.load_dotenv')
     def test_dotenv_loading_flag(self, mock_load_dotenv):
         """Test dotenv loading flag behavior"""
-        from ddcDatabases.settings import get_sqlite_settings, _dotenv_loaded
-        
+        from ddcDatabases.settings import get_sqlite_settings
+
         # Clear cache and reset flag
         get_sqlite_settings.cache_clear()
         
@@ -143,5 +139,3 @@ class TestModuleImports:
         assert isinstance(ddcDatabases.__version_info__.major, int)
         assert isinstance(ddcDatabases.__version_info__.minor, int)
         assert isinstance(ddcDatabases.__version_info__.micro, int)
-
-

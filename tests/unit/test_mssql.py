@@ -1,10 +1,9 @@
 # -*- coding: utf-8 -*-
+from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
-from unittest.mock import patch, MagicMock, AsyncMock
-from sqlalchemy.orm import Session
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.engine import URL
-
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import Session
 from ddcDatabases.mssql import MSSQL
 
 

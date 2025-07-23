@@ -56,7 +56,7 @@ def build():
         
         # Compile for current Python version
         print(f"Compiling for Python {sys.version_info.major}.{sys.version_info.minor}")
-        compileall.compile_dir('pythonDatabases', force=True)
+        compileall.compile_dir('ddcDatabases', force=True)
         
         # Note: For actual cross-version bytecode, you'd need multiple Python interpreters
         # This compiles with current interpreter but documents compatibility

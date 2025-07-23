@@ -9,6 +9,15 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 # Type variable for generic settings factory
 T = TypeVar('T', bound=BaseSettings)
 
+# Constants
+SQLALCHEMY_ECHO_DESCRIPTION = "Enable SQLAlchemy query logging"
+DATABASE_HOST_DESCRIPTION = "Database host"
+DATABASE_USERNAME_DESCRIPTION = "Database username"
+DATABASE_PASSWORD_DESCRIPTION = "Database password"
+DATABASE_NAME_DESCRIPTION = "Database name"
+ASYNC_DATABASE_DRIVER_DESCRIPTION = "Async database driver"
+SYNC_DATABASE_DRIVER_DESCRIPTION = "Sync database driver"
+
 # Lazy loading flag for dotenv - thread-safe singleton pattern
 _dotenv_loaded = False
 
@@ -40,7 +49,7 @@ class SQLiteSettings(_BaseDBSettings):
     """SQLite database settings with environment variable fallback."""
 
     file_path: str = Field(default="sqlite.db", description="Path to SQLite database file")
-    echo: bool = Field(default=False, description="Enable SQLAlchemy query logging")
+    echo: bool = Field(default=False, description=SQLALCHEMY_ECHO_DESCRIPTION)
 
     model_config = SettingsConfigDict(env_prefix="SQLITE_")
 
@@ -48,15 +57,15 @@ class SQLiteSettings(_BaseDBSettings):
 class PostgreSQLSettings(_BaseDBSettings):
     """PostgreSQL database settings with environment variable fallback."""
 
-    host: str = Field(default="localhost", description="Database host")
+    host: str = Field(default="localhost", description=DATABASE_HOST_DESCRIPTION)
     port: int = Field(default=5432, description="Database port")
-    user: str = Field(default="postgres", description="Database username")
-    password: str = Field(default="postgres", description="Database password")
-    database: str = Field(default="postgres", description="Database name")
+    user: str = Field(default="postgres", description=DATABASE_USERNAME_DESCRIPTION)
+    password: str = Field(default="postgres", description=DATABASE_PASSWORD_DESCRIPTION)
+    database: str = Field(default="postgres", description=DATABASE_NAME_DESCRIPTION)
 
-    echo: bool = Field(default=False, description="Enable SQLAlchemy query logging")
-    async_driver: str = Field(default="postgresql+asyncpg", description="Async database driver")
-    sync_driver: str = Field(default="postgresql+psycopg2", description="Sync database driver")
+    echo: bool = Field(default=False, description=SQLALCHEMY_ECHO_DESCRIPTION)
+    async_driver: str = Field(default="postgresql+asyncpg", description=ASYNC_DATABASE_DRIVER_DESCRIPTION)
+    sync_driver: str = Field(default="postgresql+psycopg2", description=SYNC_DATABASE_DRIVER_DESCRIPTION)
 
     model_config = SettingsConfigDict(env_prefix="POSTGRESQL_")
 
@@ -64,19 +73,19 @@ class PostgreSQLSettings(_BaseDBSettings):
 class MSSQLSettings(_BaseDBSettings):
     """Microsoft SQL Server settings with environment variable fallback."""
 
-    host: str = Field(default="localhost", description="Database host")
+    host: str = Field(default="localhost", description=DATABASE_HOST_DESCRIPTION)
     port: int = Field(default=1433, description="Database port")
-    user: str = Field(default="sa", description="Database username")
-    password: str | None = Field(default=None, description="Database password")
+    user: str = Field(default="sa", description=DATABASE_USERNAME_DESCRIPTION)
+    password: str | None = Field(default=None, description=DATABASE_PASSWORD_DESCRIPTION)
     db_schema: str = Field(default="dbo", description="Database schema")
-    database: str = Field(default="master", description="Database name")
+    database: str = Field(default="master", description=DATABASE_NAME_DESCRIPTION)
 
-    echo: bool = Field(default=False, description="Enable SQLAlchemy query logging")
+    echo: bool = Field(default=False, description=SQLALCHEMY_ECHO_DESCRIPTION)
     pool_size: int = Field(default=20, description="Connection pool size")
     max_overflow: int = Field(default=10, description="Max overflow connections")
     odbcdriver_version: int = Field(default=18, description="ODBC driver version")
-    async_driver: str = Field(default="mssql+aioodbc", description="Async database driver")
-    sync_driver: str = Field(default="mssql+pyodbc", description="Sync database driver")
+    async_driver: str = Field(default="mssql+aioodbc", description=ASYNC_DATABASE_DRIVER_DESCRIPTION)
+    sync_driver: str = Field(default="mssql+pyodbc", description=SYNC_DATABASE_DRIVER_DESCRIPTION)
 
     model_config = SettingsConfigDict(env_prefix="MSSQL_")
 
@@ -84,15 +93,15 @@ class MSSQLSettings(_BaseDBSettings):
 class MySQLSettings(_BaseDBSettings):
     """MySQL database settings with environment variable fallback."""
 
-    host: str = Field(default="localhost", description="Database host")
+    host: str = Field(default="localhost", description=DATABASE_HOST_DESCRIPTION)
     port: int = Field(default=3306, description="Database port")
-    user: str = Field(default="root", description="Database username")
-    password: str = Field(default="root", description="Database password")
-    database: str = Field(default="dev", description="Database name")
+    user: str = Field(default="root", description=DATABASE_USERNAME_DESCRIPTION)
+    password: str = Field(default="root", description=DATABASE_PASSWORD_DESCRIPTION)
+    database: str = Field(default="dev", description=DATABASE_NAME_DESCRIPTION)
 
-    echo: bool = Field(default=False, description="Enable SQLAlchemy query logging")
-    async_driver: str = Field(default="mysql+aiomysql", description="Async database driver")
-    sync_driver: str = Field(default="mysql+pymysql", description="Sync database driver")
+    echo: bool = Field(default=False, description=SQLALCHEMY_ECHO_DESCRIPTION)
+    async_driver: str = Field(default="mysql+aiomysql", description=ASYNC_DATABASE_DRIVER_DESCRIPTION)
+    sync_driver: str = Field(default="mysql+pymysql", description=SYNC_DATABASE_DRIVER_DESCRIPTION)
 
     model_config = SettingsConfigDict(env_prefix="MYSQL_")
 
@@ -100,11 +109,11 @@ class MySQLSettings(_BaseDBSettings):
 class MongoDBSettings(_BaseDBSettings):
     """MongoDB settings with environment variable fallback."""
 
-    host: str = Field(default="localhost", description="Database host")
+    host: str = Field(default="localhost", description=DATABASE_HOST_DESCRIPTION)
     port: int = Field(default=27017, description="Database port")
-    user: str = Field(default="admin", description="Database username")
-    password: str = Field(default="admin", description="Database password")
-    database: str = Field(default="admin", description="Database name")
+    user: str = Field(default="admin", description=DATABASE_USERNAME_DESCRIPTION)
+    password: str = Field(default="admin", description=DATABASE_PASSWORD_DESCRIPTION)
+    database: str = Field(default="admin", description=DATABASE_NAME_DESCRIPTION)
 
     batch_size: int = Field(default=2865, description="Batch size for operations")
     limit: int = Field(default=0, description="Query result limit (0 = no limit)")
@@ -116,13 +125,13 @@ class MongoDBSettings(_BaseDBSettings):
 class OracleSettings(_BaseDBSettings):
     """Oracle database settings with environment variable fallback."""
 
-    host: str = Field(default="localhost", description="Database host")
+    host: str = Field(default="localhost", description=DATABASE_HOST_DESCRIPTION)
     port: int = Field(default=1521, description="Database port")
-    user: str = Field(default="system", description="Database username")
-    password: str = Field(default="oracle", description="Database password")
+    user: str = Field(default="system", description=DATABASE_USERNAME_DESCRIPTION)
+    password: str = Field(default="oracle", description=DATABASE_PASSWORD_DESCRIPTION)
     servicename: str = Field(default="xe", description="Oracle service name")
 
-    echo: bool = Field(default=False, description="Enable SQLAlchemy query logging")
+    echo: bool = Field(default=False, description=SQLALCHEMY_ECHO_DESCRIPTION)
     sync_driver: str = Field(default="oracle+cx_oracle", description="Oracle database driver")
 
     model_config = SettingsConfigDict(env_prefix="ORACLE_")

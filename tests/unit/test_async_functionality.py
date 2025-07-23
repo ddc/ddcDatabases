@@ -1,14 +1,13 @@
 # -*- coding: utf-8 -*-
-import pytest
 import asyncio
-import tempfile
-from unittest.mock import patch, MagicMock, AsyncMock
+from unittest.mock import AsyncMock, MagicMock, patch
+import pytest
 import sqlalchemy as sa
+from sqlalchemy import Boolean, Column, Integer, String
 from sqlalchemy.orm import declarative_base
-from sqlalchemy import Column, Integer, String, Boolean
-
-from ddcDatabases import PostgreSQL, DBUtilsAsync
+from ddcDatabases import DBUtilsAsync
 from ddcDatabases.db_utils import BaseConnection
+
 
 Base = declarative_base()
 

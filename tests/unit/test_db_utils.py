@@ -1,22 +1,13 @@
 # -*- coding: utf-8 -*-
+from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
-import tempfile
-from unittest.mock import patch, MagicMock, AsyncMock
 import sqlalchemy as sa
-from sqlalchemy.orm import declarative_base
-from sqlalchemy import Column, Integer, String, Boolean
+from sqlalchemy import Boolean, Column, Integer, String
 from sqlalchemy.engine.url import URL
-
-from ddcDatabases import Sqlite, DBUtils, DBUtilsAsync
+from sqlalchemy.orm import declarative_base
+from ddcDatabases import DBUtils, DBUtilsAsync
 from ddcDatabases.db_utils import BaseConnection, ConnectionTester
-from ddcDatabases.exceptions import (
-    DBFetchAllException,
-    DBFetchValueException,
-    DBInsertSingleException,
-    DBInsertBulkException,
-    DBDeleteAllDataException,
-    DBExecuteException,
-)
+
 
 Base = declarative_base()
 
@@ -764,5 +755,3 @@ class TestDBUtilsAsyncInsertBulk:
             
         mock_session.rollback.assert_called_once()
         mock_session.commit.assert_called_once()  # Finally block
-
-
