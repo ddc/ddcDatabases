@@ -28,7 +28,7 @@ jobs:
           virtualenvs-in-project: true
 
       - name: Install dependencies
-        run: poetry install --with test --no-interaction --no-ansi
+        run: poetry install --with test --no-interaction --no-ansi -E all
 
       - name: Run tests with coverage
         run: poetry run poe tests
