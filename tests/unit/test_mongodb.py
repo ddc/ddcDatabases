@@ -8,18 +8,37 @@ from ddcDatabases.mongodb import MongoDB
 class TestMongoDB:
     """Test MongoDB database connection class"""
     
+    def _create_mock_settings(self, **overrides):
+        """Create mock settings with default values and optional overrides"""
+        mock_settings = MagicMock()
+        mock_settings.host = overrides.get('host', 'localhost')
+        mock_settings.port = overrides.get('port', 27017)
+        mock_settings.user = overrides.get('user', 'admin')
+        mock_settings.password = overrides.get('password', 'admin')
+        mock_settings.database = overrides.get('database', 'testdb')
+        mock_settings.batch_size = overrides.get('batch_size', 1000)
+        mock_settings.limit = overrides.get('limit', 0)
+        mock_settings.sync_driver = overrides.get('sync_driver', 'mongodb')
+        return mock_settings
+    
+    def _setup_mock_client_and_collection(self, mock_mongo_client):
+        """Setup mock client, database, and collection for cursor tests"""
+        mock_client = MagicMock()
+        mock_database = MagicMock()
+        mock_collection = MagicMock()
+        mock_cursor = MagicMock()
+        
+        mock_mongo_client.return_value = mock_client
+        mock_client.__getitem__.return_value = mock_database
+        mock_database.__getitem__.return_value = mock_collection
+        mock_collection.find.return_value = mock_cursor
+        
+        return mock_client, mock_database, mock_collection, mock_cursor
+    
     @patch('ddcDatabases.mongodb.get_mongodb_settings')
     def test_init_with_settings(self, mock_get_settings):
         """Test MongoDB initialization with settings"""
-        mock_settings = MagicMock()
-        mock_settings.host = "localhost"
-        mock_settings.port = 27017
-        mock_settings.user = "admin"
-        mock_settings.password = "admin"
-        mock_settings.database = "testdb"
-        mock_settings.batch_size = 1000
-        mock_settings.limit = 0
-        mock_settings.sync_driver = "mongodb"
+        mock_settings = self._create_mock_settings()
         mock_get_settings.return_value = mock_settings
         
         mongodb = MongoDB()
@@ -36,14 +55,12 @@ class TestMongoDB:
     @patch('ddcDatabases.mongodb.get_mongodb_settings')
     def test_init_with_parameters(self, mock_get_settings):
         """Test MongoDB initialization with override parameters"""
-        mock_settings = MagicMock()
-        mock_settings.host = "defaulthost"
-        mock_settings.port = 27017
-        mock_settings.user = "defaultuser"
-        mock_settings.password = "defaultpass"
-        mock_settings.database = "defaultdb"
-        mock_settings.batch_size = 1000
-        mock_settings.limit = 0
+        mock_settings = self._create_mock_settings(
+            host="defaulthost",
+            user="defaultuser",
+            password="defaultpass",
+            database="defaultdb"
+        )
         mock_get_settings.return_value = mock_settings
         
         mongodb = MongoDB(
@@ -67,9 +84,7 @@ class TestMongoDB:
     @patch('ddcDatabases.mongodb.get_mongodb_settings')
     def test_missing_credentials_error(self, mock_get_settings):
         """Test RuntimeError when credentials are missing - Line 27"""
-        mock_settings = MagicMock()
-        mock_settings.user = None  # Missing user
-        mock_settings.password = "admin"
+        mock_settings = self._create_mock_settings(user=None)
         mock_get_settings.return_value = mock_settings
         
         with pytest.raises(RuntimeError, match="Missing username/password"):
@@ -78,9 +93,7 @@ class TestMongoDB:
     @patch('ddcDatabases.mongodb.get_mongodb_settings')
     def test_missing_password_error(self, mock_get_settings):
         """Test RuntimeError when password is missing - Line 27"""
-        mock_settings = MagicMock()
-        mock_settings.user = "admin"
-        mock_settings.password = None  # Missing password
+        mock_settings = self._create_mock_settings(password=None)
         mock_get_settings.return_value = mock_settings
         
         with pytest.raises(RuntimeError, match="Missing username/password"):
@@ -90,19 +103,10 @@ class TestMongoDB:
     @patch('ddcDatabases.mongodb.MongoClient')
     def test_enter_context_manager(self, mock_mongo_client, mock_get_settings):
         """Test MongoDB context manager entry"""
-        mock_settings = MagicMock()
-        mock_settings.host = "localhost"
-        mock_settings.port = 27017
-        mock_settings.user = "admin"
-        mock_settings.password = "admin"
-        mock_settings.database = "testdb"
-        mock_settings.batch_size = 1000
-        mock_settings.limit = 0
-        mock_settings.sync_driver = "mongodb"
+        mock_settings = self._create_mock_settings()
         mock_get_settings.return_value = mock_settings
         
         mock_client = MagicMock()
-        # Mock the ping method for connection testing
         mock_client.admin.command.return_value = True
         mock_mongo_client.return_value = mock_client
         
@@ -124,15 +128,7 @@ class TestMongoDB:
     @patch('sys.exit')
     def test_enter_context_manager_exception_handling(self, mock_sys_exit, mock_mongo_client, mock_get_settings):
         """Test exception handling in __enter__ method - Lines 47-49"""
-        mock_settings = MagicMock()
-        mock_settings.user = "admin"
-        mock_settings.password = "admin"
-        mock_settings.host = "localhost"
-        mock_settings.port = 27017
-        mock_settings.database = "testdb"
-        mock_settings.batch_size = 1000
-        mock_settings.limit = 0
-        mock_settings.sync_driver = "mongodb"
+        mock_settings = self._create_mock_settings()
         mock_get_settings.return_value = mock_settings
         
         # Mock MongoClient to raise an exception
@@ -151,15 +147,7 @@ class TestMongoDB:
     @patch('sys.exit')
     def test_enter_client_close_on_exception(self, mock_sys_exit, mock_mongo_client, mock_get_settings):
         """Test client.close() is called when exception occurs - Lines 47-49"""
-        mock_settings = MagicMock()
-        mock_settings.user = "admin"
-        mock_settings.password = "admin"
-        mock_settings.host = "localhost"
-        mock_settings.port = 27017
-        mock_settings.database = "testdb"
-        mock_settings.batch_size = 1000
-        mock_settings.limit = 0
-        mock_settings.sync_driver = "mongodb"
+        mock_settings = self._create_mock_settings()
         mock_get_settings.return_value = mock_settings
         
         # Mock client and test_connection to simulate failure after client creation
@@ -180,15 +168,7 @@ class TestMongoDB:
     @patch('ddcDatabases.mongodb.MongoClient')
     def test_exit_context_manager(self, mock_mongo_client, mock_get_settings):
         """Test MongoDB context manager exit"""
-        mock_settings = MagicMock()
-        mock_settings.host = "localhost"
-        mock_settings.port = 27017
-        mock_settings.user = "admin"
-        mock_settings.password = "admin"
-        mock_settings.database = "testdb"
-        mock_settings.batch_size = 1000
-        mock_settings.limit = 0
-        mock_settings.sync_driver = "mongodb"
+        mock_settings = self._create_mock_settings()
         mock_get_settings.return_value = mock_settings
         
         mock_client = MagicMock()
@@ -207,15 +187,7 @@ class TestMongoDB:
     @patch('sys.stderr', new_callable=StringIO)
     def test_test_connection_exception_handling(self, mock_stderr, mock_mongo_client, mock_get_settings):
         """Test exception handling in _test_connection method - Lines 65-67"""
-        mock_settings = MagicMock()
-        mock_settings.user = "admin"
-        mock_settings.password = "admin"
-        mock_settings.host = "localhost"
-        mock_settings.port = 27017
-        mock_settings.database = "testdb"
-        mock_settings.batch_size = 1000
-        mock_settings.limit = 0
-        mock_settings.sync_driver = "mongodb"
+        mock_settings = self._create_mock_settings()
         mock_get_settings.return_value = mock_settings
         
         # Setup mock client with failing ping command
@@ -243,15 +215,7 @@ class TestMongoDB:
     @patch('sys.stdout', new_callable=StringIO)
     def test_test_connection_success_logging(self, mock_stdout, mock_mongo_client, mock_get_settings):
         """Test successful connection logging in _test_connection method"""
-        mock_settings = MagicMock()
-        mock_settings.user = "admin"
-        mock_settings.password = "admin"
-        mock_settings.host = "localhost"
-        mock_settings.port = 27017
-        mock_settings.database = "testdb"
-        mock_settings.batch_size = 1000
-        mock_settings.limit = 0
-        mock_settings.sync_driver = "mongodb"
+        mock_settings = self._create_mock_settings()
         mock_get_settings.return_value = mock_settings
         
         # Setup mock client with successful ping command
@@ -277,26 +241,10 @@ class TestMongoDB:
     @patch('ddcDatabases.mongodb.MongoClient')
     def test_cursor_context_manager(self, mock_mongo_client, mock_get_settings):
         """Test MongoDB cursor context manager"""
-        mock_settings = MagicMock()
-        mock_settings.host = "localhost"
-        mock_settings.port = 27017
-        mock_settings.user = "admin"
-        mock_settings.password = "admin"
-        mock_settings.database = "testdb"
-        mock_settings.batch_size = 1000
-        mock_settings.limit = 0
-        mock_settings.sync_driver = "mongodb"
+        mock_settings = self._create_mock_settings()
         mock_get_settings.return_value = mock_settings
         
-        mock_client = MagicMock()
-        mock_database = MagicMock()
-        mock_collection = MagicMock()
-        mock_cursor = MagicMock()
-        
-        mock_mongo_client.return_value = mock_client
-        mock_client.__getitem__.return_value = mock_database
-        mock_database.__getitem__.return_value = mock_collection
-        mock_collection.find.return_value = mock_cursor
+        mock_client, mock_database, mock_collection, mock_cursor = self._setup_mock_client_and_collection(mock_mongo_client)
         
         mongodb = MongoDB()
         mongodb.client = mock_client  # Set client directly for testing
@@ -315,25 +263,10 @@ class TestMongoDB:
     @patch('ddcDatabases.mongodb.MongoClient')
     def test_cursor_with_custom_batch_size_and_limit(self, mock_mongo_client, mock_get_settings):
         """Test MongoDB cursor with custom batch size and limit"""
-        mock_settings = MagicMock()
-        mock_settings.host = "localhost"
-        mock_settings.port = 27017
-        mock_settings.user = "admin"
-        mock_settings.password = "admin"
-        mock_settings.database = "testdb"
-        mock_settings.batch_size = 2000
-        mock_settings.limit = 500
+        mock_settings = self._create_mock_settings(batch_size=2000, limit=500)
         mock_get_settings.return_value = mock_settings
         
-        mock_client = MagicMock()
-        mock_database = MagicMock()
-        mock_collection = MagicMock()
-        mock_cursor = MagicMock()
-        
-        mock_mongo_client.return_value = mock_client
-        mock_client.__getitem__.return_value = mock_database
-        mock_database.__getitem__.return_value = mock_collection
-        mock_collection.find.return_value = mock_cursor
+        mock_client, mock_database, mock_collection, mock_cursor = self._setup_mock_client_and_collection(mock_mongo_client)
         
         mongodb = MongoDB(batch_size=2000, limit=500)
         mongodb.client = mock_client  # Set client directly for testing
@@ -349,20 +282,11 @@ class TestMongoDB:
     @patch('ddcDatabases.mongodb.get_mongodb_settings')
     def test_cursor_without_client(self, mock_get_settings):
         """Test cursor method when client is not initialized"""
-        mock_settings = MagicMock()
-        mock_settings.host = "localhost"
-        mock_settings.port = 27017
-        mock_settings.user = "admin"
-        mock_settings.password = "admin"
-        mock_settings.database = "testdb"
-        mock_settings.batch_size = 1000
-        mock_settings.limit = 0
-        mock_settings.sync_driver = "mongodb"
+        mock_settings = self._create_mock_settings()
         mock_get_settings.return_value = mock_settings
         
         mongodb = MongoDB()
         
-        # Set up a mock client for the cursor test
         mock_client = MagicMock()
         mock_database = MagicMock()
         mock_collection = MagicMock()
@@ -384,18 +308,9 @@ class TestMongoDB:
     @patch('ddcDatabases.mongodb.get_mongodb_settings')
     def test_cursor_with_sorting(self, mock_get_settings):
         """Test cursor method with sorting functionality - Lines 73-74"""
-        mock_settings = MagicMock()
-        mock_settings.user = "admin"
-        mock_settings.password = "admin"
-        mock_settings.host = "localhost"
-        mock_settings.port = 27017
-        mock_settings.database = "testdb"
-        mock_settings.batch_size = 1000
-        mock_settings.limit = 0
-        mock_settings.sync_driver = "mongodb"
+        mock_settings = self._create_mock_settings()
         mock_get_settings.return_value = mock_settings
         
-        # Setup mock client and collection
         mock_client = MagicMock()
         mock_database = MagicMock()
         mock_collection = MagicMock()
@@ -431,18 +346,9 @@ class TestMongoDB:
     @patch('ddcDatabases.mongodb.get_mongodb_settings')
     def test_cursor_with_ascending_sort(self, mock_get_settings):
         """Test cursor method with ascending sort direction - Lines 73-74"""
-        mock_settings = MagicMock()
-        mock_settings.user = "admin"
-        mock_settings.password = "admin"
-        mock_settings.host = "localhost"
-        mock_settings.port = 27017
-        mock_settings.database = "testdb"
-        mock_settings.batch_size = 1000
-        mock_settings.limit = 0
-        mock_settings.sync_driver = "mongodb"
+        mock_settings = self._create_mock_settings()
         mock_get_settings.return_value = mock_settings
         
-        # Setup mock client and collection
         mock_client = MagicMock()
         mock_database = MagicMock()
         mock_collection = MagicMock()
@@ -466,18 +372,9 @@ class TestMongoDB:
     @patch('ddcDatabases.mongodb.get_mongodb_settings')
     def test_cursor_without_sorting(self, mock_get_settings):
         """Test cursor method without sorting parameters"""
-        mock_settings = MagicMock()
-        mock_settings.user = "admin"
-        mock_settings.password = "admin"
-        mock_settings.host = "localhost"
-        mock_settings.port = 27017
-        mock_settings.database = "testdb"
-        mock_settings.batch_size = 1000
-        mock_settings.limit = 0
-        mock_settings.sync_driver = "mongodb"
+        mock_settings = self._create_mock_settings()
         mock_get_settings.return_value = mock_settings
         
-        # Setup mock client and collection
         mock_client = MagicMock()
         mock_database = MagicMock()
         mock_collection = MagicMock()
@@ -503,18 +400,9 @@ class TestMongoDB:
     @patch('ddcDatabases.mongodb.get_mongodb_settings')  
     def test_various_sort_direction_formats(self, mock_get_settings):
         """Test different sort direction string formats - Line 73"""
-        mock_settings = MagicMock()
-        mock_settings.user = "admin"
-        mock_settings.password = "admin"
-        mock_settings.host = "localhost"
-        mock_settings.port = 27017
-        mock_settings.database = "testdb"
-        mock_settings.batch_size = 1000
-        mock_settings.limit = 0
-        mock_settings.sync_driver = "mongodb"
+        mock_settings = self._create_mock_settings()
         mock_get_settings.return_value = mock_settings
         
-        # Setup mock client and collection
         mock_client = MagicMock()
         mock_database = MagicMock()
         mock_collection = MagicMock()
