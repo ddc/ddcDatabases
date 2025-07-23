@@ -83,7 +83,7 @@ class TestBaseConnection:
     def test_test_connection_sync_non_oracle(self):
         """Test connection test for non-Oracle database"""
         mock_session = MagicMock()
-        mock_session.bind.url = "postgresql://user@host/db"
+        mock_session.bind.url = "postgresql://user:password@host/db"
         
         test_conn = ConnectionTester(sync_session=mock_session)
         result = test_conn.test_connection_sync()
@@ -97,7 +97,7 @@ class TestBaseConnection:
     def test_test_connection_sync_exception(self):
         """Test connection test with exception"""
         mock_session = MagicMock()
-        mock_session.bind.url = "postgresql://user@host/db"
+        mock_session.bind.url = "postgresql://user:password@host/db"
         mock_session.execute.side_effect = Exception("Connection failed")
         
         test_conn = ConnectionTester(sync_session=mock_session)
@@ -112,7 +112,7 @@ class TestBaseConnection:
     async def test_test_connection_async_exception(self):
         """Test async connection test with exception"""
         mock_session = AsyncMock()
-        mock_session.bind.url = "postgresql://user@host/db"
+        mock_session.bind.url = "postgresql://user:password@host/db"
         mock_session.execute.side_effect = Exception("Connection failed")
         
         test_conn = ConnectionTester(async_session=mock_session)
