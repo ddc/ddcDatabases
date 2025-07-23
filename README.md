@@ -1,83 +1,102 @@
-# Databases Session Connections and ORM Queries
+# ddcDatabases
 
 [![Donate](https://img.shields.io/badge/Donate-PayPal-brightgreen.svg?style=plastic)](https://www.paypal.com/ncp/payment/6G9Z78QHUD4RJ)
-[![License](https://img.shields.io/pypi/l/ddcDatabases)](https://github.com/ddc/ddcDatabases/blob/master/LICENSE)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![PyPi](https://img.shields.io/pypi/v/ddcDatabases.svg)](https://pypi.python.org/pypi/ddcDatabases)
 [![PyPI Downloads](https://static.pepy.tech/badge/ddcDatabases)](https://pepy.tech/projects/ddcDatabases)
-[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![codecov](https://codecov.io/gh/ddc/ddcDatabases/graph/badge.svg?token=QsjwsmYzgD)](https://codecov.io/gh/ddc/ddcDatabases)
+[![CI/CD Pipeline](https://github.com/ddc/ddcDatabases/actions/workflows/workflow.yml/badge.svg)](https://github.com/ddc/ddcDatabases/actions/workflows/workflow.yml)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=ddc_ddcDatabases&metric=alert_status)](https://sonarcloud.io/dashboard?id=ddc_ddcDatabases)  
 [![Build Status](https://img.shields.io/endpoint.svg?url=https%3A//actions-badge.atrox.dev/ddc/ddcDatabases/badge?ref=main&label=build&logo=none)](https://actions-badge.atrox.dev/ddc/ddcDatabases/goto?ref=main)
-[![Python](https://img.shields.io/pypi/pyversions/ddcDatabases.svg)](https://www.python.org)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![Python](https://img.shields.io/pypi/pyversions/ddcDatabases.svg)](https://www.python.org/downloads)
 
-[//]: # ([![codecov]&#40;https://codecov.io/github/ddc/ddcDatabases/graph/badge.svg?token=E942EZII4Q&#41;]&#40;https://codecov.io/github/ddc/ddcDatabases&#41;)
+[![Support me on GitHub](https://img.shields.io/badge/Support_me_on_GitHub-154c79?style=for-the-badge&logo=github)](https://github.com/sponsors/ddc)
 
 
+A Python library for database connections and ORM queries with support for multiple database engines including SQLite, PostgreSQL, MySQL, MSSQL, Oracle, and MongoDB.
 
-# Install only sqlite
+## Table of Contents
+
+- [Installation](#installation)
+  - [Basic Installation (SQLite only)](#basic-installation-sqlite-only)
+  - [Database-Specific Installations](#database-specific-installations)
+- [Features](#features)
+  - [Default Session Settings](#default-session-settings)
+- [Database Classes](#database-classes)
+  - [SQLite](#sqlite)
+  - [MSSQL (SQL Server)](#mssql-sql-server)
+  - [PostgreSQL](#postgresql)
+  - [MySQL](#mysql)
+  - [Oracle](#oracle)
+  - [MongoDB](#mongodb)
+- [Database Engines](#database-engines)
+- [Database Utilities](#database-utilities)
+  - [Available Methods](#available-methods)
+- [Development](#development)
+  - [Building from Source](#building-from-source)
+  - [Running Tests](#running-tests)
+- [License](#license)
+- [Support](#support)
+
+
+## Features
+
+- **Multiple Database Support**: SQLite, PostgreSQL, MySQL, MSSQL, Oracle, and MongoDB
+- **Sync and Async Support**: Both synchronous and asynchronous operations
+- **Environment Configuration**: Optional parameters with `.env` file fallback
+- **SQLAlchemy Integration**: Built on top of SQLAlchemy ORM
+- **Connection Pooling**: Configurable connection pooling for better performance
+
+### Default Session Settings
+
+**Synchronous Sessions:**
+- `autoflush = True`
+- `expire_on_commit = True` 
+- `echo = False`
+
+**Asynchronous Sessions:**
+- `autoflush = True`
+- `expire_on_commit = False`
+- `echo = False`
+
+**Note:** All constructor parameters are optional and fall back to [.env](./ddcDatabases/.env.example) file variables.
+
+
+## Installation
+
+### Basic Installation (SQLite only)
 ```shell
 pip install ddcDatabases
 ```
 
-
-
-# Install All databases
+### Database-Specific Installations
 ```shell
+# All databases
 pip install ddcDatabases[all]
-```
 
-
-
-# Install MSSQL
-```shell
+# SQL Server / MSSQL
 pip install ddcDatabases[mssql]
-```
 
-
-
-# Install MYSQL
-```shell
+# MySQL
 pip install ddcDatabases[mysql]
-```
 
-
-
-# Install PostgreSQL
-```shell
+# PostgreSQL
 pip install ddcDatabases[pgsql]
-```
 
-
-
-# Install Oracle
-```shell
+# Oracle
 pip install ddcDatabases[oracle]
-```
 
-
-
-# Install MONGODB
-```shell
+# MongoDB
 pip install ddcDatabases[mongodb]
 ```
 
 
+## Database Classes
 
-# Databases
-+ Parameters for all classes are declared as OPTIONAL falling back to [.env](./ddcDatabases/.env.example)  file variables
-+ All examples are using [db_utils.py](ddcDatabases/db_utils.py)
-+ By default, the MSSQL class will open a session to the database, but the engine can be available at `session.bind`
-+ SYNC sessions defaults:
-  + `autoflush is True`
-  + `expire_on_commit is True`
-  + `echo is False`
-+ ASYNC sessions defaults:
-  + `autoflush is True`
-  + `expire_on_commit is False`
-  + `echo is False`
+### SQLite
 
-
-
-# SQLITE
-```
+```python
 class Sqlite(
     filepath: Optional[str] = None,
     echo: Optional[bool] = None,
@@ -87,14 +106,16 @@ class Sqlite(
 )
 ```
 
-#### Session
+**Example:**
 ```python
 import sqlalchemy as sa
 from ddcDatabases import DBUtils, Sqlite
+from your_models import User  # Your SQLAlchemy model
+
 with Sqlite() as session:
-    utils = DBUtils(session)
-    stmt = sa.select(TableModel).where(TableModel.id == 1)
-    results = utils.fetchall(stmt)
+    db_utils = DBUtils(session)
+    stmt = sa.select(User).where(User.id == 1)
+    results = db_utils.fetchall(stmt)
     for row in results:
         print(row)
 ```
@@ -103,9 +124,10 @@ with Sqlite() as session:
 
 
 
-# MSSQL
-```
-class MSSQL(        
+### MSSQL (SQL Server)
+
+```python
+class MSSQL(
     host: Optional[str] = None,
     port: Optional[int] = None,
     user: Optional[str] = None,
@@ -121,28 +143,33 @@ class MSSQL(
 )
 ```
 
-#### Sync Example
+**Synchronous Example:**
 ```python
 import sqlalchemy as sa
 from ddcDatabases import DBUtils, MSSQL
+from your_models import User
+
 with MSSQL() as session:
-    stmt = sa.select(TableModel).where(TableModel.id == 1)
+    stmt = sa.select(User).where(User.id == 1)
     db_utils = DBUtils(session)
     results = db_utils.fetchall(stmt)
     for row in results:
         print(row)
 ```
 
-#### Async Example
+**Asynchronous Example:**
 ```python
 import sqlalchemy as sa
 from ddcDatabases import DBUtilsAsync, MSSQL
-async with MSSQL() as session:
-    stmt = sa.select(TableModel).where(TableModel.id == 1)
-    db_utils = DBUtilsAsync(session)
-    results = await db_utils.fetchall(stmt)
-    for row in results:
-        print(row)
+from your_models import User
+
+async def main():
+    async with MSSQL() as session:
+        stmt = sa.select(User).where(User.id == 1)
+        db_utils = DBUtilsAsync(session)
+        results = await db_utils.fetchall(stmt)
+        for row in results:
+            print(row)
 ```
 
 
@@ -150,8 +177,9 @@ async with MSSQL() as session:
 
 
 
-# PostgreSQL or MySQL
-```
+### PostgreSQL
+
+```python
 class PostgreSQL(
     host: Optional[str] = None,
     port: Optional[int] = None,
@@ -165,37 +193,46 @@ class PostgreSQL(
 )
 ```
 
-#### Sync Examples
+**Synchronous Example:**
 ```python
 import sqlalchemy as sa
 from ddcDatabases import DBUtils, PostgreSQL
+from your_models import User
+
 with PostgreSQL() as session:
-    stmt = sa.select(TableModel).where(TableModel.id == 1)
-    db_utils = DBUtils(session)
-    results = db_utils.fetchall(stmt)
-    for row in results:
-        print(row)
-```
-```python
-import sqlalchemy as sa
-from ddcDatabases import DBUtils, MySQL
-with MySQL() as session:
-    stmt = sa.text("SELECT * FROM users")
+    stmt = sa.select(User).where(User.id == 1)
     db_utils = DBUtils(session)
     results = db_utils.fetchall(stmt)
     for row in results:
         print(row)
 ```
 
-
-#### Async Example
+**Asynchronous Example:**
 ```python
 import sqlalchemy as sa
 from ddcDatabases import DBUtilsAsync, PostgreSQL
-async with PostgreSQL() as session:
-    stmt = sa.select(TableModel).where(TableModel.id == 1)
-    db_utils = DBUtilsAsync(session)
-    results = await db_utils.fetchall(stmt)
+from your_models import User
+
+async def main():
+    async with PostgreSQL() as session:
+        stmt = sa.select(User).where(User.id == 1)
+        db_utils = DBUtilsAsync(session)
+        results = await db_utils.fetchall(stmt)
+        for row in results:
+            print(row)
+```
+
+### MySQL
+
+**Synchronous Example:**
+```python
+import sqlalchemy as sa
+from ddcDatabases import DBUtils, MySQL
+
+with MySQL() as session:
+    stmt = sa.text("SELECT * FROM users WHERE id = :user_id")
+    db_utils = DBUtils(session)
+    results = db_utils.fetchall(stmt, {"user_id": 1})
     for row in results:
         print(row)
 ```
@@ -203,8 +240,9 @@ async with PostgreSQL() as session:
 
 
 
-# Oracle
-```
+### Oracle
+
+```python
 class Oracle(
     host: Optional[str] = None,
     port: Optional[int] = None,
@@ -215,9 +253,14 @@ class Oracle(
     autoflush: Optional[bool] = None,
     expire_on_commit: Optional[bool] = None,
     extra_engine_args: Optional[dict] = None,
+)
 ```
-#### Sync Example using arguments instead of .env file
+
+**Example with explicit credentials:**
 ```python
+import sqlalchemy as sa
+from ddcDatabases import DBUtils, Oracle
+
 credentials = {
     "host": "127.0.0.1",
     "user": "system",
@@ -226,10 +269,8 @@ credentials = {
     "echo": False,
 }
 
-import sqlalchemy as sa
-from ddcDatabases import DBUtils, Oracle
 with Oracle(**credentials) as session:
-    stmt = sa.text("SELECT * FROM system.help")
+    stmt = sa.text("SELECT * FROM dual")
     db_utils = DBUtils(session)
     results = db_utils.fetchall(stmt)
     for row in results:
@@ -243,9 +284,10 @@ with Oracle(**credentials) as session:
 
 
 
-# MongoDB
-```
-class PostgreSQL(
+### MongoDB
+
+```python
+class MongoDB(
     host: Optional[str] = None,
     port: Optional[int] = None,
     user: Optional[str] = None,
@@ -255,8 +297,12 @@ class PostgreSQL(
     limit: Optional[int] = None,
 )
 ```
-#### Sync Example using arguments instead of .env file
+
+**Example with explicit credentials:**
 ```python
+from ddcDatabases.mongodb import MongoDB
+from bson.objectid import ObjectId
+
 credentials = {
     "host": "127.0.0.1",
     "user": "admin",
@@ -264,14 +310,12 @@ credentials = {
     "database": "admin",
 }
 
-from ddcDatabases.mongodb import MongoDB
-from bson.objectid import ObjectId
 with MongoDB(**credentials) as mongodb:
     query = {"_id": ObjectId("6772cf60f27e7e068e9d8985")}
     collection = "movies"
     with mongodb.cursor(collection, query) as cursor:
-        for each in cursor:
-            print(each)
+        for document in cursor:
+            print(document)
 ```
 
 
@@ -281,68 +325,79 @@ with MongoDB(**credentials) as mongodb:
 
 
 
-# ORM Engines
-Using PostgreSQL as example
+## Database Engines
 
-#### Sync Engine
+Access the underlying SQLAlchemy engine for advanced operations:
+
+**Synchronous Engine:**
 ```python
 from ddcDatabases import PostgreSQL
+
 with PostgreSQL() as session:
     engine = session.bind
-    ...
+    # Use engine for advanced operations
 ```
 
-#### Async Engine
+**Asynchronous Engine:**
 ```python
 from ddcDatabases import PostgreSQL
-async with PostgreSQL() as session:
-    engine = await session.bind
-    ...
+
+async def main():
+    async with PostgreSQL() as session:
+        engine = session.bind
+        # Use engine for advanced operations
 ```
 
 
 
 
-# ORM DBUtils and DBUtilsAsync
-+ Take an open session as parameter
-+ Can use SQLAlchemy statements
-+ Execute function can be used to update, insert or any SQLAlchemy.text
+## Database Utilities
+
+The `DBUtils` and `DBUtilsAsync` classes provide convenient methods for common database operations:
+
+### Available Methods
+
 ```python
-from ddcDatabases import DBUtils
+from ddcDatabases import DBUtils, DBUtilsAsync
+
+# Synchronous utilities
 db_utils = DBUtils(session)
-db_utils.fetchall(stmt)                     # returns a list of RowMapping
-db_utils.fetchvalue(stmt)                   # fetch a single value, returning as string
-db_utils.insert(stmt)                       # insert into model table
-db_utils.deleteall(model)                   # delete all records from model
-db_utils.insertbulk(model, list[dict])      # insert records into model from a list of dicts
-db_utils.execute(stmt)                      # this is the actual execute from session
+results = db_utils.fetchall(stmt)           # Returns list of RowMapping objects
+value = db_utils.fetchvalue(stmt)           # Returns single value as string
+db_utils.insert(stmt)                       # Insert into model table
+db_utils.deleteall(model)                   # Delete all records from model
+db_utils.insertbulk(model, data_list)      # Bulk insert from list of dictionaries
+db_utils.execute(stmt)                      # Execute any SQLAlchemy statement
+
+# Asynchronous utilities (similar interface with await)
+db_utils_async = DBUtilsAsync(session)
+results = await db_utils_async.fetchall(stmt)
 ```
 
 
 
 
-# Source Code
-### Build
+## Development
+
+### Building from Source
 ```shell
 poetry build -f wheel
 ```
 
-
-
-# Run Tests and Get Coverage Report using Poe
+### Running Tests
 ```shell
 poetry update --with test
 poe tests
 ```
 
+## License
 
-
-# License
 Released under the [MIT License](LICENSE)
 
+## Support
 
+If you find this project helpful, consider supporting development:
 
-# Buy me a cup of coffee
-+ [GitHub Sponsor](https://github.com/sponsors/ddc)
-+ [ko-fi](https://ko-fi.com/ddcsta)
-+ [Paypal](https://www.paypal.com/ncp/payment/6G9Z78QHUD4RJ)
+- [GitHub Sponsor](https://github.com/sponsors/ddc)
+- [ko-fi](https://ko-fi.com/ddcsta)
+- [PayPal](https://www.paypal.com/ncp/payment/6G9Z78QHUD4RJ)

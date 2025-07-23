@@ -35,11 +35,15 @@ classifiers = [
     "Natural Language :: English",
 ]
 
+[tool.poetry.build]
+script = "build.py"
+generate-setup-file = false
+
 [tool.poetry.group.test]
 optional = true
 
 [tool.poetry.dependencies]
-python = "^3.10"
+python = "^3.12"
 aioodbc = "^0.5.0"
 asyncpg = "^0.30.0"
 aiomysql = "^0.2.0"
@@ -67,14 +71,23 @@ poethepoet = "^0.36.0"
 pytest = "^8.4.1"
 pytest-asyncio = "^1.1.0"
 
-[tool.coverage.run]
-omit = [
-    "tests/*",
-]
-
 [tool.poe.tasks]
 _test = "coverage run -m pytest -v"
 _coverage_report = "coverage report"
 _coverage_xml = "coverage xml"
 tests = ["_test", "_coverage_report", "_coverage_xml"]
 test = ["tests"]
+
+[tool.black]
+line-length = 120
+skip-string-normalization = true
+
+[tool.coverage.run]
+omit = [
+    "tests/*",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+]
