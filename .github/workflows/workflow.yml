@@ -30,12 +30,14 @@ jobs:
           virtualenvs-in-project: true
 
       - name: Install build dependencies only
-        run: python -m poetry install --only main --no-interaction --no-ansi
+        run: poetry install --only main --no-interaction --no-ansi
+        shell: bash
 
       - name: Build package with custom build script
         run: |
-          python -m poetry run python build.py
-          python -m poetry build
+          poetry run python build.py
+          poetry build
+        shell: bash
 
       - name: Copy artifacts
         shell: bash
