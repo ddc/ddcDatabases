@@ -649,7 +649,6 @@ class TestBaseConnectionContextManagers:
             assert call_kwargs['sync_session'] is mock_session
             assert isinstance(call_kwargs['host_url'], URL)
             # Verify password was removed from connection URL
-            url_dict = dict(call_kwargs['host_url'].translate_connect_args())
             assert 'password' not in str(call_kwargs['host_url'])
             
             mock_tester.test_connection_sync.assert_called_once()

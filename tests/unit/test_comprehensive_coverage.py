@@ -27,7 +27,7 @@ class TestSettingsEdgeCases:
         
         # Mock the flag to False
         with patch('ddcDatabases.settings._dotenv_loaded', False):
-            settings = get_sqlite_settings()
+            get_sqlite_settings()
             mock_load_dotenv.assert_called_once()
             
     def test_settings_field_defaults(self):
