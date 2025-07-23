@@ -65,31 +65,52 @@ A Python library for database connections and ORM queries with support for multi
 
 ## Installation
 
-### Basic Installation (SQLite only)
+### Basic Installation
 ```shell
 pip install ddcDatabases
 ```
 
+**Note:** The basic installation includes only SQlite. Database-specific drivers are optional extras that you can install as needed.
+
 ### Database-Specific Installations
+
+Install only the database drivers you need:
+
 ```shell
-# All databases
+# All database drivers (recommended for development)
 pip install ddcDatabases[all]
 
 # SQL Server / MSSQL
 pip install ddcDatabases[mssql]
 
-# MySQL
+# MySQL / MariaDB
 pip install ddcDatabases[mysql]
 
 # PostgreSQL
 pip install ddcDatabases[pgsql]
 
-# Oracle
+# Oracle Database
 pip install ddcDatabases[oracle]
 
 # MongoDB
 pip install ddcDatabases[mongodb]
+
+# Multiple databases (example)
+pip install ddcDatabases[mysql,pgsql,mongodb]
 ```
+
+**Available Database Extras:**
+- `all` - All database drivers
+- `mssql` - Microsoft SQL Server (pyodbc, aioodbc)
+- `mysql` - MySQL/MariaDB (pymysql, aiomysql)
+- `pgsql` - PostgreSQL (psycopg2-binary, asyncpg)
+- `oracle` - Oracle Database (cx-oracle)
+- `mongodb` - MongoDB (pymongo)
+
+**Platform Notes:**
+- SQLite support is included by default (no extra installation required)
+- PostgreSQL extras may have compilation requirements on some systems
+- All extras support both synchronous and asynchronous operations where applicable
 
 
 ## Database Classes

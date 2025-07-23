@@ -44,17 +44,17 @@ optional = true
 
 [tool.poetry.dependencies]
 python = "^3.12"
-aioodbc = "^0.5.0"
-asyncpg = "^0.30.0"
-aiomysql = "^0.2.0"
-cx-oracle = "^8.3.0"
-greenlet = "^3.2.3"
-pymongo = "^4.13.2"
-pymysql = "^1.1.1"
-psycopg2-binary = "^2.9.10"
 pydantic-settings = "^2.10.1"
-pyodbc = "^5.2.0"
 SQLAlchemy = "^2.0.41"
+greenlet = "^3.2.3"
+aioodbc = {version = "^0.5.0", optional = true}
+aiomysql = {version = "^0.2.0", optional = true}
+asyncpg = {version = "^0.30.0", optional = true}
+cx-oracle = {version = "^8.3.0", optional = true}
+pymongo = {version = "^4.13.2", optional = true}
+pymysql = {version = "^1.1.1", optional = true}
+psycopg2-binary = {version = "^2.9.10", optional = true}
+pyodbc = {version = "^5.2.0", optional = true}
 
 [tool.poetry.extras]
 mongodb = ["pymongo"]

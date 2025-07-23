@@ -34,7 +34,7 @@ jobs:
           if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
             poetry install --only main --no-interaction --no-ansi -E mongodb -E mssql -E mysql -E oracle
           else
-            poetry install --only main --no-interaction --no-ansi
+            poetry install --only main --no-interaction --no-ansi -E all
           fi
         shell: bash
 
