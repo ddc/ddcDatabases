@@ -65,7 +65,7 @@ A Python library for database connections and ORM queries with support for multi
 
 ## Installation
 
-### Basic Installation
+### Basic Installation (SQLite only)
 ```shell
 pip install ddcDatabases
 ```
