@@ -1,12 +1,10 @@
-# -*- coding: utf-8 -*-
 import asyncio
 from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 import sqlalchemy as sa
 from sqlalchemy import Boolean, Column, Integer, String
 from sqlalchemy.orm import declarative_base
-from ddcDatabases import DBUtilsAsync
-from ddcDatabases.db_utils import BaseConnection
+# Imports moved to setup_method to avoid early module loading
 
 
 Base = declarative_base()
@@ -23,12 +21,17 @@ class AsyncTestModel(Base):
 class TestAsyncBaseConnection:
     """Test async functionality of BaseConnection"""
     
+    def setup_method(self):
+        """Import dependencies when needed"""
+        from ddcDatabases.db_utils import BaseConnection
+        self.BaseConnection = BaseConnection
+    
     async def test_async_context_manager_entry(self):
         """Test async context manager __aenter__"""
         connection_url = {"host": "localhost", "database": "test"}
         engine_args = {"echo": False}
         
-        conn = BaseConnection(
+        conn = self.BaseConnection(
             connection_url=connection_url,
             engine_args=engine_args,
             autoflush=True,
@@ -61,7 +64,7 @@ class TestAsyncBaseConnection:
         connection_url = {"host": "localhost", "database": "test"}
         engine_args = {"echo": False}
         
-        conn = BaseConnection(
+        conn = self.BaseConnection(
             connection_url=connection_url,
             engine_args=engine_args,
             autoflush=True,
@@ -88,7 +91,7 @@ class TestAsyncBaseConnection:
         connection_url = {"host": "localhost", "database": "test"}
         engine_args = {"echo": False}
         
-        conn = BaseConnection(
+        conn = self.BaseConnection(
             connection_url=connection_url,
             engine_args=engine_args,
             autoflush=True,
@@ -112,6 +115,11 @@ class TestAsyncBaseConnection:
 class TestDBUtilsAsync:
     """Test DBUtilsAsync functionality"""
     
+    def setup_method(self):
+        """Import dependencies when needed"""
+        from ddcDatabases import DBUtilsAsync
+        self.DBUtilsAsync = DBUtilsAsync
+    
     async def test_fetchall_success(self):
         """Test successful async fetchall operation"""
         mock_session = AsyncMock()
@@ -123,7 +131,7 @@ class TestDBUtilsAsync:
         mock_cursor.mappings.return_value = mock_mappings
         mock_mappings.all.return_value = mock_result
         
-        db_utils = DBUtilsAsync(mock_session)
+        db_utils = self.DBUtilsAsync(mock_session)
         stmt = sa.select(AsyncTestModel)
         result = await db_utils.fetchall(stmt)
         
@@ -138,7 +146,7 @@ class TestDBUtilsAsync:
         mock_session = AsyncMock()
         mock_session.execute.side_effect = Exception("Query failed")
         
-        db_utils = DBUtilsAsync(mock_session)
+        db_utils = self.DBUtilsAsync(mock_session)
         stmt = sa.select(AsyncTestModel)
         
         # The custom exception will re-raise the original exception
@@ -155,7 +163,7 @@ class TestDBUtilsAsync:
         
         mock_session.execute.return_value = mock_cursor
         
-        db_utils = DBUtilsAsync(mock_session)
+        db_utils = self.DBUtilsAsync(mock_session)
         stmt = sa.select(AsyncTestModel.name)
         result = await db_utils.fetchvalue(stmt)
         
@@ -172,7 +180,7 @@ class TestDBUtilsAsync:
         
         mock_session.execute.return_value = mock_cursor
         
-        db_utils = DBUtilsAsync(mock_session)
+        db_utils = self.DBUtilsAsync(mock_session)
         stmt = sa.select(AsyncTestModel.name)
         result = await db_utils.fetchvalue(stmt)
         
@@ -183,7 +191,7 @@ class TestDBUtilsAsync:
         mock_session = AsyncMock()
         mock_session.execute.side_effect = Exception("Query failed")
         
-        db_utils = DBUtilsAsync(mock_session)
+        db_utils = self.DBUtilsAsync(mock_session)
         stmt = sa.select(AsyncTestModel.name)
         
         with pytest.raises(Exception, match="Query failed"):
@@ -197,7 +205,7 @@ class TestDBUtilsAsync:
         # Make add a regular (non-coroutine) method
         mock_session.add = MagicMock()
         
-        db_utils = DBUtilsAsync(mock_session)
+        db_utils = self.DBUtilsAsync(mock_session)
         test_obj = AsyncTestModel(id=1, name="test")
         
         await db_utils.insert(test_obj)
@@ -211,7 +219,7 @@ class TestDBUtilsAsync:
         # Make add a regular (non-coroutine) method that raises
         mock_session.add = MagicMock(side_effect=Exception("Insert failed"))
         
-        db_utils = DBUtilsAsync(mock_session)
+        db_utils = self.DBUtilsAsync(mock_session)
         test_obj = AsyncTestModel(id=1, name="test")
         
         with pytest.raises(Exception, match="Insert failed"):
@@ -226,7 +234,7 @@ class TestDBUtilsAsync:
         # Make bulk_insert_mappings a regular (non-coroutine) method
         mock_session.bulk_insert_mappings = MagicMock()
         
-        db_utils = DBUtilsAsync(mock_session)
+        db_utils = self.DBUtilsAsync(mock_session)
         bulk_data = [{"id": 1, "name": "test1"}, {"id": 2, "name": "test2"}]
         
         await db_utils.insertbulk(AsyncTestModel, bulk_data)
@@ -240,7 +248,7 @@ class TestDBUtilsAsync:
         # Make bulk_insert_mappings a regular (non-coroutine) method that raises
         mock_session.bulk_insert_mappings = MagicMock(side_effect=Exception("Bulk insert failed"))
         
-        db_utils = DBUtilsAsync(mock_session)
+        db_utils = self.DBUtilsAsync(mock_session)
         bulk_data = [{"id": 1, "name": "test1"}]
         
         with pytest.raises(Exception, match="Bulk insert failed"):
@@ -253,7 +261,7 @@ class TestDBUtilsAsync:
         """Test successful async delete all operation"""
         mock_session = AsyncMock()
         
-        db_utils = DBUtilsAsync(mock_session)
+        db_utils = self.DBUtilsAsync(mock_session)
         
         await db_utils.deleteall(AsyncTestModel)
         
@@ -268,7 +276,7 @@ class TestDBUtilsAsync:
         mock_session = AsyncMock()
         mock_session.execute.side_effect = Exception("Delete failed")
         
-        db_utils = DBUtilsAsync(mock_session)
+        db_utils = self.DBUtilsAsync(mock_session)
         
         with pytest.raises(Exception, match="Delete failed"):
             await db_utils.deleteall(AsyncTestModel)
@@ -280,7 +288,7 @@ class TestDBUtilsAsync:
         """Test successful async execute operation"""
         mock_session = AsyncMock()
         
-        db_utils = DBUtilsAsync(mock_session)
+        db_utils = self.DBUtilsAsync(mock_session)
         stmt = sa.text("UPDATE async_test_model SET name = 'updated'")
         
         await db_utils.execute(stmt)
@@ -293,7 +301,7 @@ class TestDBUtilsAsync:
         mock_session = AsyncMock()
         mock_session.execute.side_effect = Exception("Execute failed")
         
-        db_utils = DBUtilsAsync(mock_session)
+        db_utils = self.DBUtilsAsync(mock_session)
         stmt = sa.text("UPDATE async_test_model SET name = 'updated'")
         
         with pytest.raises(Exception, match="Execute failed"):
@@ -307,6 +315,11 @@ class TestDBUtilsAsync:
 @pytest.mark.asyncio
 class TestAsyncIntegration:
     """Test async integration scenarios"""
+    
+    def setup_method(self):
+        """Import dependencies when needed"""
+        from ddcDatabases import DBUtilsAsync
+        self.DBUtilsAsync = DBUtilsAsync
     
     async def test_async_workflow_simulation(self):
         """Test a complete async workflow simulation"""
@@ -324,7 +337,7 @@ class TestAsyncIntegration:
         # Make session methods that aren't coroutines regular methods  
         mock_session.add = MagicMock()
         
-        db_utils = DBUtilsAsync(mock_session)
+        db_utils = self.DBUtilsAsync(mock_session)
         
         # Test fetchall
         stmt = sa.select(AsyncTestModel)
@@ -364,8 +377,8 @@ class TestAsyncIntegration:
         mock_cursor1.fetchone.return_value = ("result1",)
         mock_cursor2.fetchone.return_value = ("result2",)
         
-        db_utils1 = DBUtilsAsync(mock_session1)
-        db_utils2 = DBUtilsAsync(mock_session2)
+        db_utils1 = self.DBUtilsAsync(mock_session1)
+        db_utils2 = self.DBUtilsAsync(mock_session2)
         
         # Run concurrent operations
         stmt1 = sa.select(AsyncTestModel.name).where(AsyncTestModel.id == 1)
@@ -393,7 +406,7 @@ class TestAsyncIntegration:
             Exception("Execute error")
         ]
         
-        db_utils = DBUtilsAsync(mock_session)
+        db_utils = self.DBUtilsAsync(mock_session)
         
         # Test fetchall exception
         with pytest.raises(Exception, match="Fetch error"):
@@ -410,11 +423,18 @@ class TestAsyncIntegration:
 class TestAsyncCompatibility:
     """Test async compatibility and edge cases"""
     
+    def setup_method(self):
+        """Import dependencies when needed"""
+        from ddcDatabases import DBUtilsAsync
+        from ddcDatabases.db_utils import BaseConnection
+        self.DBUtilsAsync = DBUtilsAsync
+        self.BaseConnection = BaseConnection
+    
     def test_async_method_signatures(self):
         """Test that async methods have correct signatures"""
         import inspect
         
-        db_utils = DBUtilsAsync(None)
+        db_utils = self.DBUtilsAsync(None)
         
         # Check that all main methods are coroutines
         assert inspect.iscoroutinefunction(db_utils.fetchall)
@@ -428,7 +448,7 @@ class TestAsyncCompatibility:
         """Test BaseConnection has async methods"""
         import inspect
         
-        conn = BaseConnection({}, {}, True, False, "sync", "async")
+        conn = self.BaseConnection({}, {}, True, False, "sync", "async")
         
         # Check async context manager methods
         assert inspect.iscoroutinefunction(conn.__aenter__)

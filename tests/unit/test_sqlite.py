@@ -1,11 +1,10 @@
-# -*- coding: utf-8 -*-
 import tempfile
 from unittest.mock import MagicMock, patch
 import pytest
 import sqlalchemy as sa
 from sqlalchemy import Boolean, Column, Integer, String
 from sqlalchemy.orm import declarative_base
-from ddcDatabases import DBUtils, Sqlite
+# Imports moved to setup_method to avoid early module loading
 
 
 Base = declarative_base()
@@ -21,6 +20,12 @@ class DatabaseModel(Base):
 class TestSQLite:
     """Test SQLite database connection class"""
     
+    def setup_method(self):
+        """Import dependencies when needed"""
+        from ddcDatabases import Sqlite, DBUtils
+        self.Sqlite = Sqlite
+        self.DBUtils = DBUtils
+    
     @patch('ddcDatabases.sqlite.get_sqlite_settings')
     def test_init_basic(self, mock_get_settings):
         """Test SQLite basic initialization"""
@@ -29,7 +34,7 @@ class TestSQLite:
         mock_settings.echo = False
         mock_get_settings.return_value = mock_settings
         
-        sqlite = Sqlite()
+        sqlite = self.Sqlite()
         
         assert sqlite.filepath == "sqlite.db"
         assert sqlite.echo == False
@@ -43,7 +48,7 @@ class TestSQLite:
         mock_settings.echo = False
         mock_get_settings.return_value = mock_settings
         
-        sqlite = Sqlite(
+        sqlite = self.Sqlite(
             filepath="custom.db",
             echo=True,
             autoflush=False,
@@ -60,11 +65,11 @@ class TestSQLite:
         with tempfile.NamedTemporaryFile(suffix='.db', delete=False) as tmp:
             db_path = tmp.name
             
-        with Sqlite(filepath=db_path) as session:
+        with self.Sqlite(filepath=db_path) as session:
             # Create table
             DatabaseModel.__table__.create(session.bind, checkfirst=True)
             
-            db_utils = DBUtils(session)
+            db_utils = self.DBUtils(session)
             
             # Test insert single
             test_obj = DatabaseModel(id=1, name="test1", enabled=True)
@@ -117,9 +122,9 @@ class TestSQLite:
         with tempfile.NamedTemporaryFile(suffix='.db', delete=False) as tmp:
             db_path = tmp.name
             
-        with Sqlite(filepath=db_path) as session:
+        with self.Sqlite(filepath=db_path) as session:
             DatabaseModel.__table__.create(session.bind, checkfirst=True)
-            db_utils = DBUtils(session)
+            db_utils = self.DBUtils(session)
             
             # Query non-existent record
             stmt = sa.select(DatabaseModel.name).where(DatabaseModel.id == 999)
@@ -131,7 +136,7 @@ class TestSQLite:
         with tempfile.NamedTemporaryFile(suffix='.db', delete=False) as tmp:
             db_path = tmp.name
             
-        sqlite = Sqlite(filepath=db_path)
+        sqlite = self.Sqlite(filepath=db_path)
         
         # Test __enter__
         session = sqlite.__enter__()
@@ -148,7 +153,7 @@ class TestSQLite:
         """Test SQLite engine creation error handling"""
         mock_create_engine.side_effect = Exception("Engine creation failed")
         
-        sqlite = Sqlite(filepath="test.db")
+        sqlite = self.Sqlite(filepath="test.db")
         
         with pytest.raises(Exception, match="Engine creation failed"):
             with sqlite._get_engine():
@@ -158,7 +163,7 @@ class TestSQLite:
         """Test SQLite with all optional parameters"""
         extra_args = {"pool_timeout": 60, "connect_timeout": 30}
         
-        sqlite = Sqlite(
+        sqlite = self.Sqlite(
             filepath="custom.db",
             echo=True,
             autoflush=False,
@@ -176,12 +181,18 @@ class TestSQLite:
 class TestSQLiteRealOperations:
     """Test with real SQLite database operations"""
     
+    def setup_method(self):
+        """Import dependencies when needed"""
+        from ddcDatabases import Sqlite, DBUtils
+        self.Sqlite = Sqlite
+        self.DBUtils = DBUtils
+    
     def test_real_fetchall(self):
         """Test fetchall with real database"""
         with tempfile.NamedTemporaryFile(suffix='.db', delete=False) as tmp:
             db_path = tmp.name
             
-        with Sqlite(filepath=db_path) as session:
+        with self.Sqlite(filepath=db_path) as session:
             DatabaseModel.__table__.create(session.bind, checkfirst=True)
             
             # Insert test data
@@ -189,7 +200,7 @@ class TestSQLiteRealOperations:
             session.add(test_obj)
             session.commit()
             
-            db_utils = DBUtils(session)
+            db_utils = self.DBUtils(session)
             stmt = sa.select(DatabaseModel).where(DatabaseModel.id == 1)
             results = db_utils.fetchall(stmt)
             
@@ -204,7 +215,7 @@ class TestSQLiteRealOperations:
         with tempfile.NamedTemporaryFile(suffix='.db', delete=False) as tmp:
             db_path = tmp.name
             
-        with Sqlite(filepath=db_path) as session:
+        with self.Sqlite(filepath=db_path) as session:
             DatabaseModel.__table__.create(session.bind, checkfirst=True)
             
             # Insert test data
@@ -212,7 +223,7 @@ class TestSQLiteRealOperations:
             session.add(test_obj)
             session.commit()
             
-            db_utils = DBUtils(session)
+            db_utils = self.DBUtils(session)
             stmt = sa.select(DatabaseModel.name).where(DatabaseModel.id == 1)
             result = db_utils.fetchvalue(stmt)
             
@@ -223,10 +234,10 @@ class TestSQLiteRealOperations:
         with tempfile.NamedTemporaryFile(suffix='.db', delete=False) as tmp:
             db_path = tmp.name
             
-        with Sqlite(filepath=db_path) as session:
+        with self.Sqlite(filepath=db_path) as session:
             DatabaseModel.__table__.create(session.bind, checkfirst=True)
             
-            db_utils = DBUtils(session)
+            db_utils = self.DBUtils(session)
             bulk_data = [
                 {"id": 1, "name": "test1", "enabled": True},
                 {"id": 2, "name": "test2", "enabled": False},
@@ -250,7 +261,7 @@ class TestSQLiteRealOperations:
         with tempfile.NamedTemporaryFile(suffix='.db', delete=False) as tmp:
             db_path = tmp.name
             
-        sqlite = Sqlite(filepath=db_path)
+        sqlite = self.Sqlite(filepath=db_path)
         
         # Initially not connected
         assert sqlite.is_connected == False
@@ -269,7 +280,7 @@ class TestSQLiteRealOperations:
             db_path = tmp.name
             
         # Test with custom settings
-        sqlite = Sqlite(
+        sqlite = self.Sqlite(
             filepath=db_path,
             echo=True,
             autoflush=True,
@@ -290,7 +301,7 @@ class TestSQLiteRealOperations:
             session.add(test_obj)
             session.commit()
             
-            db_utils = DBUtils(session)
+            db_utils = self.DBUtils(session)
             stmt = sa.select(DatabaseModel.name).where(DatabaseModel.id == 1)
             result = db_utils.fetchvalue(stmt)
             assert result == "settings_test"

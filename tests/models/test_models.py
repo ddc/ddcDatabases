@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from sqlalchemy import Boolean
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 

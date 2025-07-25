@@ -1,6 +1,6 @@
 # -*- encoding: utf-8 -*-
-from .db_utils import BaseConnection
-from .settings import get_postgresql_settings
+from ddcDatabases.db_utils import BaseConnection
+from ddcDatabases.settings import get_postgresql_settings
 
 
 class PostgreSQL(BaseConnection):
@@ -21,8 +21,6 @@ class PostgreSQL(BaseConnection):
         extra_engine_args: dict | None = None,
     ):
         _settings = get_postgresql_settings()
-        if not _settings.user or not _settings.password:
-            raise RuntimeError("Missing username/password")
 
         self.echo = echo or _settings.echo
         self.autoflush = autoflush
@@ -36,6 +34,9 @@ class PostgreSQL(BaseConnection):
             "username": user or _settings.user,
             "password": password or _settings.password,
         }
+
+        if not self.connection_url["username"] or not self.connection_url["password"]:
+            raise RuntimeError("Missing username/password")
         self.extra_engine_args = extra_engine_args or {}
         self.engine_args = {
             "echo": self.echo,

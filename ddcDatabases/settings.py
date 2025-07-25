@@ -1,6 +1,5 @@
-# -*- coding: utf-8 -*-
-from typing import TypeVar, Callable
 from functools import lru_cache
+from typing import Callable, TypeVar
 from dotenv import load_dotenv
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -33,16 +32,18 @@ def _ensure_dotenv_loaded() -> None:
 
 def _create_cached_settings_factory(settings_class: type[T]) -> Callable[[], T]:
     """Factory function to create cached settings getters with proper type hints."""
+
     @lru_cache(maxsize=1)
     def get_settings() -> T:
         _ensure_dotenv_loaded()
         return settings_class()
+
     return get_settings
 
 
 class _BaseDBSettings(BaseSettings):
     """Base class for database settings with common configuration."""
-    
+
     model_config = SettingsConfigDict(env_file=".env", extra="allow")
 
 
@@ -77,7 +78,7 @@ class MSSQLSettings(_BaseDBSettings):
     host: str = Field(default="localhost", description=DATABASE_HOST_DESCRIPTION)
     port: int = Field(default=1433, description=DATABASE_PORT_DESCRIPTION)
     user: str = Field(default="sa", description=DATABASE_USERNAME_DESCRIPTION)
-    password: str | None = Field(default=None, description=DATABASE_PASSWORD_DESCRIPTION)
+    password: str = Field(default="sa", description=DATABASE_PASSWORD_DESCRIPTION)
     db_schema: str = Field(default="dbo", description="Database schema")
     database: str = Field(default="master", description=DATABASE_NAME_DESCRIPTION)
 
