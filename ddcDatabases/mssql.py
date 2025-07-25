@@ -1,9 +1,8 @@
-# -*- coding: utf-8 -*-
 from sqlalchemy.engine import URL
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
-from .db_utils import BaseConnection, ConnectionTester
-from .settings import get_mssql_settings
+from ddcDatabases.db_utils import BaseConnection, ConnectionTester
+from ddcDatabases.settings import get_mssql_settings
 
 
 class MSSQL(BaseConnection):
@@ -27,8 +26,6 @@ class MSSQL(BaseConnection):
         extra_engine_args: dict | None = None,
     ):
         _settings = get_mssql_settings()
-        if not _settings.user or not _settings.password:
-            raise RuntimeError("Missing username/password")
 
         self.schema = schema or _settings.db_schema
         self.echo = echo or _settings.echo
@@ -50,6 +47,9 @@ class MSSQL(BaseConnection):
                 "TrustServerCertificate": "yes",
             },
         }
+
+        if not self.connection_url["username"] or not self.connection_url["password"]:
+            raise RuntimeError("Missing username/password")
         self.extra_engine_args = extra_engine_args or {}
         self.engine_args = {
             "pool_size": self.pool_size,

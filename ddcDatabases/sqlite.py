@@ -4,7 +4,7 @@ from contextlib import contextmanager
 from datetime import datetime
 from sqlalchemy.engine import create_engine, Engine
 from sqlalchemy.orm import Session, sessionmaker
-from .settings import get_sqlite_settings
+from ddcDatabases.settings import get_sqlite_settings
 
 
 class Sqlite:
@@ -29,7 +29,6 @@ class Sqlite:
         self.is_connected = False
         self.session = None
         self._temp_engine = None
-
 
     def __enter__(self):
         with self._get_engine() as self._temp_engine:
@@ -64,8 +63,5 @@ class Sqlite:
             _engine.dispose()
         except Exception as e:
             dt = datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3]
-            sys.stderr.write(
-                f"[{dt}]:[ERROR]:Unable to Create Database Engine | "
-                f"{repr(e)}\n"
-            )
+            sys.stderr.write(f"[{dt}]:[ERROR]:Unable to Create Database Engine | " f"{repr(e)}\n")
             raise

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import sys
 from contextlib import asynccontextmanager, contextmanager
 from datetime import datetime
@@ -12,7 +11,7 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
 )
 from sqlalchemy.orm import Session, sessionmaker
-from .exceptions import (
+from ddcDatabases.exceptions import (
     DBDeleteAllDataException,
     DBExecuteException,
     DBFetchAllException,
@@ -168,11 +167,7 @@ class ConnectionTester:
             return True
         except Exception as e:
             self.sync_session.close()
-            sys.stderr.write(
-                f"[{self.dt}]:[ERROR]:{self.failed_msg} | "
-                f"{self.host_url} | "
-                f"{repr(e)}\n"
-            )
+            sys.stderr.write(f"[{self.dt}]:[ERROR]:{self.failed_msg} | {self.host_url} | {repr(e)}\n")
             raise ConnectionRefusedError(f"{self.failed_msg} | {repr(e)}")
 
     async def test_connection_async(self) -> bool:
@@ -185,11 +180,7 @@ class ConnectionTester:
             return True
         except Exception as e:
             await self.async_session.close()
-            sys.stderr.write(
-                f"[{self.dt}]:[ERROR]:{self.failed_msg} | "
-                f"{self.host_url} | "
-                f"{repr(e)}\n"
-            )
+            sys.stderr.write(f"[{self.dt}]:[ERROR]:{self.failed_msg} | {self.host_url} | {repr(e)}\n")
             raise ConnectionRefusedError(f"{self.failed_msg} | {repr(e)}")
 
 

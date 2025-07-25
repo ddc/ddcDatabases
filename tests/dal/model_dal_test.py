@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import sqlalchemy as sa
 from ddcDatabases import DBUtils
 from ddcDatabases.exceptions import DBFetchAllException
@@ -6,7 +5,7 @@ from tests.models.test_models import ModelTest
 
 
 class ModelDalTest:
-    """ Data Abstraction Layer """
+    """Data Abstraction Layer"""
 
     def __init__(self, db_session):
         self.columns = list(ModelTest.__table__.columns)

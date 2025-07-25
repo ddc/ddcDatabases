@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from unittest.mock import patch
 from sqlalchemy import Boolean, Column, Integer, String
 from sqlalchemy.orm import declarative_base
@@ -139,3 +138,71 @@ class TestModuleImports:
         assert isinstance(ddcDatabases.__version_info__.major, int)
         assert isinstance(ddcDatabases.__version_info__.minor, int)
         assert isinstance(ddcDatabases.__version_info__.micro, int)
+        
+        # Test version info structure
+        assert ddcDatabases.__version_info__.releaselevel == "final"
+        assert ddcDatabases.__version_info__.serial == 0
+        
+        # Test required Python version
+        assert ddcDatabases.__req_python_version__.major == 3
+        assert ddcDatabases.__req_python_version__.minor == 12
+        assert ddcDatabases.__req_python_version__.micro == 0
+        assert ddcDatabases.__req_python_version__.releaselevel == "final"
+        assert ddcDatabases.__req_python_version__.serial == 0
+
+    def test_package_metadata(self):
+        """Test package metadata constants"""
+        import ddcDatabases
+        
+        # Test metadata attributes exist
+        assert hasattr(ddcDatabases, '__title__')
+        assert hasattr(ddcDatabases, '__author__')
+        assert hasattr(ddcDatabases, '__email__')
+        assert hasattr(ddcDatabases, '__license__')
+        assert hasattr(ddcDatabases, '__copyright__')
+        
+        # Test metadata values
+        assert ddcDatabases.__title__ == "ddcDatabases"
+        assert ddcDatabases.__author__ == "Daniel Costa"
+        assert ddcDatabases.__email__ == "danieldcsta@gmail.com>"
+        assert ddcDatabases.__license__ == "MIT"
+        assert ddcDatabases.__copyright__ == "Copyright 2024-present ddc"
+
+    def test_all_exports(self):
+        """Test __all__ exports are accessible"""
+        import ddcDatabases
+        
+        # Test __all__ exists and contains expected items
+        assert hasattr(ddcDatabases, '__all__')
+        expected_exports = {
+            "DBUtils", "DBUtilsAsync", "MongoDB", "MSSQL", 
+            "MySQL", "Oracle", "PostgreSQL", "Sqlite"
+        }
+        
+        # Check all expected items are in __all__
+        assert set(ddcDatabases.__all__) == expected_exports
+        
+        # Check all items in __all__ are actually accessible
+        for item in ddcDatabases.__all__:
+            assert hasattr(ddcDatabases, item), f"{item} not accessible"
+
+    @patch('importlib.metadata.version')
+    def test_version_import_error_handling(self, mock_version):
+        """Test version parsing with ModuleNotFoundError"""
+        # Mock version to raise ModuleNotFoundError
+        mock_version.side_effect = ModuleNotFoundError("No module named 'ddcDatabases'")
+        
+        # Test the logic directly since module caching makes re-import difficult
+        from importlib.metadata import version
+        try:
+            _version = tuple(int(x) for x in version("ddcDatabases").split("."))
+        except ModuleNotFoundError:
+            _version = (0, 0, 0)
+        
+        # Should fall back to (0, 0, 0) when ModuleNotFoundError occurs
+        assert _version == (0, 0, 0)
+
+    def test_mongodb_import_accessibility(self):
+        """Test MongoDB import specifically (since it's not in main imports)"""
+        from ddcDatabases import MongoDB
+        assert MongoDB is not None

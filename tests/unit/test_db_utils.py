@@ -1,12 +1,9 @@
-# -*- coding: utf-8 -*-
 from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 import sqlalchemy as sa
 from sqlalchemy import Boolean, Column, Integer, String
 from sqlalchemy.engine.url import URL
 from sqlalchemy.orm import declarative_base
-from ddcDatabases import DBUtils, DBUtilsAsync
-from ddcDatabases.db_utils import BaseConnection, ConnectionTester
 
 
 Base = declarative_base()
@@ -22,12 +19,18 @@ class DatabaseModel(Base):
 class TestBaseConnection:
     """Test BaseConnection class"""
     
+    def setup_method(self):
+        """Import dependencies when needed"""
+        from ddcDatabases.db_utils import BaseConnection, ConnectionTester
+        self.BaseConnection = BaseConnection
+        self.ConnectionTester = ConnectionTester
+    
     def test_init(self):
         """Test BaseConnection initialization"""
         connection_url = {"host": "localhost", "database": "test"}
         engine_args = {"echo": True}
         
-        conn = BaseConnection(
+        conn = self.BaseConnection(
             connection_url=connection_url,
             engine_args=engine_args,
             autoflush=True,
@@ -55,7 +58,7 @@ class TestBaseConnection:
         connection_url = {"host": "localhost", "database": "test"}
         engine_args = {"echo": True}
         
-        conn = BaseConnection(
+        conn = self.BaseConnection(
             connection_url=connection_url,
             engine_args=engine_args,
             autoflush=True,
@@ -76,7 +79,7 @@ class TestBaseConnection:
         mock_session = MagicMock()
         mock_session.bind.url = "postgresql://user:password@host/db"
         
-        test_conn = ConnectionTester(sync_session=mock_session)
+        test_conn = self.ConnectionTester(sync_session=mock_session)
         result = test_conn.test_connection_sync()
         
         assert result == True
@@ -91,7 +94,7 @@ class TestBaseConnection:
         mock_session.bind.url = "postgresql://user:password@host/db"
         mock_session.execute.side_effect = Exception("Connection failed")
         
-        test_conn = ConnectionTester(sync_session=mock_session)
+        test_conn = self.ConnectionTester(sync_session=mock_session)
         
         with pytest.raises(ConnectionRefusedError):
             test_conn.test_connection_sync()
@@ -106,7 +109,7 @@ class TestBaseConnection:
         mock_session.bind.url = "postgresql://user:password@host/db"
         mock_session.execute.side_effect = Exception("Connection failed")
         
-        test_conn = ConnectionTester(async_session=mock_session)
+        test_conn = self.ConnectionTester(async_session=mock_session)
         
         with pytest.raises(ConnectionRefusedError):
             await test_conn.test_connection_async()
@@ -117,10 +120,15 @@ class TestBaseConnection:
 class TestDBUtils:
     """Test DBUtils class"""
     
+    def setup_method(self):
+        """Import dependencies when needed"""
+        from ddcDatabases import DBUtils
+        self.DBUtils = DBUtils
+    
     def test_init(self):
         """Test DBUtils initialization"""
         mock_session = MagicMock()
-        db_utils = DBUtils(mock_session)
+        db_utils = self.DBUtils(mock_session)
         assert db_utils.session is mock_session
         
     def test_fetchall_success(self):
@@ -134,7 +142,7 @@ class TestDBUtils:
         mock_cursor.mappings.return_value = mock_mappings
         mock_mappings.all.return_value = mock_result
         
-        db_utils = DBUtils(mock_session)
+        db_utils = self.DBUtils(mock_session)
         stmt = sa.select(DatabaseModel)
         result = db_utils.fetchall(stmt)
         
@@ -149,7 +157,7 @@ class TestDBUtils:
         mock_session = MagicMock()
         mock_session.execute.side_effect = Exception("Query failed")
         
-        db_utils = DBUtils(mock_session)
+        db_utils = self.DBUtils(mock_session)
         stmt = sa.select(DatabaseModel)
         
         with pytest.raises(Exception, match="Query failed"):
@@ -165,7 +173,7 @@ class TestDBUtils:
         
         mock_session.execute.return_value = mock_cursor
         
-        db_utils = DBUtils(mock_session)
+        db_utils = self.DBUtils(mock_session)
         stmt = sa.select(DatabaseModel.name)
         result = db_utils.fetchvalue(stmt)
         
@@ -180,7 +188,7 @@ class TestDBUtils:
         
         mock_session.execute.return_value = mock_cursor
         
-        db_utils = DBUtils(mock_session)
+        db_utils = self.DBUtils(mock_session)
         stmt = sa.select(DatabaseModel.name)
         result = db_utils.fetchvalue(stmt)
         
@@ -191,7 +199,7 @@ class TestDBUtils:
         mock_session = MagicMock()
         mock_session.execute.side_effect = Exception("Query failed")
         
-        db_utils = DBUtils(mock_session)
+        db_utils = self.DBUtils(mock_session)
         stmt = sa.select(DatabaseModel.name)
         
         with pytest.raises(Exception, match="Query failed"):
@@ -203,7 +211,7 @@ class TestDBUtils:
         """Test successful insert operation"""
         mock_session = MagicMock()
         
-        db_utils = DBUtils(mock_session)
+        db_utils = self.DBUtils(mock_session)
         test_obj = DatabaseModel(id=1, name="test")
         
         db_utils.insert(test_obj)
@@ -216,7 +224,7 @@ class TestDBUtils:
         mock_session = MagicMock()
         mock_session.add.side_effect = Exception("Insert failed")
         
-        db_utils = DBUtils(mock_session)
+        db_utils = self.DBUtils(mock_session)
         test_obj = DatabaseModel(id=1, name="test")
         
         with pytest.raises(Exception, match="Insert failed"):
@@ -229,7 +237,7 @@ class TestDBUtils:
         """Test successful bulk insert operation"""
         mock_session = MagicMock()
         
-        db_utils = DBUtils(mock_session)
+        db_utils = self.DBUtils(mock_session)
         bulk_data = [{"id": 1, "name": "test1"}, {"id": 2, "name": "test2"}]
         
         db_utils.insertbulk(DatabaseModel, bulk_data)
@@ -242,7 +250,7 @@ class TestDBUtils:
         mock_session = MagicMock()
         mock_session.bulk_insert_mappings.side_effect = Exception("Bulk insert failed")
         
-        db_utils = DBUtils(mock_session)
+        db_utils = self.DBUtils(mock_session)
         bulk_data = [{"id": 1, "name": "test1"}]
         
         with pytest.raises(Exception, match="Bulk insert failed"):
@@ -257,7 +265,7 @@ class TestDBUtils:
         mock_query = MagicMock()
         mock_session.query.return_value = mock_query
         
-        db_utils = DBUtils(mock_session)
+        db_utils = self.DBUtils(mock_session)
         db_utils.deleteall(DatabaseModel)
         
         mock_session.query.assert_called_once_with(DatabaseModel)
@@ -271,7 +279,7 @@ class TestDBUtils:
         mock_query.delete.side_effect = Exception("Delete failed")
         mock_session.query.return_value = mock_query
         
-        db_utils = DBUtils(mock_session)
+        db_utils = self.DBUtils(mock_session)
         
         with pytest.raises(Exception, match="Delete failed"):
             db_utils.deleteall(DatabaseModel)
@@ -283,7 +291,7 @@ class TestDBUtils:
         """Test successful execute operation"""
         mock_session = MagicMock()
         
-        db_utils = DBUtils(mock_session)
+        db_utils = self.DBUtils(mock_session)
         stmt = sa.text("UPDATE test_model SET name = 'updated'")
         
         db_utils.execute(stmt)
@@ -296,7 +304,7 @@ class TestDBUtils:
         mock_session = MagicMock()
         mock_session.execute.side_effect = Exception("Execute failed")
         
-        db_utils = DBUtils(mock_session)
+        db_utils = self.DBUtils(mock_session)
         stmt = sa.text("UPDATE test_model SET name = 'updated'")
         
         with pytest.raises(Exception, match="Execute failed"):
@@ -309,10 +317,15 @@ class TestDBUtils:
 class TestDBUtilsAsync:
     """Test DBUtilsAsync class"""
     
+    def setup_method(self):
+        """Import dependencies when needed"""
+        from ddcDatabases import DBUtilsAsync
+        self.DBUtilsAsync = DBUtilsAsync
+    
     def test_init(self):
         """Test DBUtilsAsync initialization"""
         mock_session = MagicMock()
-        db_utils = DBUtilsAsync(mock_session)
+        db_utils = self.DBUtilsAsync(mock_session)
         assert db_utils.session is mock_session
         
     @pytest.mark.asyncio
@@ -327,7 +340,7 @@ class TestDBUtilsAsync:
         mock_cursor.mappings.return_value = mock_mappings
         mock_mappings.all.return_value = mock_result
         
-        db_utils = DBUtilsAsync(mock_session)
+        db_utils = self.DBUtilsAsync(mock_session)
         stmt = sa.select(DatabaseModel)
         result = await db_utils.fetchall(stmt)
         
@@ -341,7 +354,7 @@ class TestDBUtilsAsync:
         mock_session = AsyncMock()
         mock_session.execute.side_effect = Exception("Query failed")
         
-        db_utils = DBUtilsAsync(mock_session)
+        db_utils = self.DBUtilsAsync(mock_session)
         stmt = sa.select(DatabaseModel)
         
         with pytest.raises(Exception, match="Query failed"):
@@ -358,7 +371,7 @@ class TestDBUtilsAsync:
         
         mock_session.execute.return_value = mock_cursor
         
-        db_utils = DBUtilsAsync(mock_session)
+        db_utils = self.DBUtilsAsync(mock_session)
         stmt = sa.select(DatabaseModel.name)
         result = await db_utils.fetchvalue(stmt)
         
@@ -371,7 +384,7 @@ class TestDBUtilsAsync:
         mock_session = AsyncMock()
         mock_session.execute.side_effect = Exception("Query failed")
         
-        db_utils = DBUtilsAsync(mock_session)
+        db_utils = self.DBUtilsAsync(mock_session)
         stmt = sa.select(DatabaseModel.name)
         
         with pytest.raises(Exception, match="Query failed"):
@@ -386,7 +399,7 @@ class TestDBUtilsAsync:
         # Make add a regular (non-coroutine) method
         mock_session.add = MagicMock()
         
-        db_utils = DBUtilsAsync(mock_session)
+        db_utils = self.DBUtilsAsync(mock_session)
         test_obj = DatabaseModel(id=1, name="test")
         
         await db_utils.insert(test_obj)
@@ -401,7 +414,7 @@ class TestDBUtilsAsync:
         # Make add method raise exception when called (not async)
         mock_session.add = MagicMock(side_effect=Exception("Insert failed"))
         
-        db_utils = DBUtilsAsync(mock_session)
+        db_utils = self.DBUtilsAsync(mock_session)
         test_obj = DatabaseModel(id=1, name="test")
         
         with pytest.raises(Exception, match="Insert failed"):
@@ -415,7 +428,7 @@ class TestDBUtilsAsync:
         """Test successful async delete all operation"""
         mock_session = AsyncMock()
         
-        db_utils = DBUtilsAsync(mock_session)
+        db_utils = self.DBUtilsAsync(mock_session)
         
         await db_utils.deleteall(DatabaseModel)
         
@@ -431,7 +444,7 @@ class TestDBUtilsAsync:
         mock_session = AsyncMock()
         mock_session.execute.side_effect = Exception("Delete failed")
         
-        db_utils = DBUtilsAsync(mock_session)
+        db_utils = self.DBUtilsAsync(mock_session)
         
         with pytest.raises(Exception, match="Delete failed"):
             await db_utils.deleteall(DatabaseModel)
@@ -444,7 +457,7 @@ class TestDBUtilsAsync:
         """Test successful async execute operation"""
         mock_session = AsyncMock()
         
-        db_utils = DBUtilsAsync(mock_session)
+        db_utils = self.DBUtilsAsync(mock_session)
         stmt = sa.text("UPDATE test_model SET name = 'updated'")
         
         await db_utils.execute(stmt)
@@ -458,7 +471,7 @@ class TestDBUtilsAsync:
         mock_session = AsyncMock()
         mock_session.execute.side_effect = Exception("Execute failed")
         
-        db_utils = DBUtilsAsync(mock_session)
+        db_utils = self.DBUtilsAsync(mock_session)
         stmt = sa.text("UPDATE test_model SET name = 'updated'")
         
         with pytest.raises(Exception, match="Execute failed"):
@@ -470,6 +483,12 @@ class TestDBUtilsAsync:
 
 class TestBaseConnectionContextManagers:
     """Test BaseConnection context manager methods for increased coverage"""
+    
+    def setup_method(self):
+        """Import dependencies when needed"""
+        from ddcDatabases.db_utils import BaseConnection, ConnectionTester
+        self.BaseConnection = BaseConnection
+        self.ConnectionTester = ConnectionTester
     
     @patch('ddcDatabases.db_utils.create_engine')
     @patch('ddcDatabases.db_utils.sessionmaker')
@@ -487,7 +506,7 @@ class TestBaseConnectionContextManagers:
         connection_url = {"host": "localhost", "database": "test"}
         engine_args = {"echo": False}
         
-        conn = BaseConnection(
+        conn = self.BaseConnection(
             connection_url=connection_url,
             engine_args=engine_args,
             autoflush=True,
@@ -515,7 +534,7 @@ class TestBaseConnectionContextManagers:
         connection_url = {"host": "localhost", "database": "test"}
         engine_args = {"echo": False}
         
-        conn = BaseConnection(
+        conn = self.BaseConnection(
             connection_url=connection_url,
             engine_args=engine_args,
             autoflush=False,
@@ -555,7 +574,7 @@ class TestBaseConnectionContextManagers:
         connection_url = {"host": "localhost", "database": "test"}
         engine_args = {"echo": True, "pool_size": 5}
         
-        conn = BaseConnection(
+        conn = self.BaseConnection(
             connection_url=connection_url,
             engine_args=engine_args,
             autoflush=True,
@@ -592,7 +611,7 @@ class TestBaseConnectionContextManagers:
         connection_url = {"host": "localhost", "database": "test"}
         engine_args = {"echo": False, "max_overflow": 15}
         
-        conn = BaseConnection(
+        conn = self.BaseConnection(
             connection_url=connection_url,
             engine_args=engine_args,
             autoflush=True,
@@ -625,7 +644,7 @@ class TestBaseConnectionContextManagers:
         """Test _test_connection_sync method - Lines 122-132"""
         connection_url = {"host": "localhost", "database": "test", "password": "secret"}
         
-        conn = BaseConnection(
+        conn = self.BaseConnection(
             connection_url=connection_url,
             engine_args={},
             autoflush=True,
@@ -642,7 +661,7 @@ class TestBaseConnectionContextManagers:
             
             conn._test_connection_sync(mock_session)
             
-            # Verify ConnectionTester was created with correct parameters
+            # Verify self.ConnectionTester was created with correct parameters
             mock_tester_class.assert_called_once()
             call_kwargs = mock_tester_class.call_args[1]
             
@@ -658,7 +677,7 @@ class TestBaseConnectionContextManagers:
         """Test _test_connection_async method - Lines 135-145"""
         connection_url = {"host": "localhost", "database": "test", "password": "secret"}
         
-        conn = BaseConnection(
+        conn = self.BaseConnection(
             connection_url=connection_url,
             engine_args={},
             autoflush=True,
@@ -676,7 +695,7 @@ class TestBaseConnectionContextManagers:
             
             await conn._test_connection_async(mock_session)
             
-            # Verify ConnectionTester was created with correct parameters
+            # Verify self.ConnectionTester was created with correct parameters
             mock_tester_class.assert_called_once()
             call_kwargs = mock_tester_class.call_args[1]
             
@@ -691,12 +710,17 @@ class TestBaseConnectionContextManagers:
 class TestConnectionTesterCoverage:
     """Test ConnectionTester methods for increased coverage"""
     
+    def setup_method(self):
+        """Import dependencies when needed"""
+        from ddcDatabases.db_utils import ConnectionTester
+        self.ConnectionTester = ConnectionTester
+    
     def test_sync_oracle_connection(self):
         """Test Oracle-specific query in sync connection - Line 164"""
         mock_session = MagicMock()
         mock_session.bind.url = "oracle://user:password@host/xe"
         
-        tester = ConnectionTester(sync_session=mock_session)
+        tester = self.ConnectionTester(sync_session=mock_session)
         result = tester.test_connection_sync()
         
         assert result == True
@@ -711,7 +735,7 @@ class TestConnectionTesterCoverage:
         mock_session = AsyncMock()
         mock_session.bind.url = "oracle://user:password@host/xe"
         
-        tester = ConnectionTester(async_session=mock_session)
+        tester = self.ConnectionTester(async_session=mock_session)
         result = await tester.test_connection_async()
         
         assert result == True  # This tests line 185
@@ -724,6 +748,11 @@ class TestConnectionTesterCoverage:
 class TestDBUtilsAsyncInsertBulk:
     """Test DBUtilsAsync insertbulk method for increased coverage"""
     
+    def setup_method(self):
+        """Import dependencies when needed"""
+        from ddcDatabases import DBUtilsAsync
+        self.DBUtilsAsync = DBUtilsAsync
+    
     @pytest.mark.asyncio
     async def test_insertbulk_success(self):
         """Test successful async bulk insert - Lines 291-297"""
@@ -731,7 +760,7 @@ class TestDBUtilsAsyncInsertBulk:
         # Make bulk_insert_mappings a regular (non-coroutine) method
         mock_session.bulk_insert_mappings = MagicMock()
         
-        db_utils = DBUtilsAsync(mock_session)
+        db_utils = self.DBUtilsAsync(mock_session)
         bulk_data = [{"id": 1, "name": "test1"}, {"id": 2, "name": "test2"}]
         
         await db_utils.insertbulk(DatabaseModel, bulk_data)
@@ -746,7 +775,7 @@ class TestDBUtilsAsyncInsertBulk:
         # Make bulk_insert_mappings raise exception
         mock_session.bulk_insert_mappings = MagicMock(side_effect=Exception("Bulk insert failed"))
         
-        db_utils = DBUtilsAsync(mock_session)
+        db_utils = self.DBUtilsAsync(mock_session)
         bulk_data = [{"id": 1, "name": "test1"}]
         
         with pytest.raises(Exception, match="Bulk insert failed"):

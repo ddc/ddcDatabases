@@ -1,9 +1,8 @@
-# -*- encoding: utf-8 -*-
 import sys
 from contextlib import contextmanager
 from datetime import datetime
 from pymongo import ASCENDING, DESCENDING, MongoClient
-from .settings import get_mongodb_settings
+from ddcDatabases.settings import get_mongodb_settings
 
 
 class MongoDB:
@@ -22,8 +21,6 @@ class MongoDB:
         limit: int | None = None,
     ):
         _settings = get_mongodb_settings()
-        if not _settings.user or not _settings.password:
-            raise RuntimeError("Missing username/password")
 
         self.host = host or _settings.host
         self.port = port or _settings.port
@@ -35,6 +32,9 @@ class MongoDB:
         self.sync_driver = _settings.sync_driver
         self.batch_size = batch_size or _settings.batch_size
         self.limit = limit or _settings.limit
+
+        if not self.user or not self.password:
+            raise RuntimeError("Missing username/password")
 
     def __enter__(self):
         try:
