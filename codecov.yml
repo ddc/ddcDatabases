@@ -14,5 +14,3 @@ comment:
   behavior: default
   require_changes: false
 
-codecov:
- token: 06b7aa31-2c0c-4194-81d7-80508a55024e
