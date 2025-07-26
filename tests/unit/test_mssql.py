@@ -395,7 +395,7 @@ class TestMSSQL:
         mock_settings.echo = False
         mock_settings.pool_size = 20
         mock_settings.max_overflow = 10
-        mock_settings.odbcdriver_version = 17
+        mock_settings.odbcdriver_version = 18
         mock_settings.sync_driver = "mssql+pyodbc"
         mock_settings.async_driver = "mssql+aioodbc"
         mock_get_settings.return_value = mock_settings
@@ -410,7 +410,7 @@ class TestMSSQL:
             "username": "sa",
             "password": "password",
             "query": {
-                "driver": f"ODBC Driver 17 for SQL Server",
+                "driver": "ODBC Driver 18 for SQL Server",
                 "TrustServerCertificate": "yes",
             },
         }
