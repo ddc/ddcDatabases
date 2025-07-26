@@ -55,20 +55,16 @@ jobs:
         shell: bash
 
       - name: Upload coverage to Codecov
-        if: matrix.python-version == '3.13' && (matrix.os == 'ubuntu-latest' || matrix.os == 'ubuntu-latest-arm64') && matrix.arch != 'arm64'
+        if: matrix.python-version == '3.13' && matrix.os == 'ubuntu-latest'
         uses: codecov/codecov-action@v5
         with:
-            token: ${{ secrets.CODECOV_TOKEN }}
-            files: ./coverage.xml
-            fail_ci_if_error: false
-            verbose: true
+          token: ${{ secrets.CODECOV_TOKEN }}
 
       - name: Upload test results to Codecov
-        if: matrix.python-version == '3.13' && (matrix.os == 'ubuntu-latest' || matrix.os == 'ubuntu-latest-arm64') && matrix.arch != 'arm64'
+        if: matrix.python-version == '3.13' && matrix.os == 'ubuntu-latest'
         uses: codecov/test-results-action@v1
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          file: ./junit.xml
 
 
   build:
