@@ -55,6 +55,14 @@ jobs:
         run: poetry run poe tests
         shell: bash
 
+      - name: Check coverage files
+        if: matrix.python-version == '3.13' && matrix.os == 'ubuntu-latest'
+        run: |
+          echo "Checking for coverage files..."
+          ls -la coverage.xml || echo "coverage.xml not found"
+          ls -la junit.xml || echo "junit.xml not found"
+        shell: bash
+
       - name: Upload coverage to Codecov
         if: matrix.python-version == '3.13' && matrix.os == 'ubuntu-latest'
         uses: codecov/codecov-action@v5
@@ -62,6 +70,8 @@ jobs:
             token: ${{ secrets.CODECOV_TOKEN }}
             files: ./coverage.xml
             slug: ddc/ddcDatabases
+            fail_ci_if_error: false
+            verbose: true
 
       - name: Upload test results to Codecov
         if: matrix.python-version == '3.13' && matrix.os == 'ubuntu-latest'
