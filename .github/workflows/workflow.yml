@@ -59,12 +59,14 @@ jobs:
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
+          slug: ddc/ddcDatabases
 
       - name: Upload test results to Codecov
         if: matrix.python-version == '3.13' && matrix.os == 'ubuntu-latest'
         uses: codecov/test-results-action@v1
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
+          slug: ddc/ddcDatabases
 
 
   build:
