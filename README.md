@@ -5,6 +5,7 @@
 [![PyPi](https://img.shields.io/pypi/v/ddcDatabases.svg)](https://pypi.python.org/pypi/ddcDatabases)
 [![PyPI Downloads](https://static.pepy.tech/badge/ddcDatabases)](https://pepy.tech/projects/ddcDatabases)
 [![codecov](https://codecov.io/gh/ddc/ddcDatabases/graph/badge.svg?token=E942EZII4Q)](https://codecov.io/gh/ddc/ddcDatabases)
+[![Coverage](https://coveralls.io/repos/github/ddc/ddcDatabases/badge.svg?branch=master)](https://coveralls.io/github/ddc/ddcDatabases?branch=master)
 [![CI/CD Pipeline](https://github.com/ddc/ddcDatabases/actions/workflows/workflow.yml/badge.svg)](https://github.com/ddc/ddcDatabases/actions/workflows/workflow.yml)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=ddc_ddcDatabases&metric=alert_status)](https://sonarcloud.io/dashboard?id=ddc_ddcDatabases)  
 [![Build Status](https://img.shields.io/endpoint.svg?url=https%3A//actions-badge.atrox.dev/ddc/ddcDatabases/badge?ref=main&label=build&logo=none)](https://actions-badge.atrox.dev/ddc/ddcDatabases/goto?ref=main)
