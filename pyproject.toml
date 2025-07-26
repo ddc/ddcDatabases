@@ -84,6 +84,7 @@ skip-string-normalization = true
 omit = [
     "build.py",
     "tests/*",
+    "*/__init__.py",
 ]
 
 [tool.coverage.report]
@@ -99,5 +100,3 @@ exclude_lines = [
     "class .*\\bProtocol\\):",
     "@(abc\\.)?abstractmethod",
 ]
-show_missing = false
-skip_covered = false
