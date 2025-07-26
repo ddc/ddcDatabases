@@ -1,25 +1,52 @@
 import logging
 from importlib.metadata import version
 from typing import Literal, NamedTuple
-from .db_utils import DBUtils, DBUtilsAsync
-from .mongodb import MongoDB
-from .mssql import MSSQL
-from .mysql import MySQL
-from .oracle import Oracle
-from .postgresql import PostgreSQL
-from .sqlite import Sqlite
+from ddcDatabases.db_utils import DBUtils, DBUtilsAsync
+from ddcDatabases.sqlite import Sqlite
 
 
-__all__ = (
-    "DBUtils",
-    "DBUtilsAsync",
-    "MongoDB",
-    "MSSQL",
-    "MySQL",
-    "Oracle",
-    "PostgreSQL",
-    "Sqlite",
-)
+# Conditional imports based on available dependencies
+try:
+    from .mongodb import MongoDB
+except ImportError:
+    MongoDB = None
+
+try:
+    from .mssql import MSSQL
+except ImportError:
+    MSSQL = None
+
+try:
+    from .mysql import MySQL
+except ImportError:
+    MySQL = None
+
+try:
+    from .oracle import Oracle
+except ImportError:
+    Oracle = None
+
+try:
+    from .postgresql import PostgreSQL
+except ImportError:
+    PostgreSQL = None
+
+
+# Build __all__ dynamically based on successfully imported classes
+__all__ = ["DBUtils", "DBUtilsAsync", "Sqlite"]
+
+if MongoDB is not None:
+    __all__.append("MongoDB")
+if MSSQL is not None:
+    __all__.append("MSSQL")
+if MySQL is not None:
+    __all__.append("MySQL")
+if Oracle is not None:
+    __all__.append("Oracle")
+if PostgreSQL is not None:
+    __all__.append("PostgreSQL")
+
+__all__ = tuple(__all__)
 
 
 __title__ = "ddcDatabases"

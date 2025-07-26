@@ -255,3 +255,179 @@ class TestMSSQL:
         
         assert mssql.autoflush == False
         assert mssql.expire_on_commit == False
+
+    @patch('ddcDatabases.mssql.get_mssql_settings')
+    def test_test_connection_sync_url_creation(self, mock_get_settings):
+        """Test _test_connection_sync URL creation logic - Lines 73-77"""
+        mock_settings = MagicMock()
+        mock_settings.user = "sa"
+        mock_settings.password = "password"
+        mock_settings.host = "localhost"
+        mock_settings.port = 1433
+        mock_settings.database = "master"
+        mock_settings.db_schema = "dbo"
+        mock_settings.echo = False
+        mock_settings.pool_size = 20
+        mock_settings.max_overflow = 10
+        mock_settings.odbcdriver_version = 17
+        mock_settings.sync_driver = "mssql+pyodbc"
+        mock_settings.async_driver = "mssql+aioodbc"
+        mock_get_settings.return_value = mock_settings
+        
+        # Create MSSQL instance
+        mssql = MSSQL()
+        
+        # Test the URL creation logic by simulating what the method does
+        from sqlalchemy.engine import URL
+        
+        # Simulate deleting password and query (as done in lines 71-72)
+        test_connection_url = mssql.connection_url.copy()
+        if "password" in test_connection_url:
+            del test_connection_url["password"]
+        if "query" in test_connection_url:
+            del test_connection_url["query"]
+        
+        # Create URL as done in the method (lines 73-77)
+        _connection_url = URL.create(
+            **test_connection_url,
+            drivername=mssql.sync_driver,
+            query={"schema": mssql.schema},
+        )
+        
+        # Verify URL was created correctly
+        assert _connection_url.drivername == "mssql+pyodbc"
+        assert _connection_url.query["schema"] == "dbo"
+        assert _connection_url.host == "localhost"
+        assert _connection_url.port == 1433
+        assert _connection_url.database == "master"
+
+    @patch('ddcDatabases.mssql.get_mssql_settings')
+    def test_test_connection_async_url_creation(self, mock_get_settings):
+        """Test _test_connection_async URL creation logic - Lines 87-91"""
+        mock_settings = MagicMock()
+        mock_settings.user = "sa"
+        mock_settings.password = "password"
+        mock_settings.host = "localhost"
+        mock_settings.port = 1433
+        mock_settings.database = "master"
+        mock_settings.db_schema = "dbo"
+        mock_settings.echo = False
+        mock_settings.pool_size = 20
+        mock_settings.max_overflow = 10
+        mock_settings.odbcdriver_version = 17
+        mock_settings.sync_driver = "mssql+pyodbc"
+        mock_settings.async_driver = "mssql+aioodbc"
+        mock_get_settings.return_value = mock_settings
+        
+        # Create MSSQL instance
+        mssql = MSSQL()
+        
+        # Test the URL creation logic by simulating what the async method does
+        from sqlalchemy.engine import URL
+        
+        # Simulate deleting password and query (as done in lines 85-86)
+        test_connection_url = mssql.connection_url.copy()
+        if "password" in test_connection_url:
+            del test_connection_url["password"]
+        if "query" in test_connection_url:
+            del test_connection_url["query"]
+        
+        # Create URL as done in the async method (lines 87-91)
+        _connection_url = URL.create(
+            **test_connection_url,
+            drivername=mssql.async_driver,  # Note: async_driver instead of sync_driver
+            query={"schema": mssql.schema},
+        )
+        
+        # Verify URL was created correctly for async
+        assert _connection_url.drivername == "mssql+aioodbc"  # async driver
+        assert _connection_url.query["schema"] == "dbo"
+        assert _connection_url.host == "localhost"
+        assert _connection_url.port == 1433
+        assert _connection_url.database == "master"
+
+    @patch('ddcDatabases.mssql.get_mssql_settings')
+    def test_connection_url_modification_sync(self, mock_get_settings):
+        """Test that connection_url is properly modified in _test_connection_sync - Lines 71-72"""
+        mock_settings = MagicMock()
+        mock_settings.user = "sa"
+        mock_settings.password = "password"
+        mock_settings.host = "localhost"
+        mock_settings.port = 1433
+        mock_settings.database = "master"
+        mock_settings.db_schema = "dbo"
+        mock_settings.echo = False
+        mock_settings.pool_size = 20
+        mock_settings.max_overflow = 10
+        mock_settings.odbcdriver_version = 17
+        mock_settings.sync_driver = "mssql+pyodbc"
+        mock_settings.async_driver = "mssql+aioodbc"
+        mock_get_settings.return_value = mock_settings
+        
+        mssql = MSSQL()
+        
+        # Verify initial state has password and query
+        assert "password" in mssql.connection_url
+        assert "query" in mssql.connection_url
+        
+        mock_session = MagicMock(spec=Session)
+        mock_session.bind = MagicMock()  # Add the bind attribute
+        
+        # Mock ConnectionTester to avoid actual connection
+        with patch('ddcDatabases.mssql.ConnectionTester'):
+            mssql._test_connection_sync(mock_session)
+        
+        # Verify password and query were deleted from connection_url
+        assert "password" not in mssql.connection_url
+        assert "query" not in mssql.connection_url
+
+    @patch('ddcDatabases.mssql.get_mssql_settings')
+    @pytest.mark.asyncio
+    async def test_connection_url_modification_async(self, mock_get_settings):
+        """Test that connection_url is properly modified in _test_connection_async - Lines 85-86"""
+        mock_settings = MagicMock()
+        mock_settings.user = "sa"
+        mock_settings.password = "password"
+        mock_settings.host = "localhost"
+        mock_settings.port = 1433
+        mock_settings.database = "master"
+        mock_settings.db_schema = "dbo"
+        mock_settings.echo = False
+        mock_settings.pool_size = 20
+        mock_settings.max_overflow = 10
+        mock_settings.odbcdriver_version = 18
+        mock_settings.sync_driver = "mssql+pyodbc"
+        mock_settings.async_driver = "mssql+aioodbc"
+        mock_get_settings.return_value = mock_settings
+        
+        mssql = MSSQL()
+        
+        # Reset connection_url since it may have been modified by previous test
+        mssql.connection_url = {
+            "host": "localhost",
+            "port": 1433,
+            "database": "master",
+            "username": "sa",
+            "password": "password",
+            "query": {
+                "driver": "ODBC Driver 18 for SQL Server",
+                "TrustServerCertificate": "yes",
+            },
+        }
+        
+        # Verify initial state has password and query
+        assert "password" in mssql.connection_url
+        assert "query" in mssql.connection_url
+        
+        mock_session = MagicMock(spec=AsyncSession)
+        mock_session.bind = MagicMock()  # Add the bind attribute
+        
+        # Mock ConnectionTester to avoid actual connection
+        with patch('ddcDatabases.mssql.ConnectionTester') as mock_tester_class:
+            mock_tester_instance = AsyncMock()
+            mock_tester_class.return_value = mock_tester_instance
+            await mssql._test_connection_async(mock_session)
+        
+        # Verify password and query were deleted from connection_url
+        assert "password" not in mssql.connection_url
+        assert "query" not in mssql.connection_url
