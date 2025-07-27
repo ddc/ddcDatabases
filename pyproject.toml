@@ -82,6 +82,7 @@ skip-string-normalization = true
 
 [tool.coverage.run]
 omit = [
+    "build.py",
     "tests/*",
     "*/__init__.py",
 ]
