@@ -1,8 +1,8 @@
+from ddcDatabases.db_utils import BaseConnection, ConnectionTester
+from ddcDatabases.settings import get_mssql_settings
 from sqlalchemy.engine import URL
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
-from ddcDatabases.db_utils import BaseConnection, ConnectionTester
-from ddcDatabases.settings import get_mssql_settings
 
 
 class MSSQL(BaseConnection):
@@ -55,6 +55,12 @@ class MSSQL(BaseConnection):
             "pool_size": self.pool_size,
             "max_overflow": self.max_overflow,
             "echo": self.echo,
+            "pool_pre_ping": True,
+            "pool_recycle": 3600,
+            "connect_args": {
+                "timeout": 30,
+                "login_timeout": 30,
+            },
             **self.extra_engine_args,
         }
 

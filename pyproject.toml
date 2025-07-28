@@ -4,7 +4,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "ddcDatabases"
-version = "2.0.3"
+version = "2.0.4"
 description = "Database ORM Connections and Queries"
 license = "MIT"
 readme = "README.md"
@@ -76,10 +76,6 @@ _test = "python -m pytest -v --cov --cov-report=term --cov-report=xml --junitxml
 tests = ["_test"]
 test = ["tests"]
 
-[tool.black]
-line-length = 120
-skip-string-normalization = true
-
 [tool.coverage.run]
 omit = [
     "build.py",
@@ -102,3 +98,7 @@ exclude_lines = [
 ]
 show_missing = false
 skip_covered = false
+
+[tool.black]
+line-length = 120
+skip-string-normalization = true

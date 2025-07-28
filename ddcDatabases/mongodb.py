@@ -1,8 +1,8 @@
 import sys
 from contextlib import contextmanager
 from datetime import datetime
-from pymongo import ASCENDING, DESCENDING, MongoClient
 from ddcDatabases.settings import get_mongodb_settings
+from pymongo import ASCENDING, DESCENDING, MongoClient
 
 
 class MongoDB:
