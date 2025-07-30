@@ -553,7 +553,7 @@ class TestBaseConnectionContextManagers:
         mock_engine = AsyncMock()
         
         with patch.object(conn, '_get_async_engine') as mock_get_engine, \
-             patch('ddcDatabases.db_utils.sessionmaker') as mock_sessionmaker, \
+             patch('ddcDatabases.db_utils.async_sessionmaker') as mock_sessionmaker, \
              patch.object(conn, '_test_connection_async') as mock_test_conn:
             
             mock_get_engine.return_value.__aenter__.return_value = mock_engine
@@ -763,23 +763,23 @@ class TestDBUtilsAsyncInsertBulk:
     async def test_insertbulk_success(self):
         """Test successful async bulk insert - Lines 291-297"""
         mock_session = AsyncMock()
-        # Make bulk_insert_mappings a regular (non-coroutine) method
-        mock_session.bulk_insert_mappings = MagicMock()
+        # Mock run_sync method that will call bulk_insert_mappings
+        mock_session.run_sync = AsyncMock()
         
         db_utils = self.DBUtilsAsync(mock_session)
         bulk_data = [{"id": 1, "name": "test1"}, {"id": 2, "name": "test2"}]
         
         await db_utils.insertbulk(DatabaseModel, bulk_data)
         
-        mock_session.bulk_insert_mappings.assert_called_once_with(DatabaseModel, bulk_data)
+        mock_session.run_sync.assert_called_once()
         mock_session.commit.assert_called_once()
     
     @pytest.mark.asyncio
     async def test_insertbulk_exception_handling(self):
         """Test async bulk insert exception handling - Lines 291-297"""
         mock_session = AsyncMock()
-        # Make bulk_insert_mappings raise exception
-        mock_session.bulk_insert_mappings = MagicMock(side_effect=Exception("Bulk insert failed"))
+        # Make run_sync raise an exception
+        mock_session.run_sync = AsyncMock(side_effect=Exception("Bulk insert failed"))
         
         db_utils = self.DBUtilsAsync(mock_session)
         bulk_data = [{"id": 1, "name": "test1"}]

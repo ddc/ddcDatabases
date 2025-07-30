@@ -41,7 +41,7 @@ class TestAsyncBaseConnection:
         )
         
         with patch.object(conn, '_get_async_engine') as mock_get_engine, \
-             patch('ddcDatabases.db_utils.sessionmaker') as mock_sessionmaker, \
+             patch('ddcDatabases.db_utils.async_sessionmaker') as mock_sessionmaker, \
              patch.object(conn, '_test_connection_async') as mock_test_conn:
             
             mock_engine = AsyncMock()
@@ -231,22 +231,22 @@ class TestDBUtilsAsync:
     async def test_insertbulk_success(self):
         """Test successful async bulk insert operation"""
         mock_session = AsyncMock()
-        # Make bulk_insert_mappings a regular (non-coroutine) method
-        mock_session.bulk_insert_mappings = MagicMock()
+        # Mock run_sync method that will call bulk_insert_mappings
+        mock_session.run_sync = AsyncMock()
         
         db_utils = self.DBUtilsAsync(mock_session)
         bulk_data = [{"id": 1, "name": "test1"}, {"id": 2, "name": "test2"}]
         
         await db_utils.insertbulk(AsyncTestModel, bulk_data)
         
-        mock_session.bulk_insert_mappings.assert_called_once_with(AsyncTestModel, bulk_data)
+        mock_session.run_sync.assert_called_once()
         mock_session.commit.assert_called_once()
         
     async def test_insertbulk_exception_handling(self):
         """Test bulk insert exception handling"""
         mock_session = AsyncMock()
-        # Make bulk_insert_mappings a regular (non-coroutine) method that raises
-        mock_session.bulk_insert_mappings = MagicMock(side_effect=Exception("Bulk insert failed"))
+        # Make run_sync raise an exception
+        mock_session.run_sync = AsyncMock(side_effect=Exception("Bulk insert failed"))
         
         db_utils = self.DBUtilsAsync(mock_session)
         bulk_data = [{"id": 1, "name": "test1"}]
