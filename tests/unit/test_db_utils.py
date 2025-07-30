@@ -214,10 +214,12 @@ class TestDBUtils:
         db_utils = self.DBUtils(mock_session)
         test_obj = DatabaseModel(id=1, name="test")
         
-        db_utils.insert(test_obj)
+        result = db_utils.insert(test_obj)
         
+        assert result is test_obj
         mock_session.add.assert_called_once_with(test_obj)
         mock_session.commit.assert_called_once()
+        mock_session.refresh.assert_called_once_with(test_obj)
         
     def test_insert_exception(self):
         """Test insert with exception"""
@@ -231,7 +233,8 @@ class TestDBUtils:
             db_utils.insert(test_obj)
             
         mock_session.rollback.assert_called_once()
-        mock_session.commit.assert_called_once()  # Finally block
+        mock_session.commit.assert_not_called()  # Should not commit on exception
+        mock_session.refresh.assert_not_called()  # Should not refresh on exception
         
     def test_insertbulk_success(self):
         """Test successful bulk insert operation"""
@@ -257,7 +260,7 @@ class TestDBUtils:
             db_utils.insertbulk(DatabaseModel, bulk_data)
             
         mock_session.rollback.assert_called_once()
-        mock_session.commit.assert_called_once()  # Finally block
+        mock_session.commit.assert_not_called()  # Should not commit on exception
         
     def test_deleteall_success(self):
         """Test successful delete all operation"""
@@ -285,7 +288,7 @@ class TestDBUtils:
             db_utils.deleteall(DatabaseModel)
             
         mock_session.rollback.assert_called_once()
-        mock_session.commit.assert_called_once()  # Finally block
+        mock_session.commit.assert_not_called()  # Should not commit on exception
         
     def test_execute_success(self):
         """Test successful execute operation"""
@@ -311,7 +314,7 @@ class TestDBUtils:
             db_utils.execute(stmt)
             
         mock_session.rollback.assert_called_once()
-        mock_session.commit.assert_called_once()  # Finally block
+        mock_session.commit.assert_not_called()  # Should not commit on exception
 
 
 class TestDBUtilsAsync:
@@ -402,10 +405,12 @@ class TestDBUtilsAsync:
         db_utils = self.DBUtilsAsync(mock_session)
         test_obj = DatabaseModel(id=1, name="test")
         
-        await db_utils.insert(test_obj)
+        result = await db_utils.insert(test_obj)
         
+        assert result is test_obj
         mock_session.add.assert_called_once_with(test_obj)
         mock_session.commit.assert_called_once()
+        mock_session.refresh.assert_called_once_with(test_obj)
         
     @pytest.mark.asyncio
     async def test_insert_exception(self):
@@ -421,7 +426,8 @@ class TestDBUtilsAsync:
             await db_utils.insert(test_obj)
             
         mock_session.rollback.assert_called_once()
-        mock_session.commit.assert_called_once()  # Finally block
+        mock_session.commit.assert_not_called()  # Should not commit on exception
+        mock_session.refresh.assert_not_called()  # Should not refresh on exception
         
     @pytest.mark.asyncio
     async def test_deleteall_success(self):
@@ -450,7 +456,7 @@ class TestDBUtilsAsync:
             await db_utils.deleteall(DatabaseModel)
             
         mock_session.rollback.assert_called_once()
-        mock_session.commit.assert_called_once()  # Finally block
+        mock_session.commit.assert_not_called()  # Should not commit on exception
         
     @pytest.mark.asyncio
     async def test_execute_success(self):
@@ -478,7 +484,7 @@ class TestDBUtilsAsync:
             await db_utils.execute(stmt)
             
         mock_session.rollback.assert_called_once()
-        mock_session.commit.assert_called_once()  # Finally block
+        mock_session.commit.assert_not_called()  # Should not commit on exception
 
 
 class TestBaseConnectionContextManagers:
@@ -782,4 +788,4 @@ class TestDBUtilsAsyncInsertBulk:
             await db_utils.insertbulk(DatabaseModel, bulk_data)
             
         mock_session.rollback.assert_called_once()
-        mock_session.commit.assert_called_once()  # Finally block
+        mock_session.commit.assert_not_called()  # Should not commit on exception
