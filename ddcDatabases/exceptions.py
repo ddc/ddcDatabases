@@ -1,13 +1,18 @@
 import sys
 from datetime import datetime, timezone
+from typing import Any
 
 
 class CustomBaseException(Exception):
-    def __init__(self, msg):
+    """Base exception with timestamp generation"""
+
+    __slots__ = ('original_exception',)
+
+    def __init__(self, msg: Any) -> None:
+        self.original_exception = msg
         now = datetime.now(timezone.utc)
-        dt = now.strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3]
-        utc_offset = now.strftime("%z")
-        sys.stderr.write(f"[{dt}{utc_offset}]:[ERROR]:{repr(msg)}\n")
+        dt = now.isoformat(timespec='milliseconds')
+        sys.stderr.write(f"[{dt}]:[ERROR]:{repr(msg)}\n")
         raise msg
 
 

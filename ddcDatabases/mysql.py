@@ -1,4 +1,3 @@
-# -*- encoding: utf-8 -*-
 from ddcDatabases.db_utils import BaseConnection
 from ddcDatabases.settings import get_mysql_settings
 
@@ -40,6 +39,13 @@ class MySQL(BaseConnection):
         self.extra_engine_args = extra_engine_args or {}
         self.engine_args = {
             "echo": self.echo,
+            "pool_pre_ping": True,
+            "pool_recycle": 3600,
+            "connect_args": {
+                "charset": "utf8mb4",
+                "autocommit": True,
+                "connect_timeout": 30,
+            },
             **self.extra_engine_args,
         }
 

@@ -226,7 +226,7 @@ class TestDBUtilsAsync:
             await db_utils.insert(test_obj)
             
         mock_session.rollback.assert_called_once()
-        mock_session.commit.assert_called_once()  # Finally block
+        mock_session.commit.assert_not_called()  # Should not commit on exception
         
     async def test_insertbulk_success(self):
         """Test successful async bulk insert operation"""
@@ -255,7 +255,7 @@ class TestDBUtilsAsync:
             await db_utils.insertbulk(AsyncTestModel, bulk_data)
             
         mock_session.rollback.assert_called_once()
-        mock_session.commit.assert_called_once()  # Finally block
+        mock_session.commit.assert_not_called()  # Should not commit on exception
         
     async def test_deleteall_success(self):
         """Test successful async delete all operation"""
@@ -282,7 +282,7 @@ class TestDBUtilsAsync:
             await db_utils.deleteall(AsyncTestModel)
             
         mock_session.rollback.assert_called_once()
-        mock_session.commit.assert_called_once()  # Finally block
+        mock_session.commit.assert_not_called()  # Should not commit on exception
         
     async def test_execute_success(self):
         """Test successful async execute operation"""
@@ -308,7 +308,7 @@ class TestDBUtilsAsync:
             await db_utils.execute(stmt)
             
         mock_session.rollback.assert_called_once()
-        mock_session.commit.assert_called_once()  # Finally block
+        mock_session.commit.assert_not_called()  # Should not commit on exception
 
 
 

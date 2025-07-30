@@ -1,10 +1,9 @@
-# -*- encoding: utf-8 -*-
 import sys
 from contextlib import contextmanager
 from datetime import datetime
+from ddcDatabases.settings import get_sqlite_settings
 from sqlalchemy.engine import create_engine, Engine
 from sqlalchemy.orm import Session, sessionmaker
-from ddcDatabases.settings import get_sqlite_settings
 
 
 class Sqlite:

@@ -1,4 +1,3 @@
-# -*- encoding: utf-8 -*-
 from ddcDatabases.db_utils import BaseConnection
 from ddcDatabases.settings import get_postgresql_settings
 
@@ -40,6 +39,12 @@ class PostgreSQL(BaseConnection):
         self.extra_engine_args = extra_engine_args or {}
         self.engine_args = {
             "echo": self.echo,
+            "pool_pre_ping": True,
+            "pool_recycle": 3600,
+            "connect_args": {
+                "server_side_cursors": True,
+                "connect_timeout": 30,
+            },
             **self.extra_engine_args,
         }
 

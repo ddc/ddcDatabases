@@ -1,4 +1,3 @@
-# -*- encoding: utf-8 -*-
 from ddcDatabases.db_utils import BaseConnection
 from ddcDatabases.settings import get_oracle_settings
 
@@ -43,6 +42,12 @@ class Oracle(BaseConnection):
         self.extra_engine_args = extra_engine_args or {}
         self.engine_args = {
             "echo": self.echo,
+            "pool_pre_ping": True,
+            "pool_recycle": 3600,
+            "connect_args": {
+                "threaded": True,
+                "events": True,
+            },
             **self.extra_engine_args,
         }
 

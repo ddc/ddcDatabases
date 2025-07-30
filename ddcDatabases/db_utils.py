@@ -3,14 +3,6 @@ from contextlib import asynccontextmanager, contextmanager
 from datetime import datetime
 from typing import AsyncGenerator, Generator
 import sqlalchemy as sa
-from sqlalchemy import RowMapping
-from sqlalchemy.engine import create_engine, Engine, URL
-from sqlalchemy.ext.asyncio import (
-    AsyncEngine,
-    AsyncSession,
-    create_async_engine,
-)
-from sqlalchemy.orm import Session, sessionmaker
 from ddcDatabases.exceptions import (
     DBDeleteAllDataException,
     DBExecuteException,
@@ -19,6 +11,14 @@ from ddcDatabases.exceptions import (
     DBInsertBulkException,
     DBInsertSingleException,
 )
+from sqlalchemy import RowMapping
+from sqlalchemy.engine import create_engine, Engine, URL
+from sqlalchemy.ext.asyncio import (
+    AsyncEngine,
+    AsyncSession,
+    create_async_engine,
+)
+from sqlalchemy.orm import Session, sessionmaker
 
 
 class BaseConnection:
@@ -208,41 +208,39 @@ class DBUtils:
             self.session.rollback()
             raise DBFetchValueException(e)
 
-    def insert(self, stmt) -> None:
+    def insert(self, stmt):
         try:
             self.session.add(stmt)
+            self.session.commit()
+            self.session.refresh(stmt)
+            return stmt
         except Exception as e:
             self.session.rollback()
-            raise DBInsertSingleException(e)
-        finally:
-            self.session.commit()
+            raise DBInsertSingleException(e) from e
 
     def insertbulk(self, model, list_data: list[dict]) -> None:
         try:
             self.session.bulk_insert_mappings(model, list_data)
+            self.session.commit()
         except Exception as e:
             self.session.rollback()
             raise DBInsertBulkException(e)
-        finally:
-            self.session.commit()
 
     def deleteall(self, model) -> None:
         try:
             self.session.query(model).delete()
+            self.session.commit()
         except Exception as e:
             self.session.rollback()
             raise DBDeleteAllDataException(e)
-        finally:
-            self.session.commit()
 
     def execute(self, stmt) -> None:
         try:
             self.session.execute(stmt)
+            self.session.commit()
         except Exception as e:
             self.session.rollback()
             raise DBExecuteException(e)
-        finally:
-            self.session.commit()
 
 
 class DBUtilsAsync:
@@ -269,38 +267,36 @@ class DBUtilsAsync:
             await self.session.rollback()
             raise DBFetchValueException(e)
 
-    async def insert(self, stmt) -> None:
+    async def insert(self, stmt):
         try:
             self.session.add(stmt)
+            await self.session.commit()
+            await self.session.refresh(stmt)
+            return stmt
         except Exception as e:
             await self.session.rollback()
-            raise DBInsertSingleException(e)
-        finally:
-            await self.session.commit()
+            raise DBInsertSingleException(e) from e
 
     async def insertbulk(self, model, list_data: list[dict]) -> None:
         try:
             self.session.bulk_insert_mappings(model, list_data)
+            await self.session.commit()
         except Exception as e:
             await self.session.rollback()
             raise DBInsertBulkException(e)
-        finally:
-            await self.session.commit()
 
     async def deleteall(self, model) -> None:
         try:
             await self.session.execute(sa.delete(model))
+            await self.session.commit()
         except Exception as e:
             await self.session.rollback()
             raise DBDeleteAllDataException(e)
-        finally:
-            await self.session.commit()
 
     async def execute(self, stmt) -> None:
         try:
             await self.session.execute(stmt)
+            await self.session.commit()
         except Exception as e:
             await self.session.rollback()
             raise DBExecuteException(e)
-        finally:
-            await self.session.commit()
