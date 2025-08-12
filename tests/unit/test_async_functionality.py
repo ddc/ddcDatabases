@@ -40,9 +40,9 @@ class TestAsyncBaseConnection:
             async_driver="postgresql+asyncpg"
         )
         
-        with patch.object(conn, '_get_async_engine') as mock_get_engine, \
+        with patch.object(self.BaseConnection, '_get_async_engine') as mock_get_engine, \
              patch('ddcDatabases.db_utils.async_sessionmaker') as mock_sessionmaker, \
-             patch.object(conn, '_test_connection_async') as mock_test_conn:
+             patch.object(self.BaseConnection, '_test_connection_async') as mock_test_conn:
             
             mock_engine = AsyncMock()
             mock_get_engine.return_value.__aenter__.return_value = mock_engine

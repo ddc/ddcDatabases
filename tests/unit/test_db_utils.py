@@ -592,7 +592,7 @@ class TestBaseConnectionContextManagers:
         )
         
         # Mock _test_connection_sync to avoid actual connection testing
-        with patch.object(conn, '_test_connection_sync') as mock_test_conn:
+        with patch.object(self.BaseConnection, '_test_connection_sync') as mock_test_conn:
             with conn as session:
                 assert session is mock_session
                 assert conn.is_connected == True
@@ -622,9 +622,9 @@ class TestBaseConnectionContextManagers:
         mock_session = AsyncMock()
         mock_engine = AsyncMock()
         
-        with patch.object(conn, '_get_async_engine') as mock_get_engine, \
+        with patch.object(self.BaseConnection, '_get_async_engine') as mock_get_engine, \
              patch('ddcDatabases.db_utils.async_sessionmaker') as mock_sessionmaker, \
-             patch.object(conn, '_test_connection_async') as mock_test_conn:
+             patch.object(self.BaseConnection, '_test_connection_async') as mock_test_conn:
             
             mock_get_engine.return_value.__aenter__.return_value = mock_engine
             mock_get_engine.return_value.__aexit__.return_value = None

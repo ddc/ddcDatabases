@@ -1102,4 +1102,4 @@ pgsql = ["asyncpg", "psycopg2-binary"]
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.12"
-content-hash = "712c91117b40c708e813ffff298e9275527fb76f1fca481791082bfc10b81d93"
+content-hash = "f2ce065b4ea0f9e3d9434a54e93e5fffbe76707fa9d94f0cc8ec5c3786aff503"

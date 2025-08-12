@@ -45,7 +45,7 @@ optional = true
 [tool.poetry.dependencies]
 python = "^3.12"
 pydantic-settings = "^2.10.1"
-SQLAlchemy = "^2.0.43"
+SQLAlchemy = "==2.0.43"
 greenlet = "^3.2.4"
 aioodbc = {version = "^0.5.0", optional = true}
 aiomysql = {version = "^0.2.0", optional = true}
