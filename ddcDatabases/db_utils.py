@@ -2,7 +2,7 @@ from __future__ import annotations
 import logging
 from contextlib import asynccontextmanager, contextmanager
 from datetime import datetime
-from typing import AsyncGenerator, Generator
+from typing import Any, AsyncGenerator, Generator, Sequence, TypeVar
 import sqlalchemy as sa
 from sqlalchemy import RowMapping
 from sqlalchemy.engine import create_engine, Engine, URL
@@ -21,6 +21,9 @@ from ddcDatabases.exceptions import (
     DBInsertBulkException,
     DBInsertSingleException,
 )
+
+# Type variable for generic model types
+T = TypeVar('T')
 
 
 class BaseConnection:
@@ -187,12 +190,17 @@ class DBUtils:
     def __init__(self, session: Session):
         self.session = session
 
-    def fetchall(self, stmt) -> list[RowMapping]:
+    def fetchall(self, stmt, as_dict: bool = False) -> list[RowMapping] | list[dict]:
         try:
             cursor = self.session.execute(stmt)
-            result = cursor.mappings().all()
-            cursor.close()
-            return list(result)
+            if as_dict:
+                result = cursor.mappings().all()
+                cursor.close()
+                return [dict(row) for row in result]
+            else:
+                result = cursor.mappings().all()
+                cursor.close()
+                return list(result)
         except Exception as e:
             self.session.rollback()
             raise DBFetchAllException(e) from e
@@ -217,10 +225,25 @@ class DBUtils:
             self.session.rollback()
             raise DBInsertSingleException(e) from e
 
-    def insertbulk(self, model, list_data: list[dict]) -> None:
+    def insertbulk(self, model: type[T], list_data: Sequence[dict[str, Any]], batch_size: int = 100) -> list[T]:
         try:
-            self.session.bulk_insert_mappings(model, list_data)
+            # Create model instances for bulk insert
+            instances = [model(**data) for data in list_data]
+            self.session.add_all(instances)
             self.session.commit()
+            
+            # Bulk refresh to avoid connection busy issues and get updated IDs
+            self.session.expunge_all()
+            refreshed_instances = []
+            
+            # Process in batches to optimize memory usage and performance
+            for i in range(0, len(instances), batch_size):
+                batch = instances[i:i + batch_size]
+                for instance in batch:
+                    merged_instance = self.session.merge(instance)
+                    refreshed_instances.append(merged_instance)
+            
+            return refreshed_instances
         except Exception as e:
             self.session.rollback()
             raise DBInsertBulkException(e) from e
@@ -246,12 +269,17 @@ class DBUtilsAsync:
     def __init__(self, session: AsyncSession):
         self.session = session
 
-    async def fetchall(self, stmt) -> list[RowMapping]:
+    async def fetchall(self, stmt, as_dict: bool = False) -> list[RowMapping] | list[dict]:
         try:
             cursor = await self.session.execute(stmt)
-            result = cursor.mappings().all()
-            cursor.close()
-            return list(result)
+            if as_dict:
+                result = cursor.mappings().all()
+                cursor.close()
+                return [dict(row) for row in result]
+            else:
+                result = cursor.mappings().all()
+                cursor.close()
+                return list(result)
         except Exception as e:
             await self.session.rollback()
             raise DBFetchAllException(e) from e
@@ -276,17 +304,33 @@ class DBUtilsAsync:
             await self.session.rollback()
             raise DBInsertSingleException(e) from e
 
-    async def insertbulk(self, model, list_data: list[dict]) -> None:
+    async def insertbulk(self, model: type[T], list_data: Sequence[dict[str, Any]], batch_size: int = 100) -> list[T]:
         try:
-            await self.session.run_sync(lambda sync_session: sync_session.bulk_insert_mappings(model, list_data))
+            # Create model instances for bulk insert
+            instances = [model(**data) for data in list_data]
+            self.session.add_all(instances)
             await self.session.commit()
+            
+            # Bulk refresh to avoid connection busy issues with MSSQL and get updated IDs
+            self.session.expunge_all()
+            refreshed_instances = []
+            
+            # Process in batches to optimize memory usage and performance
+            for i in range(0, len(instances), batch_size):
+                batch = instances[i:i + batch_size]
+                for instance in batch:
+                    merged_instance = await self.session.merge(instance)
+                    refreshed_instances.append(merged_instance)
+            
+            return refreshed_instances
         except Exception as e:
             await self.session.rollback()
             raise DBInsertBulkException(e) from e
 
     async def deleteall(self, model) -> None:
         try:
-            await self.session.execute(sa.delete(model))
+            stmt = sa.delete(model)
+            await self.session.execute(stmt)
             await self.session.commit()
         except Exception as e:
             await self.session.rollback()
