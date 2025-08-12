@@ -152,6 +152,29 @@ class TestDBUtils:
         mock_mappings.all.assert_called_once()
         mock_cursor.close.assert_called_once()
         
+    def test_fetchall_as_dict(self):
+        """Test fetchall with as_dict=True"""
+        mock_session = MagicMock()
+        mock_cursor = MagicMock()
+        mock_mappings = MagicMock()
+        # Create mock RowMapping objects that behave like dictionaries
+        mock_row1 = {"id": 1, "name": "test1"}
+        mock_row2 = {"id": 2, "name": "test2"}
+        
+        mock_session.execute.return_value = mock_cursor
+        mock_cursor.mappings.return_value = mock_mappings
+        mock_mappings.all.return_value = [mock_row1, mock_row2]
+        
+        db_utils = self.DBUtils(mock_session)
+        stmt = sa.select(DatabaseModel)
+        result = db_utils.fetchall(stmt, as_dict=True)
+        
+        assert result == [{"id": 1, "name": "test1"}, {"id": 2, "name": "test2"}]
+        mock_session.execute.assert_called_once_with(stmt)
+        mock_cursor.mappings.assert_called_once()
+        mock_mappings.all.assert_called_once()
+        mock_cursor.close.assert_called_once()
+        
     def test_fetchall_exception(self):
         """Test fetchall with exception"""
         mock_session = MagicMock()
@@ -240,18 +263,41 @@ class TestDBUtils:
         """Test successful bulk insert operation"""
         mock_session = MagicMock()
         
-        db_utils = self.DBUtils(mock_session)
-        bulk_data = [{"id": 1, "name": "test1"}, {"id": 2, "name": "test2"}]
+        # Create mock instances that will be returned
+        mock_instance1 = MagicMock()
+        mock_instance1.id = 1
+        mock_instance1.name = "test1"
+        mock_instance2 = MagicMock()
+        mock_instance2.id = 2
+        mock_instance2.name = "test2"
         
-        db_utils.insertbulk(DatabaseModel, bulk_data)
-        
-        mock_session.bulk_insert_mappings.assert_called_once_with(DatabaseModel, bulk_data)
-        mock_session.commit.assert_called_once()
+        # Mock DatabaseModel constructor
+        with patch('test_db_utils.DatabaseModel') as MockModel:
+            MockModel.side_effect = lambda **kwargs: mock_instance1 if kwargs['id'] == 1 else mock_instance2
+            
+            # Mock merge to return the same instances
+            mock_session.merge.side_effect = lambda instance: instance
+            
+            db_utils = self.DBUtils(mock_session)
+            bulk_data = [{"id": 1, "name": "test1"}, {"id": 2, "name": "test2"}]
+            
+            result = db_utils.insertbulk(MockModel, bulk_data)
+            
+            # Verify the result
+            assert len(result) == 2
+            assert result[0] is mock_instance1
+            assert result[1] is mock_instance2
+            
+            # Verify session methods were called
+            mock_session.add_all.assert_called_once()
+            mock_session.commit.assert_called_once()
+            mock_session.expunge_all.assert_called_once()
+            assert mock_session.merge.call_count == 2
         
     def test_insertbulk_exception(self):
         """Test bulk insert with exception"""
         mock_session = MagicMock()
-        mock_session.bulk_insert_mappings.side_effect = Exception("Bulk insert failed")
+        mock_session.add_all.side_effect = Exception("Bulk insert failed")
         
         db_utils = self.DBUtils(mock_session)
         bulk_data = [{"id": 1, "name": "test1"}]
@@ -349,6 +395,30 @@ class TestDBUtilsAsync:
         
         assert result == mock_result
         mock_session.execute.assert_called_once_with(stmt)
+        mock_cursor.close.assert_called_once()
+        
+    @pytest.mark.asyncio
+    async def test_fetchall_as_dict(self):
+        """Test async fetchall with as_dict=True"""
+        mock_session = AsyncMock()
+        mock_cursor = MagicMock()
+        mock_mappings = MagicMock()
+        # Create mock RowMapping objects that behave like dictionaries
+        mock_row1 = {"id": 1, "name": "test1"}
+        mock_row2 = {"id": 2, "name": "test2"}
+        
+        mock_session.execute.return_value = mock_cursor
+        mock_cursor.mappings.return_value = mock_mappings
+        mock_mappings.all.return_value = [mock_row1, mock_row2]
+        
+        db_utils = self.DBUtilsAsync(mock_session)
+        stmt = sa.select(DatabaseModel)
+        result = await db_utils.fetchall(stmt, as_dict=True)
+        
+        assert result == [{"id": 1, "name": "test1"}, {"id": 2, "name": "test2"}]
+        mock_session.execute.assert_called_once_with(stmt)
+        mock_cursor.mappings.assert_called_once()
+        mock_mappings.all.assert_called_once()
         mock_cursor.close.assert_called_once()
         
     @pytest.mark.asyncio
@@ -761,25 +831,48 @@ class TestDBUtilsAsyncInsertBulk:
     
     @pytest.mark.asyncio
     async def test_insertbulk_success(self):
-        """Test successful async bulk insert - Lines 291-297"""
+        """Test successful async bulk insert with new implementation"""
         mock_session = AsyncMock()
-        # Mock run_sync method that will call bulk_insert_mappings
-        mock_session.run_sync = AsyncMock()
+        mock_session.add_all = MagicMock()
+        mock_session.expunge_all = MagicMock()
         
-        db_utils = self.DBUtilsAsync(mock_session)
-        bulk_data = [{"id": 1, "name": "test1"}, {"id": 2, "name": "test2"}]
+        # Create mock instances that will be returned
+        mock_instance1 = MagicMock()
+        mock_instance1.id = 1
+        mock_instance1.name = "test1"
+        mock_instance2 = MagicMock()
+        mock_instance2.id = 2
+        mock_instance2.name = "test2"
         
-        await db_utils.insertbulk(DatabaseModel, bulk_data)
-        
-        mock_session.run_sync.assert_called_once()
-        mock_session.commit.assert_called_once()
+        # Mock DatabaseModel constructor
+        with patch('test_db_utils.DatabaseModel') as MockModel:
+            MockModel.side_effect = lambda **kwargs: mock_instance1 if kwargs['id'] == 1 else mock_instance2
+            
+            # Mock merge to return the same instances
+            mock_session.merge.side_effect = AsyncMock(side_effect=lambda instance: instance)
+            
+            db_utils = self.DBUtilsAsync(mock_session)
+            bulk_data = [{"id": 1, "name": "test1"}, {"id": 2, "name": "test2"}]
+            
+            result = await db_utils.insertbulk(MockModel, bulk_data)
+            
+            # Verify the result
+            assert len(result) == 2
+            assert result[0] is mock_instance1
+            assert result[1] is mock_instance2
+            
+            # Verify session methods were called
+            mock_session.add_all.assert_called_once()
+            mock_session.commit.assert_called_once()
+            mock_session.expunge_all.assert_called_once()
+            assert mock_session.merge.call_count == 2
     
     @pytest.mark.asyncio
     async def test_insertbulk_exception_handling(self):
-        """Test async bulk insert exception handling - Lines 291-297"""
+        """Test async bulk insert exception handling with new implementation"""
         mock_session = AsyncMock()
-        # Make run_sync raise an exception
-        mock_session.run_sync = AsyncMock(side_effect=Exception("Bulk insert failed"))
+        # Make add_all raise an exception
+        mock_session.add_all = MagicMock(side_effect=Exception("Bulk insert failed"))
         
         db_utils = self.DBUtilsAsync(mock_session)
         bulk_data = [{"id": 1, "name": "test1"}]
