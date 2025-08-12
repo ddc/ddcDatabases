@@ -27,6 +27,18 @@ T = TypeVar('T')
 
 
 class BaseConnection:
+    __slots__ = (
+        'connection_url',
+        'engine_args', 
+        'autoflush',
+        'expire_on_commit',
+        'sync_driver',
+        'async_driver',
+        'session',
+        'is_connected',
+        '_temp_engine'
+    )
+    
     def __init__(
         self,
         connection_url: dict,
@@ -150,6 +162,15 @@ class BaseConnection:
 
 
 class ConnectionTester:
+    __slots__ = (
+        'sync_session',
+        'async_session',
+        'host_url',
+        'dt',
+        'logger',
+        'failed_msg'
+    )
+    
     def __init__(
         self,
         sync_session: Session | None = None,
@@ -187,10 +208,12 @@ class ConnectionTester:
 
 
 class DBUtils:
-    def __init__(self, session: Session):
+    __slots__ = ('session',)
+
+    def __init__(self, session: Session) -> None:
         self.session = session
 
-    def fetchall(self, stmt, as_dict: bool = False) -> list[RowMapping] | list[dict]:
+    def fetchall(self, stmt: Any, as_dict: bool = False) -> list[RowMapping] | list[dict]:
         try:
             cursor = self.session.execute(stmt)
             if as_dict:
@@ -205,7 +228,7 @@ class DBUtils:
             self.session.rollback()
             raise DBFetchAllException(e) from e
 
-    def fetchvalue(self, stmt) -> str | None:
+    def fetchvalue(self, stmt: Any) -> str | None:
         try:
             cursor = self.session.execute(stmt)
             result = cursor.fetchone()
@@ -215,7 +238,7 @@ class DBUtils:
             self.session.rollback()
             raise DBFetchValueException(e) from e
 
-    def insert(self, stmt):
+    def insert(self, stmt: Any) -> Any:
         try:
             self.session.add(stmt)
             self.session.commit()
@@ -231,24 +254,24 @@ class DBUtils:
             instances = [model(**data) for data in list_data]
             self.session.add_all(instances)
             self.session.commit()
-            
+
             # Bulk refresh to avoid connection busy issues and get updated IDs
             self.session.expunge_all()
             refreshed_instances = []
-            
+
             # Process in batches to optimize memory usage and performance
             for i in range(0, len(instances), batch_size):
-                batch = instances[i:i + batch_size]
+                batch = instances[i : i + batch_size]
                 for instance in batch:
                     merged_instance = self.session.merge(instance)
                     refreshed_instances.append(merged_instance)
-            
+
             return refreshed_instances
         except Exception as e:
             self.session.rollback()
             raise DBInsertBulkException(e) from e
 
-    def deleteall(self, model) -> None:
+    def deleteall(self, model: type[T]) -> None:
         try:
             self.session.query(model).delete()
             self.session.commit()
@@ -256,7 +279,7 @@ class DBUtils:
             self.session.rollback()
             raise DBDeleteAllDataException(e) from e
 
-    def execute(self, stmt) -> None:
+    def execute(self, stmt: Any) -> None:
         try:
             self.session.execute(stmt)
             self.session.commit()
@@ -266,10 +289,12 @@ class DBUtils:
 
 
 class DBUtilsAsync:
+    __slots__ = ('session',)
+
     def __init__(self, session: AsyncSession):
         self.session = session
 
-    async def fetchall(self, stmt, as_dict: bool = False) -> list[RowMapping] | list[dict]:
+    async def fetchall(self, stmt: Any, as_dict: bool = False) -> list[RowMapping] | list[dict]:
         try:
             cursor = await self.session.execute(stmt)
             if as_dict:
@@ -294,7 +319,7 @@ class DBUtilsAsync:
             await self.session.rollback()
             raise DBFetchValueException(e) from e
 
-    async def insert(self, stmt):
+    async def insert(self, stmt: Any) -> Any:
         try:
             self.session.add(stmt)
             await self.session.commit()
@@ -310,24 +335,24 @@ class DBUtilsAsync:
             instances = [model(**data) for data in list_data]
             self.session.add_all(instances)
             await self.session.commit()
-            
+
             # Bulk refresh to avoid connection busy issues with MSSQL and get updated IDs
             self.session.expunge_all()
             refreshed_instances = []
-            
+
             # Process in batches to optimize memory usage and performance
             for i in range(0, len(instances), batch_size):
-                batch = instances[i:i + batch_size]
+                batch = instances[i : i + batch_size]
                 for instance in batch:
                     merged_instance = await self.session.merge(instance)
                     refreshed_instances.append(merged_instance)
-            
+
             return refreshed_instances
         except Exception as e:
             await self.session.rollback()
             raise DBInsertBulkException(e) from e
 
-    async def deleteall(self, model) -> None:
+    async def deleteall(self, model: type[T]) -> None:
         try:
             stmt = sa.delete(model)
             await self.session.execute(stmt)
@@ -336,7 +361,7 @@ class DBUtilsAsync:
             await self.session.rollback()
             raise DBDeleteAllDataException(e) from e
 
-    async def execute(self, stmt) -> None:
+    async def execute(self, stmt: Any) -> None:
         try:
             await self.session.execute(stmt)
             await self.session.commit()
