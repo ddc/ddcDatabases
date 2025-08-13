@@ -9,12 +9,19 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 T = TypeVar('T', bound=BaseSettings)
 
 # Constants
-SQLALCHEMY_ECHO_DESCRIPTION = "Enable SQLAlchemy query logging"
-DATABASE_HOST_DESCRIPTION = "Database host"
-DATABASE_PORT_DESCRIPTION = "Database port"
-DATABASE_USERNAME_DESCRIPTION = "Database username"
-DATABASE_PASSWORD_DESCRIPTION = "Database password"
-DATABASE_NAME_DESCRIPTION = "Database name"
+ECHO_DESCRIPTION = "Enable SQLAlchemy query logging"
+AUTOFLUSH_DESCRIPTION = "Enable autoflush"
+EXPIRE_ON_COMMIT_DESCRIPTION = "Enable expire on commit"
+AUTOCOMMIT_DESCRIPTION = "Enable autocommit"
+CONNECTION_TIMEOUT_DESCRIPTION = "Connection timeout in seconds"
+POOL_RECYCLE_DESCRIPTION = "Pool recycle in seconds"
+POOL_SIZE_DESCRIPTION = "Database connection pool size"
+MAX_OVERFLOW_DESCRIPTION = "Maximum overflow connections for the pool"
+HOST_DESCRIPTION = "Database host"
+PORT_DESCRIPTION = "Database port"
+USERNAME_DESCRIPTION = "Database username"
+PASSWORD_DESCRIPTION = "Database password"
+NAME_DESCRIPTION = "Database name"
 ASYNC_DATABASE_DRIVER_DESCRIPTION = "Async database driver"
 SYNC_DATABASE_DRIVER_DESCRIPTION = "Sync database driver"
 
@@ -51,7 +58,7 @@ class SQLiteSettings(_BaseDBSettings):
     """SQLite database settings with environment variable fallback."""
 
     file_path: str = Field(default="sqlite.db", description="Path to SQLite database file")
-    echo: bool = Field(default=False, description=SQLALCHEMY_ECHO_DESCRIPTION)
+    echo: bool = Field(default=False, description=ECHO_DESCRIPTION)
 
     model_config = SettingsConfigDict(env_prefix="SQLITE_")
 
@@ -59,13 +66,20 @@ class SQLiteSettings(_BaseDBSettings):
 class PostgreSQLSettings(_BaseDBSettings):
     """PostgreSQL database settings with environment variable fallback."""
 
-    host: str = Field(default="localhost", description=DATABASE_HOST_DESCRIPTION)
-    port: int = Field(default=5432, description=DATABASE_PORT_DESCRIPTION)
-    user: str = Field(default="postgres", description=DATABASE_USERNAME_DESCRIPTION)
-    password: str = Field(default="postgres", description=DATABASE_PASSWORD_DESCRIPTION)
-    database: str = Field(default="postgres", description=DATABASE_NAME_DESCRIPTION)
+    host: str = Field(default="localhost", description=HOST_DESCRIPTION)
+    port: int = Field(default=5432, description=PORT_DESCRIPTION)
+    user: str = Field(default="postgres", description=USERNAME_DESCRIPTION)
+    password: str = Field(default="postgres", description=PASSWORD_DESCRIPTION)
+    database: str = Field(default="postgres", description=NAME_DESCRIPTION)
 
-    echo: bool = Field(default=False, description=SQLALCHEMY_ECHO_DESCRIPTION)
+    echo: bool = Field(default=False, description=ECHO_DESCRIPTION)
+    autoflush: bool = Field(default=False, description=AUTOFLUSH_DESCRIPTION)
+    expire_on_commit: bool = Field(default=False, description=EXPIRE_ON_COMMIT_DESCRIPTION)
+    autocommit: bool = Field(default=False, description=AUTOCOMMIT_DESCRIPTION)
+    connection_timeout: int = Field(default=30, description=CONNECTION_TIMEOUT_DESCRIPTION)
+    pool_recycle: int = Field(default=3600, description=POOL_RECYCLE_DESCRIPTION)
+    pool_size: int = Field(default=25, description=POOL_SIZE_DESCRIPTION)
+    max_overflow: int = Field(default=50, description=MAX_OVERFLOW_DESCRIPTION)
     async_driver: str = Field(default="postgresql+asyncpg", description=ASYNC_DATABASE_DRIVER_DESCRIPTION)
     sync_driver: str = Field(default="postgresql+psycopg2", description=SYNC_DATABASE_DRIVER_DESCRIPTION)
 
@@ -75,16 +89,21 @@ class PostgreSQLSettings(_BaseDBSettings):
 class MSSQLSettings(_BaseDBSettings):
     """Microsoft SQL Server settings with environment variable fallback."""
 
-    host: str = Field(default="localhost", description=DATABASE_HOST_DESCRIPTION)
-    port: int = Field(default=1433, description=DATABASE_PORT_DESCRIPTION)
-    user: str = Field(default="sa", description=DATABASE_USERNAME_DESCRIPTION)
-    password: str = Field(default="sa", description=DATABASE_PASSWORD_DESCRIPTION)
+    host: str = Field(default="localhost", description=HOST_DESCRIPTION)
+    port: int = Field(default=1433, description=PORT_DESCRIPTION)
+    user: str = Field(default="sa", description=USERNAME_DESCRIPTION)
+    password: str = Field(default="sa", description=PASSWORD_DESCRIPTION)
     db_schema: str = Field(default="dbo", description="Database schema")
-    database: str = Field(default="master", description=DATABASE_NAME_DESCRIPTION)
+    database: str = Field(default="master", description=NAME_DESCRIPTION)
 
-    echo: bool = Field(default=False, description=SQLALCHEMY_ECHO_DESCRIPTION)
-    pool_size: int = Field(default=20, description="Connection pool size")
-    max_overflow: int = Field(default=10, description="Max overflow connections")
+    echo: bool = Field(default=False, description=ECHO_DESCRIPTION)
+    autoflush: bool = Field(default=False, description=AUTOFLUSH_DESCRIPTION)
+    expire_on_commit: bool = Field(default=False, description=EXPIRE_ON_COMMIT_DESCRIPTION)
+    autocommit: bool = Field(default=False, description=AUTOCOMMIT_DESCRIPTION)
+    connection_timeout: int = Field(default=30, description=CONNECTION_TIMEOUT_DESCRIPTION)
+    pool_recycle: int = Field(default=3600, description=POOL_RECYCLE_DESCRIPTION)
+    pool_size: int = Field(default=25, description="Connection pool size")
+    max_overflow: int = Field(default=50, description="Max overflow connections")
     odbcdriver_version: int = Field(default=18, description="ODBC driver version")
     async_driver: str = Field(default="mssql+aioodbc", description=ASYNC_DATABASE_DRIVER_DESCRIPTION)
     sync_driver: str = Field(default="mssql+pyodbc", description=SYNC_DATABASE_DRIVER_DESCRIPTION)
@@ -95,13 +114,20 @@ class MSSQLSettings(_BaseDBSettings):
 class MySQLSettings(_BaseDBSettings):
     """MySQL database settings with environment variable fallback."""
 
-    host: str = Field(default="localhost", description=DATABASE_HOST_DESCRIPTION)
-    port: int = Field(default=3306, description=DATABASE_PORT_DESCRIPTION)
-    user: str = Field(default="root", description=DATABASE_USERNAME_DESCRIPTION)
-    password: str = Field(default="root", description=DATABASE_PASSWORD_DESCRIPTION)
-    database: str = Field(default="dev", description=DATABASE_NAME_DESCRIPTION)
+    host: str = Field(default="localhost", description=HOST_DESCRIPTION)
+    port: int = Field(default=3306, description=PORT_DESCRIPTION)
+    user: str = Field(default="root", description=USERNAME_DESCRIPTION)
+    password: str = Field(default="root", description=PASSWORD_DESCRIPTION)
+    database: str = Field(default="dev", description=NAME_DESCRIPTION)
 
-    echo: bool = Field(default=False, description=SQLALCHEMY_ECHO_DESCRIPTION)
+    echo: bool = Field(default=False, description=ECHO_DESCRIPTION)
+    autoflush: bool = Field(default=False, description=AUTOFLUSH_DESCRIPTION)
+    expire_on_commit: bool = Field(default=False, description=EXPIRE_ON_COMMIT_DESCRIPTION)
+    autocommit: bool = Field(default=True, description=AUTOCOMMIT_DESCRIPTION)
+    connection_timeout: int = Field(default=30, description=CONNECTION_TIMEOUT_DESCRIPTION)
+    pool_recycle: int = Field(default=3600, description=POOL_RECYCLE_DESCRIPTION)
+    pool_size: int = Field(default=10, description=POOL_SIZE_DESCRIPTION)
+    max_overflow: int = Field(default=20, description=MAX_OVERFLOW_DESCRIPTION)
     async_driver: str = Field(default="mysql+aiomysql", description=ASYNC_DATABASE_DRIVER_DESCRIPTION)
     sync_driver: str = Field(default="mysql+pymysql", description=SYNC_DATABASE_DRIVER_DESCRIPTION)
 
@@ -111,11 +137,11 @@ class MySQLSettings(_BaseDBSettings):
 class MongoDBSettings(_BaseDBSettings):
     """MongoDB settings with environment variable fallback."""
 
-    host: str = Field(default="localhost", description=DATABASE_HOST_DESCRIPTION)
-    port: int = Field(default=27017, description=DATABASE_PORT_DESCRIPTION)
-    user: str = Field(default="admin", description=DATABASE_USERNAME_DESCRIPTION)
-    password: str = Field(default="admin", description=DATABASE_PASSWORD_DESCRIPTION)
-    database: str = Field(default="admin", description=DATABASE_NAME_DESCRIPTION)
+    host: str = Field(default="localhost", description=HOST_DESCRIPTION)
+    port: int = Field(default=27017, description=PORT_DESCRIPTION)
+    user: str = Field(default="admin", description=USERNAME_DESCRIPTION)
+    password: str = Field(default="admin", description=PASSWORD_DESCRIPTION)
+    database: str = Field(default="admin", description=NAME_DESCRIPTION)
 
     batch_size: int = Field(default=2865, description="Batch size for operations")
     limit: int = Field(default=0, description="Query result limit (0 = no limit)")
@@ -127,13 +153,20 @@ class MongoDBSettings(_BaseDBSettings):
 class OracleSettings(_BaseDBSettings):
     """Oracle database settings with environment variable fallback."""
 
-    host: str = Field(default="localhost", description=DATABASE_HOST_DESCRIPTION)
-    port: int = Field(default=1521, description=DATABASE_PORT_DESCRIPTION)
-    user: str = Field(default="system", description=DATABASE_USERNAME_DESCRIPTION)
-    password: str = Field(default="oracle", description=DATABASE_PASSWORD_DESCRIPTION)
+    host: str = Field(default="localhost", description=HOST_DESCRIPTION)
+    port: int = Field(default=1521, description=PORT_DESCRIPTION)
+    user: str = Field(default="system", description=USERNAME_DESCRIPTION)
+    password: str = Field(default="oracle", description=PASSWORD_DESCRIPTION)
     servicename: str = Field(default="xe", description="Oracle service name")
 
-    echo: bool = Field(default=False, description=SQLALCHEMY_ECHO_DESCRIPTION)
+    echo: bool = Field(default=False, description=ECHO_DESCRIPTION)
+    autoflush: bool = Field(default=False, description=AUTOFLUSH_DESCRIPTION)
+    expire_on_commit: bool = Field(default=False, description=EXPIRE_ON_COMMIT_DESCRIPTION)
+    autocommit: bool = Field(default=True, description=AUTOCOMMIT_DESCRIPTION)
+    connection_timeout: int = Field(default=30, description=CONNECTION_TIMEOUT_DESCRIPTION)
+    pool_recycle: int = Field(default=3600, description=POOL_RECYCLE_DESCRIPTION)
+    pool_size: int = Field(default=10, description=POOL_SIZE_DESCRIPTION)
+    max_overflow: int = Field(default=20, description=MAX_OVERFLOW_DESCRIPTION)
     sync_driver: str = Field(default="oracle+cx_oracle", description="Oracle database driver")
 
     model_config = SettingsConfigDict(env_prefix="ORACLE_")

@@ -1,8 +1,8 @@
-from ddcDatabases.db_utils import BaseConnection, ConnectionTester
-from ddcDatabases.settings import get_mssql_settings
 from sqlalchemy.engine import URL
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
+from .db_utils import BaseConnection, ConnectionTester
+from .settings import get_mssql_settings
 
 
 class MSSQL(BaseConnection):
@@ -19,20 +19,26 @@ class MSSQL(BaseConnection):
         database: str | None = None,
         schema: str | None = None,
         echo: bool | None = None,
-        pool_size: int | None = None,
-        max_overflow: int | None = None,
         autoflush: bool | None = None,
         expire_on_commit: bool | None = None,
+        autocommit: bool | None = None,
+        connection_timeout: int | None = None,
+        pool_recycle: int | None = None,
+        pool_size: int | None = None,
+        max_overflow: int | None = None,
         extra_engine_args: dict | None = None,
     ):
         _settings = get_mssql_settings()
 
         self.schema = schema or _settings.db_schema
-        self.echo = echo or _settings.echo
+        self.echo = echo if echo is not None else _settings.echo
+        self.autoflush = autoflush if autoflush is not None else _settings.autoflush
+        self.expire_on_commit = expire_on_commit if expire_on_commit is not None else _settings.expire_on_commit
+        self.autocommit = autocommit if autocommit is not None else _settings.autocommit
+        self.connection_timeout = connection_timeout or _settings.connection_timeout
+        self.pool_recycle = pool_recycle or _settings.pool_recycle
         self.pool_size = pool_size or int(_settings.pool_size)
         self.max_overflow = max_overflow or int(_settings.max_overflow)
-        self.autoflush = autoflush
-        self.expire_on_commit = expire_on_commit
         self.async_driver = _settings.async_driver
         self.sync_driver = _settings.sync_driver
         self.odbcdriver_version = int(_settings.odbcdriver_version)
@@ -47,19 +53,17 @@ class MSSQL(BaseConnection):
                 "TrustServerCertificate": "yes",
             },
         }
-
-        if not self.connection_url["username"] or not self.connection_url["password"]:
-            raise RuntimeError("Missing username/password")
         self.extra_engine_args = extra_engine_args or {}
         self.engine_args = {
             "pool_size": self.pool_size,
             "max_overflow": self.max_overflow,
             "echo": self.echo,
             "pool_pre_ping": True,
-            "pool_recycle": 3600,
+            "pool_recycle": self.pool_recycle,
             "connect_args": {
-                "timeout": 30,
-                "login_timeout": 30,
+                "timeout": self.connection_timeout,
+                "login_timeout": self.connection_timeout,
+                "autocommit": self.autocommit,
             },
             **self.extra_engine_args,
         }

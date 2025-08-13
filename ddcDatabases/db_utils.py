@@ -63,8 +63,8 @@ class BaseConnection:
             session_maker = sessionmaker(
                 bind=self._temp_engine,
                 class_=Session,
-                autoflush=self.autoflush or True,
-                expire_on_commit=self.expire_on_commit or True,
+                autoflush=self.autoflush,
+                expire_on_commit=self.expire_on_commit,
             )
         with session_maker.begin() as self.session:
             self._test_connection_sync(self.session)
@@ -83,8 +83,8 @@ class BaseConnection:
             session_maker = async_sessionmaker(
                 bind=self._temp_engine,
                 class_=AsyncSession,
-                autoflush=self.autoflush or True,
-                expire_on_commit=self.expire_on_commit or False,
+                autoflush=self.autoflush,
+                expire_on_commit=self.expire_on_commit,
             )
         async with session_maker.begin() as self.session:
             await self._test_connection_async(self.session)
@@ -217,9 +217,9 @@ class DBUtils:
         try:
             cursor = self.session.execute(stmt)
             if as_dict:
-                result = cursor.mappings().all()
+                result = cursor.all()
                 cursor.close()
-                return [dict(row) for row in result]
+                return [row._asdict() for row in result]
             else:
                 result = cursor.mappings().all()
                 cursor.close()
@@ -298,9 +298,9 @@ class DBUtilsAsync:
         try:
             cursor = await self.session.execute(stmt)
             if as_dict:
-                result = cursor.mappings().all()
+                result = cursor.all()
                 cursor.close()
-                return [dict(row) for row in result]
+                return [row._asdict() for row in result]
             else:
                 result = cursor.mappings().all()
                 cursor.close()

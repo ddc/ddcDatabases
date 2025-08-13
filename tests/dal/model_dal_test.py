@@ -8,7 +8,7 @@ class ModelDalTest:
     """Data Abstraction Layer"""
 
     def __init__(self, db_session):
-        self.columns = list(ModelTest.__table__.columns)
+        self.columns = list(ModelTest.__table__.columns.keys())
         self.db_utils = DBUtils(db_session)
 
     def update_name(self, name: str, test_id: int):
