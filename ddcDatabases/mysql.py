@@ -1,5 +1,6 @@
-from ddcDatabases.db_utils import BaseConnection
-from ddcDatabases.settings import get_mysql_settings
+from .db_utils import BaseConnection
+from .settings import get_mysql_settings
+
 
 
 class MySQL(BaseConnection):
@@ -17,34 +18,43 @@ class MySQL(BaseConnection):
         echo: bool | None = None,
         autoflush: bool | None = None,
         expire_on_commit: bool | None = None,
+        autocommit: bool | None = None,
+        connection_timeout: int | None = None,
+        pool_recycle: int | None = None,
+        pool_size: int | None = None,
+        max_overflow: int | None = None,
         extra_engine_args: dict | None = None,
     ):
         _settings = get_mysql_settings()
 
-        self.echo = echo or _settings.echo
-        self.autoflush = autoflush
-        self.expire_on_commit = expire_on_commit
+        self.echo = echo if echo is not None else _settings.echo
+        self.autoflush = autoflush if autoflush is not None else _settings.autoflush
+        self.expire_on_commit = expire_on_commit if expire_on_commit is not None else _settings.expire_on_commit
+        self.autocommit = autocommit if autocommit is not None else _settings.autocommit
+        self.connection_timeout = connection_timeout or _settings.connection_timeout
+        self.pool_recycle = pool_recycle or _settings.pool_recycle
+        self.pool_size = pool_size or _settings.pool_size
+        self.max_overflow = max_overflow or _settings.max_overflow
         self.async_driver = _settings.async_driver
         self.sync_driver = _settings.sync_driver
         self.connection_url = {
             "host": host or _settings.host,
             "port": int(port or _settings.port),
-            "database": database or _settings.database,
             "username": user or _settings.user,
             "password": password or _settings.password,
+            "database": database or _settings.database,
         }
-
-        if not self.connection_url["username"] or not self.connection_url["password"]:
-            raise RuntimeError("Missing username/password")
         self.extra_engine_args = extra_engine_args or {}
         self.engine_args = {
             "echo": self.echo,
             "pool_pre_ping": True,
-            "pool_recycle": 3600,
+            "pool_recycle": self.pool_recycle,
+            "pool_size": self.pool_size,
+            "max_overflow": self.max_overflow,
             "connect_args": {
                 "charset": "utf8mb4",
-                "autocommit": True,
-                "connect_timeout": 30,
+                "autocommit": self.autocommit,
+                "connect_timeout": self.connection_timeout,
             },
             **self.extra_engine_args,
         }

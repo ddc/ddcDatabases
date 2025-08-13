@@ -1,9 +1,14 @@
-import sys
+import logging
 from contextlib import contextmanager
-from datetime import datetime
-from ddcDatabases.settings import get_sqlite_settings
+from typing import Any, Generator, Optional, Type
 from sqlalchemy.engine import create_engine, Engine
 from sqlalchemy.orm import Session, sessionmaker
+from .settings import get_sqlite_settings
+
+
+logger = logging.getLogger(__name__)
+# Add NullHandler to prevent "No handlers found" warnings in libraries
+logger.addHandler(logging.NullHandler())
 
 
 class Sqlite:
@@ -17,19 +22,19 @@ class Sqlite:
         echo: bool | None = None,
         autoflush: bool | None = None,
         expire_on_commit: bool | None = None,
-        extra_engine_args: dict | None = None,
-    ):
+        extra_engine_args: dict[str, Any] | None = None,
+    ) -> None:
         _settings = get_sqlite_settings()
-        self.filepath = filepath or _settings.file_path
-        self.echo = echo or _settings.echo
-        self.autoflush = autoflush
-        self.expire_on_commit = expire_on_commit
-        self.extra_engine_args = extra_engine_args or {}
-        self.is_connected = False
-        self.session = None
-        self._temp_engine = None
+        self.filepath: str = filepath or _settings.file_path
+        self.echo: bool = echo or _settings.echo
+        self.autoflush: bool | None = autoflush
+        self.expire_on_commit: bool | None = expire_on_commit
+        self.extra_engine_args: dict[str, Any] = extra_engine_args or {}
+        self.is_connected: bool = False
+        self.session: Session | None = None
+        self._temp_engine: Engine | None = None
 
-    def __enter__(self):
+    def __enter__(self) -> Session:
         with self._get_engine() as self._temp_engine:
             session_maker = sessionmaker(
                 bind=self._temp_engine,
@@ -42,7 +47,12 @@ class Sqlite:
             self.is_connected = True
             return self.session
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(
+        self,
+        exc_type: Optional[Type[BaseException]],
+        exc_val: Optional[BaseException],
+        exc_tb: Optional[object],
+    ) -> None:
         if self.session:
             self.session.close()
         if self._temp_engine:
@@ -50,7 +60,7 @@ class Sqlite:
         self.is_connected = False
 
     @contextmanager
-    def _get_engine(self) -> Engine | None:
+    def _get_engine(self) -> Generator[Engine, None, None]:
         try:
             _engine_args = {
                 "url": f"sqlite:///{self.filepath}",
@@ -61,6 +71,5 @@ class Sqlite:
             yield _engine
             _engine.dispose()
         except Exception as e:
-            dt = datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3]
-            sys.stderr.write(f"[{dt}]:[ERROR]:Unable to Create Database Engine | " f"{repr(e)}\n")
+            logger.error(f"Unable to Create Database Engine | {e}")
             raise

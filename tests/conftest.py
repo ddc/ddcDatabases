@@ -1,5 +1,4 @@
 import pytest
-import sys
 from sqlalchemy.pool import StaticPool
 from tests.data.base_data import get_fake_test_data
 
@@ -8,7 +7,7 @@ from tests.data.base_data import get_fake_test_data
 def sqlite_session():
     # Import Sqlite only when needed to avoid early module loading
     from ddcDatabases import Sqlite
-    
+
     extra_engine_args = {"poolclass": StaticPool}
     with Sqlite(
         filepath=":memory:",
@@ -36,7 +35,7 @@ def clear_settings_cache():
             get_mongodb_settings,
             get_oracle_settings,
         )
-        
+
         # Multiple rounds of aggressive cache clearing
         for _ in range(10):
             get_sqlite_settings.cache_clear()
@@ -45,21 +44,23 @@ def clear_settings_cache():
             get_mysql_settings.cache_clear()
             get_mongodb_settings.cache_clear()
             get_oracle_settings.cache_clear()
-        
+
         # Reset dotenv loaded flag to ensure clean state
         import ddcDatabases.settings
+
         ddcDatabases.settings._dotenv_loaded = False
-        
+
         # Force garbage collection to clear any references
         import gc
+
         gc.collect()
-        
+
     except ImportError:
         # Settings module not yet imported, that's fine
         pass
-    
+
     yield
-    
+
     # Clear again after test to prevent interference
     try:
         # Multiple rounds of aggressive cache clearing

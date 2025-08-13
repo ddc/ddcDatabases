@@ -33,6 +33,7 @@ A Python library for database connections and ORM queries with support for multi
 - [Database Engines](#database-engines)
 - [Database Utilities](#database-utilities)
   - [Available Methods](#available-methods)
+- [Logging](#logging)
 - [Development](#development)
   - [Building from Source](#building-from-source)
   - [Running Tests](#running-tests)
@@ -50,14 +51,8 @@ A Python library for database connections and ORM queries with support for multi
 
 ### Default Session Settings
 
-**Synchronous Sessions:**
-- `autoflush = True`
-- `expire_on_commit = True` 
-- `echo = False`
-
-**Asynchronous Sessions:**
-- `autoflush = True`
-- `expire_on_commit = False`
+- `autoflush = False`
+- `expire_on_commit = False` 
 - `echo = False`
 
 **Note:** All constructor parameters are optional and fall back to [.env](./ddcDatabases/.env.example) file variables.
@@ -117,25 +112,15 @@ pip install ddcDatabases[mysql,pgsql,mongodb]
 
 ### SQLite
 
-```python
-class Sqlite(
-    filepath: Optional[str] = None,
-    echo: Optional[bool] = None,
-    autoflush: Optional[bool] = None,
-    expire_on_commit: Optional[bool] = None,
-    extra_engine_args: Optional[dict] = None,
-)
-```
-
 **Example:**
 ```python
 import sqlalchemy as sa
 from ddcDatabases import DBUtils, Sqlite
-from your_models import User  # Your SQLAlchemy model
+from your_models import Model  # Your SQLAlchemy model
 
-with Sqlite() as session:
+with Sqlite(filepath="data.db") as session:
     db_utils = DBUtils(session)
-    stmt = sa.select(User).where(User.id == 1)
+    stmt = sa.select(Model).where(Model.id == 1)
     results = db_utils.fetchall(stmt)
     for row in results:
         print(row)
@@ -147,31 +132,31 @@ with Sqlite() as session:
 
 ### MSSQL (SQL Server)
 
-```python
-class MSSQL(
-    host: Optional[str] = None,
-    port: Optional[int] = None,
-    user: Optional[str] = None,
-    password: Optional[str] = None,
-    database: Optional[str] = None,
-    schema: Optional[str] = None,
-    echo: Optional[bool] = None,
-    pool_size: Optional[int] = None,
-    max_overflow: Optional[int] = None,
-    autoflush: Optional[bool] = None,
-    expire_on_commit: Optional[bool] = None,
-    extra_engine_args: Optional[dict] = None,
-)
-```
-
 **Synchronous Example:**
 ```python
 import sqlalchemy as sa
 from ddcDatabases import DBUtils, MSSQL
-from your_models import User
+from your_models import Model
 
-with MSSQL() as session:
-    stmt = sa.select(User).where(User.id == 1)
+kwargs = {
+    "host": "127.0.0.1",
+    "port": 1433,
+    "user": "sa",
+    "password": "password",
+    "database": "master",
+    "db_schema": "dbo",
+    "echo": True,
+    "autoflush": True,
+    "expire_on_commit": True,
+    "autocommit": True,
+    "connection_timeout": 30,
+    "pool_recycle": 3600,
+    "pool_size": 25,
+    "max_overflow": 50,
+}
+
+with MSSQL(**kwargs) as session:
+    stmt = sa.select(Model).where(Model.id == 1)
     db_utils = DBUtils(session)
     results = db_utils.fetchall(stmt)
     for row in results:
@@ -180,17 +165,19 @@ with MSSQL() as session:
 
 **Asynchronous Example:**
 ```python
+import asyncio
 import sqlalchemy as sa
 from ddcDatabases import DBUtilsAsync, MSSQL
-from your_models import User
+from your_models import Model
 
 async def main():
-    async with MSSQL() as session:
-        stmt = sa.select(User).where(User.id == 1)
+    async with MSSQL(**kwargs) as session:
+        stmt = sa.select(Model).where(Model.id == 1)
         db_utils = DBUtilsAsync(session)
         results = await db_utils.fetchall(stmt)
         for row in results:
             print(row)
+asyncio.run(main())
 ```
 
 
@@ -200,28 +187,30 @@ async def main():
 
 ### PostgreSQL
 
-```python
-class PostgreSQL(
-    host: Optional[str] = None,
-    port: Optional[int] = None,
-    user: Optional[str] = None,
-    password: Optional[str] = None,
-    database: Optional[str] = None,
-    echo: Optional[bool] = None,
-    autoflush: Optional[bool] = None,
-    expire_on_commit: Optional[bool] = None,
-    engine_args: Optional[dict] = None,
-)
-```
-
 **Synchronous Example:**
 ```python
 import sqlalchemy as sa
 from ddcDatabases import DBUtils, PostgreSQL
-from your_models import User
+from your_models import Model
 
-with PostgreSQL() as session:
-    stmt = sa.select(User).where(User.id == 1)
+kwargs = {
+    "host": "127.0.0.1",
+    "port": 5432,
+    "user": "postgres",
+    "password": "postgres",
+    "database": "postgres",
+    "echo": True,
+    "autoflush": False,
+    "expire_on_commit": False,
+    "autocommit": True,
+    "connection_timeout": 30,
+    "pool_recycle": 3600,
+    "pool_size": 25,
+    "max_overflow": 50,
+}
+
+with PostgreSQL(**kwargs) as session:
+    stmt = sa.select(Model).where(Model.id == 1)
     db_utils = DBUtils(session)
     results = db_utils.fetchall(stmt)
     for row in results:
@@ -230,18 +219,26 @@ with PostgreSQL() as session:
 
 **Asynchronous Example:**
 ```python
+import asyncio
 import sqlalchemy as sa
 from ddcDatabases import DBUtilsAsync, PostgreSQL
-from your_models import User
+from your_models import Model
 
 async def main():
-    async with PostgreSQL() as session:
-        stmt = sa.select(User).where(User.id == 1)
+    async with PostgreSQL(**kwargs) as session:
+        stmt = sa.select(Model).where(Model.id == 1)
         db_utils = DBUtilsAsync(session)
         results = await db_utils.fetchall(stmt)
         for row in results:
             print(row)
+asyncio.run(main())
 ```
+
+
+
+
+
+
 
 ### MySQL
 
@@ -250,47 +247,74 @@ async def main():
 import sqlalchemy as sa
 from ddcDatabases import DBUtils, MySQL
 
-with MySQL() as session:
-    stmt = sa.text("SELECT * FROM users WHERE id = :user_id")
+kwargs = {
+    "host": "127.0.0.1",
+    "port": 3306,
+    "user": "root",
+    "password": "root",
+    "database": "dev",
+    "echo": True,
+    "autoflush": False,
+    "expire_on_commit": False,
+    "autocommit": True,
+    "connection_timeout": 30,
+    "pool_recycle": 3600,
+    "pool_size": 25,
+    "max_overflow": 50,
+}
+
+with MySQL(**kwargs) as session:
+    stmt = sa.text("SELECT * FROM users WHERE id = 1")
     db_utils = DBUtils(session)
-    results = db_utils.fetchall(stmt, {"user_id": 1})
+    results = db_utils.fetchall(stmt)
     for row in results:
         print(row)
 ```
+
+**Asynchronous Example:**
+```python
+import asyncio
+import sqlalchemy as sa
+from ddcDatabases import DBUtilsAsync, MySQL
+async def main() -> None:
+    async with MySQL(**kwargs) as session:
+        stmt = sa.text("SELECT * FROM users")
+        db_utils = DBUtilsAsync(session)
+        results = await db_utils.fetchall(stmt)
+        for row in results:
+            print(row)
+asyncio.run(main())
+
+```
+
 
 
 
 
 ### Oracle
 
-```python
-class Oracle(
-    host: Optional[str] = None,
-    port: Optional[int] = None,
-    user: Optional[str] = None,
-    password: Optional[str] = None,
-    servicename: Optional[str] = None,
-    echo: Optional[bool] = None,
-    autoflush: Optional[bool] = None,
-    expire_on_commit: Optional[bool] = None,
-    extra_engine_args: Optional[dict] = None,
-)
-```
-
 **Example with explicit credentials:**
 ```python
 import sqlalchemy as sa
 from ddcDatabases import DBUtils, Oracle
 
-credentials = {
+kwargs = {
     "host": "127.0.0.1",
+    "port": 1521,
     "user": "system",
     "password": "oracle",
     "servicename": "xe",
     "echo": False,
+    "autoflush": False,
+    "expire_on_commit": False,
+    "autocommit": True,
+    "connection_timeout": 30,
+    "pool_recycle": 3600,
+    "pool_size": 25,
+    "max_overflow": 50,
 }
 
-with Oracle(**credentials) as session:
+with Oracle(**kwargs) as session:
     stmt = sa.text("SELECT * FROM dual")
     db_utils = DBUtils(session)
     results = db_utils.fetchall(stmt)
@@ -307,36 +331,26 @@ with Oracle(**credentials) as session:
 
 ### MongoDB
 
-```python
-class MongoDB(
-    host: Optional[str] = None,
-    port: Optional[int] = None,
-    user: Optional[str] = None,
-    password: Optional[str] = None,
-    database: Optional[str] = None,
-    batch_size: Optional[int] = None,
-    limit: Optional[int] = None,
-)
-```
-
 **Example with explicit credentials:**
 ```python
-from ddcDatabases.mongodb import MongoDB
+from ddcDatabases import MongoDB
 from bson.objectid import ObjectId
 
-credentials = {
+kwargs = {
     "host": "127.0.0.1",
+    "port": 27017,
     "user": "admin",
     "password": "admin",
     "database": "admin",
+    "collection": "test_collection",
+    "sort_column": "_id",
+    "sort_order": "asc", # asc or desc
 }
 
-with MongoDB(**credentials) as mongodb:
-    query = {"_id": ObjectId("6772cf60f27e7e068e9d8985")}
-    collection = "movies"
-    with mongodb.cursor(collection, query) as cursor:
-        for document in cursor:
-            print(document)
+query = {"_id": ObjectId("689c9f71dd642a68cfc60477")}
+with MongoDB(**kwargs, query=query) as cursor:
+    for each in cursor:
+        print(each)
 ```
 
 
@@ -396,6 +410,14 @@ results = await db_utils_async.fetchall(stmt)
 ```
 
 
+
+
+## Logging
+```python
+import logging
+logging.getLogger('ddcDatabases').setLevel(logging.INFO)
+logging.getLogger('ddcDatabases').addHandler(logging.StreamHandler())
+```
 
 
 ## Development

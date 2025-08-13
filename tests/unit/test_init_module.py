@@ -1,13 +1,8 @@
-"""
-Comprehensive tests for ddcDatabases/__init__.py module
-"""
 import sys
-import importlib
 from unittest.mock import patch
 
 
 class TestInitModule:
-    """Test the __init__.py module functionality"""
 
     def test_logging_configuration(self):
         """Test that logging is properly configured with NullHandler"""
@@ -25,12 +20,13 @@ class TestInitModule:
         # Test the version parsing logic directly
         version_str = "2.0.1"
         _version = tuple(int(x) for x in version_str.split("."))
-        
+
         # Version should be parsed correctly
         assert _version == (2, 0, 1)
-        
+
         # Test current module version exists and is valid
         import ddcDatabases
+
         assert isinstance(ddcDatabases.__version__, tuple)
         assert len(ddcDatabases.__version__) == 3
         assert all(isinstance(x, int) for x in ddcDatabases.__version__)
@@ -38,31 +34,31 @@ class TestInitModule:
     def test_version_parsing_module_not_found(self):
         """Test version parsing fallback when module is not found"""
         import sys
-        import importlib
-        
+
         # Test the actual exception path by creating a mock scenario
         # We'll temporarily modify sys.modules to simulate the exception
         original_modules = sys.modules.copy()
-        
+
         try:
             # Create a test scenario that will trigger ModuleNotFoundError
             if 'ddcDatabases' in sys.modules:
                 del sys.modules['ddcDatabases']
-            
+
             # Mock the version function to raise ModuleNotFoundError
             with patch('importlib.metadata.version') as mock_version:
                 mock_version.side_effect = ModuleNotFoundError("No module named 'ddcDatabases'")
-                
+
                 # This should trigger the exception handling code
                 try:
                     from importlib.metadata import version
+
                     _version = tuple(int(x) for x in version("ddcDatabases").split("."))
                 except ModuleNotFoundError:
                     _version = (0, 0, 0)
-                
+
                 # Should fall back to (0, 0, 0)
                 assert _version == (0, 0, 0)
-                
+
         finally:
             # Restore original modules
             sys.modules.clear()
@@ -71,20 +67,18 @@ class TestInitModule:
     def test_version_parsing_exception_path_direct(self):
         """Test the actual exception path in the module initialization"""
         import sys
-        import importlib
-        
+
         # Force a re-import with mocked version to test the exception path
         with patch('importlib.metadata.version') as mock_version:
             mock_version.side_effect = ModuleNotFoundError("No module named 'ddcDatabases'")
-            
+
             # Remove the module from cache if it exists
             modules_to_remove = [name for name in sys.modules.keys() if name.startswith('ddcDatabases')]
             for module_name in modules_to_remove:
                 del sys.modules[module_name]
-            
+
             # Import the module, which should trigger the exception path
-            import ddcDatabases
-            
+
             # The module should have the fallback version
             # Note: This might not work as expected due to module caching,
             # but it demonstrates the intended test case
@@ -92,7 +86,7 @@ class TestInitModule:
     def test_version_info_namedtuple_structure(self):
         """Test VersionInfo NamedTuple structure and values"""
         import ddcDatabases
-        
+
         # Test __version_info__ structure (VersionInfo is cleaned up after import)
         version_info = ddcDatabases.__version_info__
         assert hasattr(version_info, 'major')
@@ -117,8 +111,14 @@ class TestInitModule:
         import ddcDatabases
 
         constants = [
-            '__title__', '__author__', '__email__', '__license__',
-            '__copyright__', '__version__', '__version_info__', '__req_python_version__'
+            '__title__',
+            '__author__',
+            '__email__',
+            '__license__',
+            '__copyright__',
+            '__version__',
+            '__version_info__',
+            '__req_python_version__',
         ]
 
         for const in constants:
@@ -130,8 +130,13 @@ class TestInitModule:
 
         # These should be deleted after import
         cleanup_items = [
-            'logging', 'NamedTuple', 'Literal', 'VersionInfo',
-            'version', '_version', '_req_python_version'
+            'logging',
+            'NamedTuple',
+            'Literal',
+            'VersionInfo',
+            'version',
+            '_version',
+            '_req_python_version',
         ]
 
         for item in cleanup_items:
@@ -140,13 +145,10 @@ class TestInitModule:
     def test_all_exports_defined(self):
         """Test that __all__ contains expected database classes"""
         import ddcDatabases
-        
+
         # Test that __all__ contains the expected database classes
-        expected_classes = {
-            "DBUtils", "DBUtilsAsync", "MongoDB", "MSSQL", 
-            "MySQL", "Oracle", "PostgreSQL", "Sqlite"
-        }
-        
+        expected_classes = {"DBUtils", "DBUtilsAsync", "MongoDB", "MSSQL", "MySQL", "Oracle", "PostgreSQL", "Sqlite"}
+
         # Verify __all__ contains expected classes
         assert set(ddcDatabases.__all__) == expected_classes
 
@@ -194,30 +196,30 @@ class TestInitModule:
 
     def test_version_exception_path_actual(self):
         """Test that covers the ModuleNotFoundError exception path in __init__.py"""
-        
+
         # Save original state
         original_modules = dict(sys.modules)
-        
+
         try:
             # Remove ddcDatabases from sys.modules if it exists
             modules_to_remove = [name for name in list(sys.modules.keys()) if name.startswith('ddcDatabases')]
             for module_name in modules_to_remove:
                 if module_name in sys.modules:
                     del sys.modules[module_name]
-            
+
             # Patch importlib.metadata.version to raise ModuleNotFoundError
             with patch('importlib.metadata.version') as mock_version:
                 mock_version.side_effect = ModuleNotFoundError("No module named 'ddcDatabases'")
-                
+
                 # Now import ddcDatabases which should trigger the exception path
                 import ddcDatabases
-                
+
                 # The version should be the fallback (0, 0, 0)
                 assert ddcDatabases.__version__ == (0, 0, 0)
                 assert ddcDatabases.__version_info__.major == 0
                 assert ddcDatabases.__version_info__.minor == 0
                 assert ddcDatabases.__version_info__.micro == 0
-                
+
         finally:
             # Restore original sys.modules state
             sys.modules.clear()
@@ -225,15 +227,15 @@ class TestInitModule:
 
     def test_force_module_not_found_error_direct(self):
         """Force the ModuleNotFoundError by testing the logic directly"""
-        
+
         # Test the actual code path from __init__.py
         from importlib.metadata import version
-        
+
         # This should trigger ModuleNotFoundError for a non-existent package
         try:
             _version = tuple(int(x) for x in version("definitely_nonexistent_package_name_12345").split("."))
         except ModuleNotFoundError:
             _version = (0, 0, 0)
-        
+
         # Should be the fallback version
         assert _version == (0, 0, 0)
