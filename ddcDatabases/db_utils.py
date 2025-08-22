@@ -4,15 +4,6 @@ from contextlib import asynccontextmanager, contextmanager
 from datetime import datetime
 from typing import Any, AsyncGenerator, Generator, Sequence, TypeVar
 import sqlalchemy as sa
-from sqlalchemy import RowMapping
-from sqlalchemy.engine import create_engine, Engine, URL
-from sqlalchemy.ext.asyncio import (
-    AsyncEngine,
-    AsyncSession,
-    async_sessionmaker,
-    create_async_engine,
-)
-from sqlalchemy.orm import Session, sessionmaker
 from ddcDatabases.exceptions import (
     DBDeleteAllDataException,
     DBExecuteException,
@@ -21,6 +12,11 @@ from ddcDatabases.exceptions import (
     DBInsertBulkException,
     DBInsertSingleException,
 )
+from sqlalchemy import RowMapping
+from sqlalchemy.engine import create_engine, Engine, URL
+from sqlalchemy.ext.asyncio import async_sessionmaker, AsyncEngine, AsyncSession, create_async_engine
+from sqlalchemy.orm import Session, sessionmaker
+
 
 # Type variable for generic model types
 T = TypeVar('T')
@@ -29,16 +25,16 @@ T = TypeVar('T')
 class BaseConnection:
     __slots__ = (
         'connection_url',
-        'engine_args', 
+        'engine_args',
         'autoflush',
         'expire_on_commit',
         'sync_driver',
         'async_driver',
         'session',
         'is_connected',
-        '_temp_engine'
+        '_temp_engine',
     )
-    
+
     def __init__(
         self,
         connection_url: dict,
@@ -106,11 +102,6 @@ class BaseConnection:
         )
         _engine_args = {
             "url": _connection_url,
-            "pool_size": 10,
-            "max_overflow": 20,
-            "pool_pre_ping": True,
-            "pool_recycle": 3600,  # Recycle connections after 1 hour
-            "query_cache_size": 1000,  # Enable query cache
             **self.engine_args,
         }
         _engine = create_engine(**_engine_args)
@@ -125,9 +116,6 @@ class BaseConnection:
         )
         _engine_args = {
             "url": _connection_url,
-            "pool_size": 10,
-            "max_overflow": 20,
-            "pool_recycle": 3600,  # Recycle connections after 1 hour
             **self.engine_args,
         }
         _engine = create_async_engine(**_engine_args)
@@ -162,15 +150,8 @@ class BaseConnection:
 
 
 class ConnectionTester:
-    __slots__ = (
-        'sync_session',
-        'async_session',
-        'host_url',
-        'dt',
-        'logger',
-        'failed_msg'
-    )
-    
+    __slots__ = ('sync_session', 'async_session', 'host_url', 'dt', 'logger', 'failed_msg')
+
     def __init__(
         self,
         sync_session: Session | None = None,
@@ -214,6 +195,19 @@ class DBUtils:
         self.session = session
 
     def fetchall(self, stmt: Any, as_dict: bool = False) -> list[RowMapping] | list[dict]:
+        """
+        Execute a SELECT statement and fetch all results.
+        
+        Args:
+            stmt: SQLAlchemy statement or raw SQL string to execute
+            as_dict: If True, returns list of dicts; if False, returns list of RowMapping objects
+            
+        Returns:
+            List of query results as either RowMapping objects or dictionaries
+            
+        Raises:
+            DBFetchAllException: If query execution fails
+        """
         try:
             cursor = self.session.execute(stmt)
             if as_dict:
@@ -229,6 +223,18 @@ class DBUtils:
             raise DBFetchAllException(e) from e
 
     def fetchvalue(self, stmt: Any) -> str | None:
+        """
+        Execute a SELECT statement and fetch a single scalar value.
+        
+        Args:
+            stmt: SQLAlchemy statement or raw SQL string to execute
+            
+        Returns:
+            String representation of the first column of the first row, or None if no results
+            
+        Raises:
+            DBFetchValueException: If query execution fails
+        """
         try:
             cursor = self.session.execute(stmt)
             result = cursor.fetchone()
@@ -239,6 +245,18 @@ class DBUtils:
             raise DBFetchValueException(e) from e
 
     def insert(self, stmt: Any) -> Any:
+        """
+        Insert a single record and return the inserted instance with updated fields.
+        
+        Args:
+            stmt: SQLAlchemy model instance to insert
+            
+        Returns:
+            The inserted model instance with refreshed data (including auto-generated IDs)
+            
+        Raises:
+            DBInsertSingleException: If insert operation fails
+        """
         try:
             self.session.add(stmt)
             self.session.commit()
@@ -248,30 +266,46 @@ class DBUtils:
             self.session.rollback()
             raise DBInsertSingleException(e) from e
 
-    def insertbulk(self, model: type[T], list_data: Sequence[dict[str, Any]], batch_size: int = 100) -> list[T]:
+    def insertbulk(self, model: type[T], list_data: Sequence[dict[str, Any]], batch_size: int = 1000) -> None:
+        """
+        Bulk insert data using the most efficient method available.
+
+        This method prioritizes performance over returning inserted records.
+        Use the regular insert() method if you need the inserted instances back.
+
+        Args:
+            model: The SQLAlchemy model class
+            list_data: List of dictionaries containing the data to insert
+            batch_size: Number of records to insert per batch (default: 1000)
+            
+        Raises:
+            DBInsertBulkException: If bulk insert operation fails
+        """
         try:
-            # Create model instances for bulk insert
-            instances = [model(**data) for data in list_data]
-            self.session.add_all(instances)
+            if not list_data:
+                return
+
+            for i in range(0, len(list_data), batch_size):
+                batch = list_data[i : i + batch_size]
+                self.session.bulk_insert_mappings(model, batch, return_defaults=False)
+
             self.session.commit()
-
-            # Bulk refresh to avoid connection busy issues and get updated IDs
-            self.session.expunge_all()
-            refreshed_instances = []
-
-            # Process in batches to optimize memory usage and performance
-            for i in range(0, len(instances), batch_size):
-                batch = instances[i : i + batch_size]
-                for instance in batch:
-                    merged_instance = self.session.merge(instance)
-                    refreshed_instances.append(merged_instance)
-
-            return refreshed_instances
         except Exception as e:
             self.session.rollback()
             raise DBInsertBulkException(e) from e
 
     def deleteall(self, model: type[T]) -> None:
+        """
+        Delete all records from a table.
+        
+        WARNING: This operation removes ALL data from the specified table.
+        
+        Args:
+            model: The SQLAlchemy model class representing the table to clear
+            
+        Raises:
+            DBDeleteAllDataException: If delete operation fails
+        """
         try:
             self.session.query(model).delete()
             self.session.commit()
@@ -280,6 +314,15 @@ class DBUtils:
             raise DBDeleteAllDataException(e) from e
 
     def execute(self, stmt: Any) -> None:
+        """
+        Execute a statement that doesn't return results (INSERT, UPDATE, DELETE).
+        
+        Args:
+            stmt: SQLAlchemy statement or raw SQL string to execute
+            
+        Raises:
+            DBExecuteException: If statement execution fails
+        """
         try:
             self.session.execute(stmt)
             self.session.commit()
@@ -295,6 +338,19 @@ class DBUtilsAsync:
         self.session = session
 
     async def fetchall(self, stmt: Any, as_dict: bool = False) -> list[RowMapping] | list[dict]:
+        """
+        Execute a SELECT statement asynchronously and fetch all results.
+        
+        Args:
+            stmt: SQLAlchemy statement or raw SQL string to execute
+            as_dict: If True, returns list of dicts; if False, returns list of RowMapping objects
+            
+        Returns:
+            List of query results as either RowMapping objects or dictionaries
+            
+        Raises:
+            DBFetchAllException: If query execution fails
+        """
         try:
             cursor = await self.session.execute(stmt)
             if as_dict:
@@ -310,6 +366,18 @@ class DBUtilsAsync:
             raise DBFetchAllException(e) from e
 
     async def fetchvalue(self, stmt) -> str | None:
+        """
+        Execute a SELECT statement asynchronously and fetch a single scalar value.
+        
+        Args:
+            stmt: SQLAlchemy statement or raw SQL string to execute
+            
+        Returns:
+            String representation of the first column of the first row, or None if no results
+            
+        Raises:
+            DBFetchValueException: If query execution fails
+        """
         try:
             cursor = await self.session.execute(stmt)
             result = cursor.fetchone()
@@ -320,6 +388,18 @@ class DBUtilsAsync:
             raise DBFetchValueException(e) from e
 
     async def insert(self, stmt: Any) -> Any:
+        """
+        Insert a single record asynchronously and return the inserted instance with updated fields.
+        
+        Args:
+            stmt: SQLAlchemy model instance to insert
+            
+        Returns:
+            The inserted model instance with refreshed data (including auto-generated IDs)
+            
+        Raises:
+            DBInsertSingleException: If insert operation fails
+        """
         try:
             self.session.add(stmt)
             await self.session.commit()
@@ -329,30 +409,48 @@ class DBUtilsAsync:
             await self.session.rollback()
             raise DBInsertSingleException(e) from e
 
-    async def insertbulk(self, model: type[T], list_data: Sequence[dict[str, Any]], batch_size: int = 100) -> list[T]:
+    async def insertbulk(self, model: type[T], list_data: Sequence[dict[str, Any]], batch_size: int = 1000) -> None:
+        """
+        Bulk insert data using the most efficient method available.
+
+        This method prioritizes performance over returning inserted records.
+        Use the regular insert() method if you need the inserted instances back.
+
+        Args:
+            model: The SQLAlchemy model class
+            list_data: List of dictionaries containing the data to insert
+            batch_size: Number of records to insert per batch (default: 1000)
+            
+        Raises:
+            DBInsertBulkException: If bulk insert operation fails
+        """
         try:
-            # Create model instances for bulk insert
-            instances = [model(**data) for data in list_data]
-            self.session.add_all(instances)
+            if not list_data:
+                return
+
+            for i in range(0, len(list_data), batch_size):
+                batch = list_data[i : i + batch_size]
+                await self.session.run_sync(
+                    lambda session, b=batch: session.bulk_insert_mappings(model, b, return_defaults=False)
+                )
+
             await self.session.commit()
-
-            # Bulk refresh to avoid connection busy issues with MSSQL and get updated IDs
-            self.session.expunge_all()
-            refreshed_instances = []
-
-            # Process in batches to optimize memory usage and performance
-            for i in range(0, len(instances), batch_size):
-                batch = instances[i : i + batch_size]
-                for instance in batch:
-                    merged_instance = await self.session.merge(instance)
-                    refreshed_instances.append(merged_instance)
-
-            return refreshed_instances
         except Exception as e:
             await self.session.rollback()
             raise DBInsertBulkException(e) from e
 
     async def deleteall(self, model: type[T]) -> None:
+        """
+        Delete all records from a table asynchronously.
+        
+        WARNING: This operation removes ALL data from the specified table.
+        
+        Args:
+            model: The SQLAlchemy model class representing the table to clear
+            
+        Raises:
+            DBDeleteAllDataException: If delete operation fails
+        """
         try:
             stmt = sa.delete(model)
             await self.session.execute(stmt)
@@ -362,6 +460,15 @@ class DBUtilsAsync:
             raise DBDeleteAllDataException(e) from e
 
     async def execute(self, stmt: Any) -> None:
+        """
+        Execute a statement asynchronously that doesn't return results (INSERT, UPDATE, DELETE).
+        
+        Args:
+            stmt: SQLAlchemy statement or raw SQL string to execute
+            
+        Raises:
+            DBExecuteException: If statement execution fails
+        """
         try:
             await self.session.execute(stmt)
             await self.session.commit()
