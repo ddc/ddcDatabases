@@ -241,45 +241,25 @@ class TestDBUtilsAsync:
     async def test_insertbulk_success(self):
         """Test successful async bulk insert operation"""
         mock_session = AsyncMock()
-        mock_session.add_all = MagicMock()
-        mock_session.expunge_all = MagicMock()
+        mock_session.run_sync = AsyncMock()
 
-        # Create mock instances that will be returned
-        mock_instance1 = MagicMock()
-        mock_instance1.id = 1
-        mock_instance1.name = "test1"
-        mock_instance2 = MagicMock()
-        mock_instance2.id = 2
-        mock_instance2.name = "test2"
+        db_utils = self.DBUtilsAsync(mock_session)
+        bulk_data = [{"id": 1, "name": "test1"}, {"id": 2, "name": "test2"}]
 
-        # Mock AsyncTestModel constructor
-        with patch('test_async_functionality.AsyncTestModel') as MockModel:
-            MockModel.side_effect = lambda **kwargs: mock_instance1 if kwargs['id'] == 1 else mock_instance2
+        result = await db_utils.insertbulk(AsyncTestModel, bulk_data)
 
-            # Mock merge to return the same instances
-            mock_session.merge.side_effect = AsyncMock(side_effect=lambda instance: instance)
-
-            db_utils = self.DBUtilsAsync(mock_session)
-            bulk_data = [{"id": 1, "name": "test1"}, {"id": 2, "name": "test2"}]
-
-            result = await db_utils.insertbulk(MockModel, bulk_data)
-
-            # Verify the result
-            assert len(result) == 2
-            assert result[0] is mock_instance1
-            assert result[1] is mock_instance2
-
-            # Verify session methods were called
-            mock_session.add_all.assert_called_once()
-            mock_session.commit.assert_called_once()
-            mock_session.expunge_all.assert_called_once()
-            assert mock_session.merge.call_count == 2
+        # Verify the method returns None
+        assert result is None
+        
+        # Verify session methods were called
+        mock_session.run_sync.assert_called_once()
+        mock_session.commit.assert_called_once()
 
     async def test_insertbulk_exception_handling(self):
         """Test bulk insert exception handling"""
         mock_session = AsyncMock()
-        # Make add_all raise an exception
-        mock_session.add_all = MagicMock(side_effect=Exception("Bulk insert failed"))
+        # Make run_sync raise an exception
+        mock_session.run_sync.side_effect = Exception("Bulk insert failed")
 
         db_utils = self.DBUtilsAsync(mock_session)
         bulk_data = [{"id": 1, "name": "test1"}]

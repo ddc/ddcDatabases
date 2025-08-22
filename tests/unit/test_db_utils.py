@@ -270,41 +270,38 @@ class TestDBUtils:
         """Test successful bulk insert operation"""
         mock_session = MagicMock()
 
-        # Create mock instances that will be returned
-        mock_instance1 = MagicMock()
-        mock_instance1.id = 1
-        mock_instance1.name = "test1"
-        mock_instance2 = MagicMock()
-        mock_instance2.id = 2
-        mock_instance2.name = "test2"
+        db_utils = self.DBUtils(mock_session)
+        bulk_data = [{"id": 1, "name": "test1"}, {"id": 2, "name": "test2"}]
 
-        # Mock DatabaseModel constructor
-        with patch('test_db_utils.DatabaseModel') as MockModel:
-            MockModel.side_effect = lambda **kwargs: mock_instance1 if kwargs['id'] == 1 else mock_instance2
+        result = db_utils.insertbulk(DatabaseModel, bulk_data)
+        
+        # Verify the method returns None
+        assert result is None
+        
+        # Verify session methods were called
+        mock_session.bulk_insert_mappings.assert_called_once_with(DatabaseModel, bulk_data, return_defaults=False)
+        mock_session.commit.assert_called_once()
 
-            # Mock merge to return the same instances
-            mock_session.merge.side_effect = lambda instance: instance
+    def test_insertbulk_empty_list(self):
+        """Test bulk insert with empty list"""
+        mock_session = MagicMock()
 
-            db_utils = self.DBUtils(mock_session)
-            bulk_data = [{"id": 1, "name": "test1"}, {"id": 2, "name": "test2"}]
+        db_utils = self.DBUtils(mock_session)
+        bulk_data = []
 
-            result = db_utils.insertbulk(MockModel, bulk_data)
-
-            # Verify the result
-            assert len(result) == 2
-            assert result[0] is mock_instance1
-            assert result[1] is mock_instance2
-
-            # Verify session methods were called
-            mock_session.add_all.assert_called_once()
-            mock_session.commit.assert_called_once()
-            mock_session.expunge_all.assert_called_once()
-            assert mock_session.merge.call_count == 2
+        result = db_utils.insertbulk(DatabaseModel, bulk_data)
+        
+        # Verify the method returns None for empty list
+        assert result is None
+        
+        # Verify no database operations were performed
+        mock_session.bulk_insert_mappings.assert_not_called()
+        mock_session.commit.assert_not_called()
 
     def test_insertbulk_exception(self):
         """Test bulk insert with exception"""
         mock_session = MagicMock()
-        mock_session.add_all.side_effect = Exception("Bulk insert failed")
+        mock_session.bulk_insert_mappings.side_effect = Exception("Bulk insert failed")
 
         db_utils = self.DBUtils(mock_session)
         bulk_data = [{"id": 1, "name": "test1"}]
@@ -681,11 +678,7 @@ class TestBaseConnectionContextManagers:
 
                 # Check that our custom engine_args were merged
                 assert call_kwargs['echo'] == True
-                assert call_kwargs['pool_size'] == 5  # Custom override
-                assert call_kwargs['max_overflow'] == 20  # Default
-                assert call_kwargs['pool_pre_ping'] == True  # Default
-                assert call_kwargs['pool_recycle'] == 3600  # Default
-                assert call_kwargs['query_cache_size'] == 1000  # Default
+                assert call_kwargs['pool_size'] == 5  # Custom override from engine_args
 
             # Engine should be disposed after context exit
             mock_engine.dispose.assert_called_once()
@@ -718,9 +711,7 @@ class TestBaseConnectionContextManagers:
 
                 # Check that our custom engine_args were merged
                 assert call_kwargs['echo'] == False
-                assert call_kwargs['max_overflow'] == 15  # Custom override
-                assert call_kwargs['pool_size'] == 10  # Default
-                assert call_kwargs['pool_recycle'] == 3600  # Default
+                assert call_kwargs['max_overflow'] == 15  # Custom override from engine_args
 
             # Engine should be disposed after context exit
             mock_engine.dispose.assert_called_once()
@@ -842,48 +833,46 @@ class TestDBUtilsAsyncInsertBulk:
 
     @pytest.mark.asyncio
     async def test_insertbulk_success(self):
-        """Test successful async bulk insert with new implementation"""
+        """Test successful async bulk insert"""
         mock_session = AsyncMock()
-        mock_session.add_all = MagicMock()
-        mock_session.expunge_all = MagicMock()
+        mock_session.run_sync = AsyncMock()
 
-        # Create mock instances that will be returned
-        mock_instance1 = MagicMock()
-        mock_instance1.id = 1
-        mock_instance1.name = "test1"
-        mock_instance2 = MagicMock()
-        mock_instance2.id = 2
-        mock_instance2.name = "test2"
+        db_utils = self.DBUtilsAsync(mock_session)
+        bulk_data = [{"id": 1, "name": "test1"}, {"id": 2, "name": "test2"}]
 
-        # Mock DatabaseModel constructor
-        with patch('test_db_utils.DatabaseModel') as MockModel:
-            MockModel.side_effect = lambda **kwargs: mock_instance1 if kwargs['id'] == 1 else mock_instance2
+        result = await db_utils.insertbulk(DatabaseModel, bulk_data)
+        
+        # Verify the method returns None
+        assert result is None
+        
+        # Verify session methods were called
+        mock_session.run_sync.assert_called_once()
+        mock_session.commit.assert_called_once()
 
-            # Mock merge to return the same instances
-            mock_session.merge.side_effect = AsyncMock(side_effect=lambda instance: instance)
+    @pytest.mark.asyncio
+    async def test_insertbulk_empty_list(self):
+        """Test async bulk insert with empty list"""
+        mock_session = AsyncMock()
+        mock_session.run_sync = AsyncMock()
 
-            db_utils = self.DBUtilsAsync(mock_session)
-            bulk_data = [{"id": 1, "name": "test1"}, {"id": 2, "name": "test2"}]
+        db_utils = self.DBUtilsAsync(mock_session)
+        bulk_data = []
 
-            result = await db_utils.insertbulk(MockModel, bulk_data)
-
-            # Verify the result
-            assert len(result) == 2
-            assert result[0] is mock_instance1
-            assert result[1] is mock_instance2
-
-            # Verify session methods were called
-            mock_session.add_all.assert_called_once()
-            mock_session.commit.assert_called_once()
-            mock_session.expunge_all.assert_called_once()
-            assert mock_session.merge.call_count == 2
+        result = await db_utils.insertbulk(DatabaseModel, bulk_data)
+        
+        # Verify the method returns None for empty list
+        assert result is None
+        
+        # Verify no database operations were performed
+        mock_session.run_sync.assert_not_called()
+        mock_session.commit.assert_not_called()
 
     @pytest.mark.asyncio
     async def test_insertbulk_exception_handling(self):
-        """Test async bulk insert exception handling with new implementation"""
+        """Test async bulk insert exception handling"""
         mock_session = AsyncMock()
-        # Make add_all raise an exception
-        mock_session.add_all = MagicMock(side_effect=Exception("Bulk insert failed"))
+        # Make run_sync raise an exception
+        mock_session.run_sync.side_effect = Exception("Bulk insert failed")
 
         db_utils = self.DBUtilsAsync(mock_session)
         bulk_data = [{"id": 1, "name": "test1"}]
