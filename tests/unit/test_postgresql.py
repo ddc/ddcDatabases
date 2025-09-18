@@ -1,5 +1,15 @@
 from unittest.mock import MagicMock, patch
 import pytest
+
+try:
+    import psycopg2
+    import asyncpg
+    POSTGRESQL_AVAILABLE = True
+except ImportError:
+    POSTGRESQL_AVAILABLE = False
+
+pytestmark = pytest.mark.skipif(not POSTGRESQL_AVAILABLE, reason="PostgreSQL drivers not available")
+
 from ddcDatabases.postgresql import PostgreSQL
 
 

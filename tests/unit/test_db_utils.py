@@ -9,6 +9,13 @@ from sqlalchemy.engine.url import URL
 from sqlalchemy.ext.asyncio import AsyncEngine
 from sqlalchemy.orm import declarative_base
 
+try:
+    import psycopg2
+    import asyncpg
+    POSTGRESQL_AVAILABLE = True
+except ImportError:
+    POSTGRESQL_AVAILABLE = False
+
 
 Base = declarative_base()
 
@@ -107,6 +114,7 @@ class TestBaseConnection:
         assert conn.is_connected == False
         assert conn.session is None
 
+    @pytest.mark.skipif(not POSTGRESQL_AVAILABLE, reason="PostgreSQL drivers not available")
     def test_get_engine(self):
         """Test _get_engine context manager"""
         connection_url = {
@@ -690,6 +698,7 @@ class TestBaseConnectionContextManagers:
             # Engine dispose is called once in __aexit__ (we mocked _get_async_engine)
             mock_engine.dispose.assert_called_once()
 
+    @pytest.mark.skipif(not POSTGRESQL_AVAILABLE, reason="PostgreSQL drivers not available")
     def test_get_engine_context_manager(self):
         """Test _get_engine context manager - Lines 86-102"""
         connection_url = {"host": "localhost", "database": "test"}
@@ -713,6 +722,7 @@ class TestBaseConnectionContextManagers:
             assert hasattr(engine, 'url')  # Should have URL attribute
 
     @pytest.mark.asyncio
+    @pytest.mark.skipif(not POSTGRESQL_AVAILABLE, reason="PostgreSQL drivers not available")
     async def test_get_async_engine_context_manager(self):
         """Test _get_async_engine context manager - Lines 105-119"""
         connection_url = {"host": "localhost", "database": "test"}

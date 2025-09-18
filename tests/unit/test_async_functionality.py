@@ -9,6 +9,13 @@ from sqlalchemy.engine import Engine
 from sqlalchemy.ext.asyncio import AsyncEngine
 from sqlalchemy.orm import declarative_base
 
+try:
+    import psycopg2
+    import asyncpg
+    POSTGRESQL_AVAILABLE = True
+except ImportError:
+    POSTGRESQL_AVAILABLE = False
+
 
 Base = declarative_base()
 
@@ -146,6 +153,7 @@ class TestAsyncBaseConnection:
         mock_engine.dispose.assert_called_once()
         assert conn.is_connected == False
 
+    @pytest.mark.skipif(not POSTGRESQL_AVAILABLE, reason="PostgreSQL drivers not available")
     async def test_get_async_engine(self):
         """Test _get_async_engine method"""
         connection_url = {
