@@ -185,4 +185,3 @@ class Oracle(BaseConnection):
     @asynccontextmanager
     async def _get_async_engine(self) -> AsyncGenerator[AsyncEngine, None]:
         raise NotImplementedError("Oracle doesn't support async operations. Use synchronous methods only.")
-        yield  # This will never be reached, but needed for the generator type

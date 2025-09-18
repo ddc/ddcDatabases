@@ -44,7 +44,7 @@ jobs:
       - name: Install dependencies
         run: |
           if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
-            poetry install --with test --no-interaction --no-ansi -E mongodb -E mssql -E mysql -E oracle
+            poetry install --with test --no-interaction --no-ansi -E mongodb -E mssql -E mysql -E oracle -E pgsql
           else
             poetry install --with test --no-interaction --no-ansi -E all
           fi
@@ -95,7 +95,7 @@ jobs:
       - name: Install dependencies
         run: |
           if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
-            poetry install --with test --no-interaction --no-ansi -E mongodb -E mssql -E mysql -E oracle
+            poetry install --with test --no-interaction --no-ansi -E mongodb -E mssql -E mysql -E oracle -E pgsql
           else
             poetry install --with test --no-interaction --no-ansi -E all
           fi
