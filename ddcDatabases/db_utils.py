@@ -1,5 +1,6 @@
 from __future__ import annotations
 import logging
+from abc import ABC, abstractmethod
 from contextlib import asynccontextmanager, contextmanager
 from datetime import datetime
 from typing import Any, AsyncGenerator, Generator, Sequence, TypeVar
@@ -13,8 +14,8 @@ from ddcDatabases.exceptions import (
     DBInsertSingleException,
 )
 from sqlalchemy import RowMapping
-from sqlalchemy.engine import create_engine, Engine, URL
-from sqlalchemy.ext.asyncio import async_sessionmaker, AsyncEngine, AsyncSession, create_async_engine
+from sqlalchemy.engine import Engine, URL
+from sqlalchemy.ext.asyncio import async_sessionmaker, AsyncEngine, AsyncSession
 from sqlalchemy.orm import Session, sessionmaker
 
 
@@ -22,7 +23,7 @@ from sqlalchemy.orm import Session, sessionmaker
 T = TypeVar('T')
 
 
-class BaseConnection:
+class BaseConnection(ABC):
     __slots__ = (
         'connection_url',
         'engine_args',
@@ -94,33 +95,15 @@ class BaseConnection:
             await self._temp_engine.dispose()
         self.is_connected = False
 
+    @abstractmethod
     @contextmanager
     def _get_engine(self) -> Generator[Engine, None, None]:
-        _connection_url = URL.create(
-            drivername=self.sync_driver,
-            **self.connection_url,
-        )
-        _engine_args = {
-            "url": _connection_url,
-            **self.engine_args,
-        }
-        _engine = create_engine(**_engine_args)
-        yield _engine
-        _engine.dispose()
+        pass
 
+    @abstractmethod
     @asynccontextmanager
     async def _get_async_engine(self) -> AsyncGenerator[AsyncEngine, None]:
-        _connection_url = URL.create(
-            drivername=self.async_driver,
-            **self.connection_url,
-        )
-        _engine_args = {
-            "url": _connection_url,
-            **self.engine_args,
-        }
-        _engine = create_async_engine(**_engine_args)
-        yield _engine
-        await _engine.dispose()
+        pass
 
     def _test_connection_sync(self, session: Session) -> None:
         _connection_url_copy = self.connection_url.copy()
@@ -197,14 +180,14 @@ class DBUtils:
     def fetchall(self, stmt: Any, as_dict: bool = False) -> list[RowMapping] | list[dict]:
         """
         Execute a SELECT statement and fetch all results.
-        
+
         Args:
             stmt: SQLAlchemy statement or raw SQL string to execute
             as_dict: If True, returns list of dicts; if False, returns list of RowMapping objects
-            
+
         Returns:
             List of query results as either RowMapping objects or dictionaries
-            
+
         Raises:
             DBFetchAllException: If query execution fails
         """
@@ -225,13 +208,13 @@ class DBUtils:
     def fetchvalue(self, stmt: Any) -> str | None:
         """
         Execute a SELECT statement and fetch a single scalar value.
-        
+
         Args:
             stmt: SQLAlchemy statement or raw SQL string to execute
-            
+
         Returns:
             String representation of the first column of the first row, or None if no results
-            
+
         Raises:
             DBFetchValueException: If query execution fails
         """
@@ -247,13 +230,13 @@ class DBUtils:
     def insert(self, stmt: Any) -> Any:
         """
         Insert a single record and return the inserted instance with updated fields.
-        
+
         Args:
             stmt: SQLAlchemy model instance to insert
-            
+
         Returns:
             The inserted model instance with refreshed data (including auto-generated IDs)
-            
+
         Raises:
             DBInsertSingleException: If insert operation fails
         """
@@ -277,7 +260,7 @@ class DBUtils:
             model: The SQLAlchemy model class
             list_data: List of dictionaries containing the data to insert
             batch_size: Number of records to insert per batch (default: 1000)
-            
+
         Raises:
             DBInsertBulkException: If bulk insert operation fails
         """
@@ -297,12 +280,12 @@ class DBUtils:
     def deleteall(self, model: type[T]) -> None:
         """
         Delete all records from a table.
-        
+
         WARNING: This operation removes ALL data from the specified table.
-        
+
         Args:
             model: The SQLAlchemy model class representing the table to clear
-            
+
         Raises:
             DBDeleteAllDataException: If delete operation fails
         """
@@ -316,10 +299,10 @@ class DBUtils:
     def execute(self, stmt: Any) -> None:
         """
         Execute a statement that doesn't return results (INSERT, UPDATE, DELETE).
-        
+
         Args:
             stmt: SQLAlchemy statement or raw SQL string to execute
-            
+
         Raises:
             DBExecuteException: If statement execution fails
         """
@@ -340,14 +323,14 @@ class DBUtilsAsync:
     async def fetchall(self, stmt: Any, as_dict: bool = False) -> list[RowMapping] | list[dict]:
         """
         Execute a SELECT statement asynchronously and fetch all results.
-        
+
         Args:
             stmt: SQLAlchemy statement or raw SQL string to execute
             as_dict: If True, returns list of dicts; if False, returns list of RowMapping objects
-            
+
         Returns:
             List of query results as either RowMapping objects or dictionaries
-            
+
         Raises:
             DBFetchAllException: If query execution fails
         """
@@ -368,13 +351,13 @@ class DBUtilsAsync:
     async def fetchvalue(self, stmt) -> str | None:
         """
         Execute a SELECT statement asynchronously and fetch a single scalar value.
-        
+
         Args:
             stmt: SQLAlchemy statement or raw SQL string to execute
-            
+
         Returns:
             String representation of the first column of the first row, or None if no results
-            
+
         Raises:
             DBFetchValueException: If query execution fails
         """
@@ -390,13 +373,13 @@ class DBUtilsAsync:
     async def insert(self, stmt: Any) -> Any:
         """
         Insert a single record asynchronously and return the inserted instance with updated fields.
-        
+
         Args:
             stmt: SQLAlchemy model instance to insert
-            
+
         Returns:
             The inserted model instance with refreshed data (including auto-generated IDs)
-            
+
         Raises:
             DBInsertSingleException: If insert operation fails
         """
@@ -420,7 +403,7 @@ class DBUtilsAsync:
             model: The SQLAlchemy model class
             list_data: List of dictionaries containing the data to insert
             batch_size: Number of records to insert per batch (default: 1000)
-            
+
         Raises:
             DBInsertBulkException: If bulk insert operation fails
         """
@@ -442,12 +425,12 @@ class DBUtilsAsync:
     async def deleteall(self, model: type[T]) -> None:
         """
         Delete all records from a table asynchronously.
-        
+
         WARNING: This operation removes ALL data from the specified table.
-        
+
         Args:
             model: The SQLAlchemy model class representing the table to clear
-            
+
         Raises:
             DBDeleteAllDataException: If delete operation fails
         """
@@ -462,10 +445,10 @@ class DBUtilsAsync:
     async def execute(self, stmt: Any) -> None:
         """
         Execute a statement asynchronously that doesn't return results (INSERT, UPDATE, DELETE).
-        
+
         Args:
             stmt: SQLAlchemy statement or raw SQL string to execute
-            
+
         Raises:
             DBExecuteException: If statement execution fails
         """

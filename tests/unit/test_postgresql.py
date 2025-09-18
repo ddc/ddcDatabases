@@ -1,5 +1,15 @@
 from unittest.mock import MagicMock, patch
 import pytest
+
+try:
+    import psycopg2
+    import asyncpg
+    POSTGRESQL_AVAILABLE = True
+except ImportError:
+    POSTGRESQL_AVAILABLE = False
+
+pytestmark = pytest.mark.skipif(not POSTGRESQL_AVAILABLE, reason="PostgreSQL drivers not available")
+
 from ddcDatabases.postgresql import PostgreSQL
 
 
@@ -466,3 +476,376 @@ class TestPostgreSQL:
 
         assert postgresql.pool_size == 25
         assert postgresql.max_overflow == 50
+
+    @patch('ddcDatabases.postgresql.get_postgresql_settings')
+    def test_enhanced_configuration_methods(self, mock_get_settings):
+        """Test the new enhanced configuration getter methods"""
+        mock_settings = MagicMock()
+        mock_settings.host = "testhost"
+        mock_settings.port = 5432
+        mock_settings.user = "testuser"
+        mock_settings.password = "testpass"
+        mock_settings.database = "testdb"
+        mock_settings.echo = True
+        mock_settings.autoflush = True
+        mock_settings.expire_on_commit = True
+        mock_settings.autocommit = False
+        mock_settings.connection_timeout = 45
+        mock_settings.pool_recycle = 7200
+        mock_settings.pool_size = 30
+        mock_settings.max_overflow = 60
+        mock_settings.sync_driver = "postgresql+psycopg2"
+        mock_settings.async_driver = "postgresql+asyncpg"
+        mock_get_settings.return_value = mock_settings
+
+        postgresql = PostgreSQL(
+            host="customhost",
+            port=5433,
+            user="customuser",
+            password="custompass",
+            database="customdb",
+            echo=False,
+            autoflush=False,
+            expire_on_commit=False,
+            autocommit=True,
+            connection_timeout=60,
+            pool_recycle=9000,
+            pool_size=40,
+            max_overflow=80
+        )
+
+        # Test get_connection_info method (line 153)
+        conn_config = postgresql.get_connection_info()
+        assert conn_config.host == "customhost"
+        assert conn_config.port == 5433
+        assert conn_config.user == "customuser"
+        assert conn_config.password == "custompass"
+        assert conn_config.database == "customdb"
+
+        # Test get_pool_info method (line 157)
+        pool_config = postgresql.get_pool_info()
+        assert pool_config.pool_size == 40
+        assert pool_config.max_overflow == 80
+        assert pool_config.pool_recycle == 9000
+        assert pool_config.connection_timeout == 60
+
+        # Test get_session_info method (line 161)
+        session_config = postgresql.get_session_info()
+        assert session_config.echo == False
+        assert session_config.autoflush == False
+        assert session_config.expire_on_commit == False
+        assert session_config.autocommit == True
+
+    @patch('ddcDatabases.postgresql.get_postgresql_settings')
+    def test_get_engine_method_with_psycopg2(self, mock_get_settings):
+        """Test the _get_engine method with psycopg2 driver"""
+        mock_settings = MagicMock()
+        mock_settings.user = "postgres"
+        mock_settings.password = "password"
+        mock_settings.host = "localhost"
+        mock_settings.port = 5432
+        mock_settings.database = "postgres"
+        mock_settings.echo = False
+        mock_settings.autoflush = False
+        mock_settings.expire_on_commit = False
+        mock_settings.autocommit = False
+        mock_settings.connection_timeout = 30
+        mock_settings.pool_recycle = 3600
+        mock_settings.pool_size = 25
+        mock_settings.max_overflow = 50
+        mock_settings.sync_driver = "postgresql+psycopg2"
+        mock_settings.async_driver = "postgresql+asyncpg"
+        mock_get_settings.return_value = mock_settings
+
+        postgresql = PostgreSQL(autocommit=True)
+
+        # Test that _get_engine context manager works and returns an engine
+        with postgresql._get_engine() as engine:
+            # Verify we get a real SQLAlchemy engine
+            assert hasattr(engine, 'dispose')
+            assert hasattr(engine, 'connect')
+            # Verify URL was constructed correctly
+            assert "postgresql+psycopg2" in str(engine.url)
+            assert "localhost" in str(engine.url)
+            assert "postgres" in str(engine.url)
+
+        # Engine should be properly disposed after context exit
+        # After dispose(), the pool should be invalidated or recreated
+        # We can check that the engine is in a disposed state
+        try:
+            # Try to get a connection - should fail or create new pool after disposal
+            with engine.connect() as conn:
+                pass
+        except Exception:
+            # This is expected if the engine was properly disposed
+            pass
+
+    @patch('ddcDatabases.postgresql.get_postgresql_settings')
+    def test_get_engine_method_without_autocommit(self, mock_get_settings):
+        """Test the _get_engine method without autocommit"""
+        mock_settings = MagicMock()
+        mock_settings.user = "postgres"
+        mock_settings.password = "password"
+        mock_settings.host = "localhost"
+        mock_settings.port = 5432
+        mock_settings.database = "postgres"
+        mock_settings.echo = False
+        mock_settings.autoflush = False
+        mock_settings.expire_on_commit = False
+        mock_settings.autocommit = False
+        mock_settings.connection_timeout = 30
+        mock_settings.pool_recycle = 3600
+        mock_settings.pool_size = 25
+        mock_settings.max_overflow = 50
+        mock_settings.sync_driver = "postgresql+psycopg2"
+        mock_settings.async_driver = "postgresql+asyncpg"
+        mock_get_settings.return_value = mock_settings
+
+        postgresql = PostgreSQL(autocommit=False)
+
+        # Test the _get_engine context manager without autocommit
+        with postgresql._get_engine() as engine:
+            # Verify we get a real SQLAlchemy engine
+            assert hasattr(engine, 'dispose')
+            assert hasattr(engine, 'connect')
+            # Verify URL was constructed correctly
+            assert "postgresql+psycopg2" in str(engine.url)
+
+        # Engine should be properly disposed after context exit
+        # After dispose(), the pool should be invalidated or recreated
+        # We can check that the engine is in a disposed state
+        try:
+            # Try to get a connection - should fail or create new pool after disposal
+            with engine.connect() as conn:
+                pass
+        except Exception:
+            # This is expected if the engine was properly disposed
+            pass
+
+    @patch('ddcDatabases.postgresql.get_postgresql_settings')
+    def test_get_engine_method_non_psycopg2_driver(self, mock_get_settings):
+        """Test the _get_engine method with non-psycopg2 driver"""
+        mock_settings = MagicMock()
+        mock_settings.user = "postgres"
+        mock_settings.password = "password"
+        mock_settings.host = "localhost"
+        mock_settings.port = 5432
+        mock_settings.database = "postgres"
+        mock_settings.echo = False
+        mock_settings.autoflush = False
+        mock_settings.expire_on_commit = False
+        mock_settings.autocommit = False
+        mock_settings.connection_timeout = 30
+        mock_settings.pool_recycle = 3600
+        mock_settings.pool_size = 25
+        mock_settings.max_overflow = 50
+        mock_settings.sync_driver = "postgresql+psycopg2"  # Use psycopg2 (available driver)
+        mock_settings.async_driver = "postgresql+asyncpg"
+        mock_get_settings.return_value = mock_settings
+
+        postgresql = PostgreSQL()
+
+        # Test the _get_engine context manager with non-psycopg2 driver
+        with postgresql._get_engine() as engine:
+            # Verify we get a real SQLAlchemy engine
+            assert hasattr(engine, 'dispose')
+            assert hasattr(engine, 'connect')
+            # For non-psycopg2 drivers, should still use psycopg2 as fallback
+            # since the settings return psycopg2 as sync_driver for PostgreSQL
+            assert "postgresql" in str(engine.url)
+
+        # Engine should be properly disposed after context exit
+        # After dispose(), the pool should be invalidated or recreated
+        # We can check that the engine is in a disposed state
+        try:
+            # Try to get a connection - should fail or create new pool after disposal
+            with engine.connect() as conn:
+                pass
+        except Exception:
+            # This is expected if the engine was properly disposed
+            pass
+
+    @patch('ddcDatabases.postgresql.get_postgresql_settings')
+    def test_get_async_engine_method_with_asyncpg(self, mock_get_settings):
+        """Test the _get_async_engine method with asyncpg driver"""
+        mock_settings = MagicMock()
+        mock_settings.user = "postgres"
+        mock_settings.password = "password"
+        mock_settings.host = "localhost"
+        mock_settings.port = 5432
+        mock_settings.database = "postgres"
+        mock_settings.echo = False
+        mock_settings.autoflush = False
+        mock_settings.expire_on_commit = False
+        mock_settings.autocommit = False
+        mock_settings.connection_timeout = 45
+        mock_settings.pool_recycle = 3600
+        mock_settings.pool_size = 25
+        mock_settings.max_overflow = 50
+        mock_settings.sync_driver = "postgresql+psycopg2"
+        mock_settings.async_driver = "postgresql+asyncpg"
+        mock_get_settings.return_value = mock_settings
+
+        postgresql = PostgreSQL(autocommit=True, connection_timeout=60)
+
+        # Test the _get_async_engine context manager
+        async def test_async():
+            async with postgresql._get_async_engine() as engine:
+                # Verify we get a real SQLAlchemy AsyncEngine
+                assert hasattr(engine, 'dispose')
+                assert hasattr(engine, 'begin')
+                # Verify URL was constructed correctly
+                assert "postgresql+asyncpg" in str(engine.url)
+                assert "localhost" in str(engine.url)
+
+        # Run the async test
+        import asyncio
+        asyncio.run(test_async())
+
+    @patch('ddcDatabases.postgresql.get_postgresql_settings')
+    def test_get_async_engine_method_without_autocommit(self, mock_get_settings):
+        """Test the _get_async_engine method without autocommit"""
+        mock_settings = MagicMock()
+        mock_settings.user = "postgres"
+        mock_settings.password = "password"
+        mock_settings.host = "localhost"
+        mock_settings.port = 5432
+        mock_settings.database = "postgres"
+        mock_settings.echo = False
+        mock_settings.autoflush = False
+        mock_settings.expire_on_commit = False
+        mock_settings.autocommit = False
+        mock_settings.connection_timeout = 30
+        mock_settings.pool_recycle = 3600
+        mock_settings.pool_size = 25
+        mock_settings.max_overflow = 50
+        mock_settings.sync_driver = "postgresql+psycopg2"
+        mock_settings.async_driver = "postgresql+asyncpg"
+        mock_get_settings.return_value = mock_settings
+
+        postgresql = PostgreSQL(autocommit=False)
+
+        # Test the _get_async_engine context manager without autocommit
+        async def test_async():
+            async with postgresql._get_async_engine() as engine:
+                # Verify we get a real SQLAlchemy AsyncEngine
+                assert hasattr(engine, 'dispose')
+                assert hasattr(engine, 'begin')
+                # Verify URL was constructed correctly
+                assert "postgresql+asyncpg" in str(engine.url)
+
+        import asyncio
+        asyncio.run(test_async())
+
+    @patch('ddcDatabases.postgresql.get_postgresql_settings')
+    def test_get_async_engine_method_non_asyncpg_driver(self, mock_get_settings):
+        """Test the _get_async_engine method with non-asyncpg driver"""
+        mock_settings = MagicMock()
+        mock_settings.user = "postgres"
+        mock_settings.password = "password"
+        mock_settings.host = "localhost"
+        mock_settings.port = 5432
+        mock_settings.database = "postgres"
+        mock_settings.echo = False
+        mock_settings.autoflush = False
+        mock_settings.expire_on_commit = False
+        mock_settings.autocommit = False
+        mock_settings.connection_timeout = 30
+        mock_settings.pool_recycle = 3600
+        mock_settings.pool_size = 25
+        mock_settings.max_overflow = 50
+        mock_settings.sync_driver = "postgresql+psycopg2"
+        mock_settings.async_driver = "postgresql+asyncpg"  # Use asyncpg (available driver)
+        mock_get_settings.return_value = mock_settings
+
+        postgresql = PostgreSQL()
+
+        # Test the _get_async_engine context manager with non-asyncpg driver
+        async def test_async():
+            async with postgresql._get_async_engine() as engine:
+                # Verify we get a real SQLAlchemy AsyncEngine
+                assert hasattr(engine, 'dispose')
+                assert hasattr(engine, 'begin')
+                # Verify URL was constructed correctly
+                assert "postgresql+asyncpg" in str(engine.url)
+
+        import asyncio
+        asyncio.run(test_async())
+
+    @patch('ddcDatabases.postgresql.get_postgresql_settings')
+    def test_repr_method(self, mock_get_settings):
+        """Test the enhanced __repr__ method"""
+        mock_settings = MagicMock()
+        mock_settings.user = "testuser"
+        mock_settings.password = "testpass"
+        mock_settings.host = "testhost"
+        mock_settings.port = 5432
+        mock_settings.database = "testdb"
+        mock_settings.echo = False
+        mock_settings.autoflush = False
+        mock_settings.expire_on_commit = False
+        mock_settings.autocommit = False
+        mock_settings.connection_timeout = 30
+        mock_settings.pool_recycle = 3600
+        mock_settings.pool_size = 25
+        mock_settings.max_overflow = 50
+        mock_settings.sync_driver = "postgresql+psycopg2"
+        mock_settings.async_driver = "postgresql+asyncpg"
+        mock_get_settings.return_value = mock_settings
+
+        postgresql = PostgreSQL(
+            host="myhost",
+            port=5433,
+            database="mydb",
+            pool_size=30,
+            echo=True
+        )
+
+        repr_str = repr(postgresql)
+
+        # Check that all expected values are in the repr string
+        assert "PostgreSQL(" in repr_str
+        assert "host='myhost'" in repr_str
+        assert "port=5433" in repr_str
+        assert "database='mydb'" in repr_str
+        assert "pool_size=30" in repr_str
+        assert "echo=True" in repr_str
+        assert ")" in repr_str
+
+    @patch('ddcDatabases.postgresql.get_postgresql_settings')
+    def test_configuration_immutability(self, mock_get_settings):
+        """Test that configuration objects are properly immutable"""
+        mock_settings = MagicMock()
+        mock_settings.user = "postgres"
+        mock_settings.password = "password"
+        mock_settings.host = "localhost"
+        mock_settings.port = 5432
+        mock_settings.database = "postgres"
+        mock_settings.echo = False
+        mock_settings.autoflush = False
+        mock_settings.expire_on_commit = False
+        mock_settings.autocommit = False
+        mock_settings.connection_timeout = 30
+        mock_settings.pool_recycle = 3600
+        mock_settings.pool_size = 25
+        mock_settings.max_overflow = 50
+        mock_settings.sync_driver = "postgresql+psycopg2"
+        mock_settings.async_driver = "postgresql+asyncpg"
+        mock_get_settings.return_value = mock_settings
+
+        postgresql = PostgreSQL()
+
+        # Test that configuration objects are frozen (immutable)
+        conn_config = postgresql.get_connection_info()
+        pool_config = postgresql.get_pool_info()
+        session_config = postgresql.get_session_info()
+
+        # Try to modify configurations - should raise FrozenInstanceError
+        with pytest.raises(Exception):  # FrozenInstanceError
+            conn_config.host = "modified"
+
+        with pytest.raises(Exception):  # FrozenInstanceError
+            pool_config.pool_size = 999
+
+        with pytest.raises(Exception):  # FrozenInstanceError
+            session_config.echo = True

@@ -4,7 +4,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "ddcDatabases"
-version = "2.0.7"
+version = "2.0.8"
 description = "Simplified Database ORM Connections"
 license = "MIT"
 readme = "README.md"
@@ -51,8 +51,8 @@ aioodbc = {version = "^0.5.0", optional = true}
 aiomysql = {version = "^0.2.0", optional = true}
 asyncpg = {version = "^0.30.0", optional = true}
 cx-oracle = {version = "^8.3.0", optional = true}
-pymongo = {version = "^4.14.1", optional = true}
-pymysql = {version = "^1.1.1", optional = true}
+pymongo = {version = "^4.15.1", optional = true}
+pymysql = {version = "^1.1.2", optional = true}
 psycopg2-binary = {version = "^2.9.10", optional = true}
 pyodbc = {version = "^5.2.0", optional = true}
 
@@ -65,11 +65,11 @@ pgsql = ["psycopg2-binary", "asyncpg"]
 all = ["pymongo", "pyodbc", "aioodbc", "pymysql", "aiomysql", "cx-oracle", "psycopg2-binary", "asyncpg"]
 
 [tool.poetry.group.test.dependencies]
-faker = "^37.5.3"
+faker = "^37.8.0"
 poethepoet = "^0.37.0"
-pytest = "^8.4.1"
-pytest-asyncio = "^1.1.0"
-pytest-cov = "^6.2.1"
+pytest = "^8.4.2"
+pytest-asyncio = "^1.2.0"
+pytest-cov = "^7.0.0"
 
 [tool.poe.tasks]
 _test = "python -m pytest -v --cov --cov-report=term --cov-report=xml --junitxml=junit.xml -o junit_family=legacy"
