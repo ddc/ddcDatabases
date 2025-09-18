@@ -162,14 +162,17 @@ class TestMongoDB:
         assert mongodb.query == test_query
         assert mongodb.collection == "users"
 
-        # Verify that _create_cursor would be called with the query
-        with patch.object(mongodb, '_create_cursor') as mock_create_cursor:
-            mock_create_cursor.return_value = mock_cursor
-            mongodb.client = mock_client  # Set client to simulate successful connection
-            mongodb.is_connected = True
+        # Verify that _create_cursor works correctly with the query
+        # Since __slots__ prevents method patching, we'll test the method directly
+        mongodb.client = mock_client  # Set client to simulate successful connection
+        mongodb.is_connected = True
 
-            result = mongodb._create_cursor(mongodb.collection, mongodb.query)
-            mock_create_cursor.assert_called_once_with("users", test_query)
+        # Test the actual method functionality rather than mocking it
+        result = mongodb._create_cursor(mongodb.collection, mongodb.query)
+
+        # Verify the method was called with correct parameters by checking the result
+        assert result is mock_cursor  # The mock cursor should be returned
+        mock_collection.find.assert_called_once_with(test_query, batch_size=mongodb.batch_size, limit=mongodb.limit)
 
     def test_missing_credentials_error(self):
         """Test RuntimeError when credentials are missing - Line 27"""
