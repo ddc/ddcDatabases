@@ -583,8 +583,9 @@ Must have UV installed. See [UV Installation Guide](https://uv.run/docs/getting-
 poe build
 ```
 
-### Running Tests
+### Building DEV Environment and Running Tests
 ```shell
+uv venv
 poe install
 poe test
 ```
