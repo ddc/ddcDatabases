@@ -1,8 +1,8 @@
 name: CI/CD Pipeline
 
-"on":
+'on':
   push:
-    branches: ["**"]
+    branches: ['**']
     tags: ['v*']
 
 
@@ -13,14 +13,14 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: ["ubuntu-latest", "ubuntu-latest-arm64", "macos-latest", "macos-14-arm64", "windows-latest"]
-        python-version: ["3.12", "3.13"]
+        os: ['ubuntu-latest', 'ubuntu-latest-arm64', 'macos-latest', 'macos-14-arm64', 'windows-latest']
+        python-version: ['3.12', '3.13', '3.14']
         include:
-          - os: "macos-14-arm64"
-            runs-on: "macos-14"
-          - os: "ubuntu-latest-arm64"
-            runs-on: "ubuntu-latest"
-            arch: "arm64"
+          - os: 'macos-14-arm64'
+            runs-on: 'macos-14'
+          - os: 'ubuntu-latest-arm64'
+            runs-on: 'ubuntu-latest'
+            arch: 'arm64'
     steps:
       - uses: actions/checkout@v4
 
@@ -30,36 +30,31 @@ jobs:
         with:
           platforms: arm64
 
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python-version }}
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
 
-      - name: Install Poetry
-        uses: snok/install-poetry@v1
-        with:
-          virtualenvs-create: true
-          virtualenvs-in-project: true
+      - name: Set up Python ${{ matrix.python-version }}
+        run: uv python install ${{ matrix.python-version }}
 
       - name: Install dependencies
         run: |
-          if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
-            poetry install --with test --no-interaction --no-ansi -E mongodb -E mssql -E mysql -E oracle
+          if [[ '${{ matrix.os }}' == 'windows-latest' ]]; then
+            uv pip install -e .[mongodb,mssql,mysql,oracle,test]
           else
-            poetry install --with test --no-interaction --no-ansi -E all
+            uv pip install -e .[all,test]
           fi
         shell: bash
 
       - name: Run tests with coverage
-        run: poetry run poe tests
+        run: uv run poe test
         shell: bash
 
       - name: Upload coverage to Codecov
-        if: matrix.python-version == '3.13' && matrix.os == 'ubuntu-latest'
+        if: matrix.python-version == '3.14' && matrix.os == 'ubuntu-latest'
         uses: codecov/codecov-action@v5
 
       - name: Upload test results to Codecov
-        if: matrix.python-version == '3.13' && matrix.os == 'ubuntu-latest'
+        if: matrix.python-version == '3.14' && matrix.os == 'ubuntu-latest'
         uses: codecov/test-results-action@v1
 
 
@@ -70,41 +65,36 @@ jobs:
     if: startsWith(github.ref, 'refs/tags/v')
     strategy:
       matrix:
-        os: ["ubuntu-latest", "ubuntu-latest-arm64", "macos-latest", "macos-14-arm64", "windows-latest"]
-        python-version: ["3.12", "3.13"]
+        os: ['ubuntu-latest', 'ubuntu-latest-arm64', 'macos-latest', 'macos-14-arm64', 'windows-latest']
+        python-version: ['3.12', '3.13', '3.14']
         include:
-          - os: "macos-14-arm64"
-            runs-on: "macos-14"
-          - os: "ubuntu-latest-arm64"
-            runs-on: "ubuntu-latest"
-            arch: "arm64"
+          - os: 'macos-14-arm64'
+            runs-on: 'macos-14'
+          - os: 'ubuntu-latest-arm64'
+            runs-on: 'ubuntu-latest'
+            arch: 'arm64'
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python-version }}
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
 
-      - name: Install Poetry
-        uses: snok/install-poetry@v1
-        with:
-          virtualenvs-create: true
-          virtualenvs-in-project: true
+      - name: Set up Python ${{ matrix.python-version }}
+        run: uv python install ${{ matrix.python-version }}
 
       - name: Install dependencies
         run: |
-          if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
-            poetry install --with test --no-interaction --no-ansi -E mongodb -E mssql -E mysql -E oracle
+          if [[ '${{ matrix.os }}' == 'windows-latest' ]]; then
+            uv pip install -e .[mongodb,mssql,mysql,oracle,test]
           else
-            poetry install --with test --no-interaction --no-ansi -E all
+            uv pip install -e .[all,test]
           fi
         shell: bash
 
       - name: Build package with custom build script
         run: |
-          poetry run python build.py
-          poetry build
+          uv run python build.py
+          uv build
         shell: bash
 
       - name: Copy artifacts
@@ -138,8 +128,8 @@ jobs:
       - name: Prepare release assets
         run: |
           mkdir -p release-assets
-          find artifacts/ -name "*.whl" -exec cp {} release-assets/ \;
-          find artifacts/ -name "*.tar.gz" -exec cp {} release-assets/ \;
+          find artifacts/ -name '*.whl' -exec cp {} release-assets/ \;
+          find artifacts/ -name '*.tar.gz' -exec cp {} release-assets/ \;
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
