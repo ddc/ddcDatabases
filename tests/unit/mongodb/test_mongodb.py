@@ -680,51 +680,6 @@ class TestMongoDB:
 
         mock_cursor.sort.assert_called_once_with("_id", DESCENDING)
 
-    def test_missing_username_runtime_error(self):
-        """Test RuntimeError when username is missing - Line 37"""
-
-        # Create a completely isolated test that patches the MongoDB init to simulate the validation
-        def mock_init(self, *args, **kwargs):
-            # Simulate the actual initialization logic with None user
-            self.user = None  # This triggers the validation failure
-            self.password = "password"
-            if not self.user or not self.password:
-                raise RuntimeError("Missing username/password")
-
-        with patch.object(MongoDB, '__init__', mock_init):
-            with pytest.raises(RuntimeError, match="Missing username/password"):
-                MongoDB(collection="test_collection", query={"test": "value"})
-
-    def test_missing_password_runtime_error(self):
-        """Test RuntimeError when password is missing - Line 37"""
-
-        # Create a completely isolated test that patches the MongoDB init to simulate the validation
-        def mock_init(self, *args, **kwargs):
-            # Simulate the actual initialization logic with None password
-            self.user = "admin"
-            self.password = None  # This triggers the validation failure
-            if not self.user or not self.password:
-                raise RuntimeError("Missing username/password")
-
-        with patch.object(MongoDB, '__init__', mock_init):
-            with pytest.raises(RuntimeError, match="Missing username/password"):
-                MongoDB(collection="test_collection", query={"test": "value"})
-
-    def test_empty_string_credentials(self):
-        """Test RuntimeError with empty string credentials - Line 37"""
-
-        # Create a completely isolated test that patches the MongoDB init to simulate the validation
-        def mock_init(self, *args, **kwargs):
-            # Simulate the actual initialization logic with empty string user
-            self.user = ""  # This triggers the validation failure (empty string is falsy)
-            self.password = "password"
-            if not self.user or not self.password:
-                raise RuntimeError("Missing username/password")
-
-        with patch.object(MongoDB, '__init__', mock_init):
-            with pytest.raises(RuntimeError, match="Missing username/password"):
-                MongoDB(collection="test_collection", query={"test": "value"})
-
     def test_connection_url_format(self):
         """Test connection URL format logic - Line 41"""
         # Test the connection URL format directly without complex mocking

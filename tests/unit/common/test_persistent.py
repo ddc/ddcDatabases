@@ -444,8 +444,8 @@ class TestRetrySettingsIntegration:
 
         assert settings.enable_retry is True
         assert settings.max_retries == 3
-        assert settings.initial_retry_delay == 1.0
-        assert settings.max_retry_delay == 30.0
+        assert settings.initial_retry_delay == pytest.approx(1.0)
+        assert settings.max_retry_delay == pytest.approx(30.0)
         assert settings.disconnect_idle_timeout == 300
 
     def test_mysql_retry_settings(self):

@@ -22,9 +22,9 @@ class TestRetryConfig:
         config = RetryConfig()
         assert config.enable_retry is True
         assert config.max_retries == 3
-        assert config.initial_delay == 1.0
-        assert config.max_delay == 30.0
-        assert config.jitter == 0.1
+        assert config.initial_delay == pytest.approx(1.0)
+        assert config.max_delay == pytest.approx(30.0)
+        assert config.jitter == pytest.approx(0.1)
 
     def test_custom_values(self):
         """Test RetryConfig with custom values."""
@@ -37,9 +37,9 @@ class TestRetryConfig:
         )
         assert config.enable_retry is False
         assert config.max_retries == 5
-        assert config.initial_delay == 2.0
-        assert config.max_delay == 60.0
-        assert config.jitter == 0.2
+        assert config.initial_delay == pytest.approx(2.0)
+        assert config.max_delay == pytest.approx(60.0)
+        assert config.jitter == pytest.approx(0.2)
 
     def test_invalid_max_retries(self):
         """Test that negative max_retries raises ValueError."""
@@ -338,8 +338,8 @@ class TestRetryConfigInDatabaseClasses:
 
         assert retry_info.enable_retry is True
         assert retry_info.max_retries == 3
-        assert retry_info.initial_retry_delay == 1.0
-        assert retry_info.max_retry_delay == 30.0
+        assert retry_info.initial_retry_delay == pytest.approx(1.0)
+        assert retry_info.max_retry_delay == pytest.approx(30.0)
 
     def test_mysql_retry_config(self):
         """Test MySQL includes retry config."""
@@ -406,5 +406,5 @@ class TestRetryConfigInDatabaseClasses:
 
         assert retry_info.enable_retry is False
         assert retry_info.max_retries == 5
-        assert retry_info.initial_retry_delay == 2.0
-        assert retry_info.max_retry_delay == 60.0
+        assert retry_info.initial_retry_delay == pytest.approx(2.0)
+        assert retry_info.max_retry_delay == pytest.approx(60.0)
