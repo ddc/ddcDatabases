@@ -778,3 +778,125 @@ class TestMongoDB:
             # Simulate line 45: return self
             result = mongodb  # This is what "return self" does
             assert result is mongodb
+
+    def test_test_connection_raises_connection_error_on_failure(self):
+        """Test _test_connection raises ConnectionError when ping fails."""
+        from pymongo.errors import PyMongoError
+
+        mock_settings = MagicMock()
+        mock_settings.user = "admin"
+        mock_settings.password = "password"
+        mock_settings.host = "localhost"
+        mock_settings.port = 27017
+        mock_settings.database = "admin"
+        mock_settings.batch_size = 2865
+        mock_settings.limit = 0
+        mock_settings.sync_driver = "mongodb"
+
+        with patch('ddcDatabases.mongodb.get_mongodb_settings', return_value=mock_settings):
+            mongodb = MongoDB(collection="test_collection", query={"test": "value"})
+
+            # Mock client with failing ping
+            mock_client = MagicMock()
+            mock_client.admin.command.side_effect = PyMongoError("ping failed")
+            mongodb.client = mock_client
+
+            with pytest.raises(ConnectionError, match="Connection to MongoDB failed"):
+                mongodb._test_connection()
+
+    def test_create_cursor_with_ascending_sort(self):
+        """Test _create_cursor with ascending sort order."""
+        mock_settings = MagicMock()
+        mock_settings.user = "admin"
+        mock_settings.password = "password"
+        mock_settings.host = "localhost"
+        mock_settings.port = 27017
+        mock_settings.database = "admin"
+        mock_settings.batch_size = 100
+        mock_settings.limit = 10
+        mock_settings.sync_driver = "mongodb"
+
+        with patch('ddcDatabases.mongodb.get_mongodb_settings', return_value=mock_settings):
+            mongodb = MongoDB(collection="test_collection")
+
+            # Create proper nested mock structure
+            mock_cursor = MagicMock()
+            mock_cursor.sort.return_value = mock_cursor
+            mock_cursor.batch_size.return_value = mock_cursor
+
+            mock_collection = MagicMock()
+            mock_collection.find.return_value = mock_cursor
+
+            mock_db = MagicMock()
+            mock_db.__getitem__ = MagicMock(return_value=mock_collection)
+
+            mock_client = MagicMock()
+            mock_client.__getitem__ = MagicMock(return_value=mock_db)
+            mongodb.client = mock_client
+
+            # Test with ascending sort
+            from pymongo import ASCENDING
+            cursor = mongodb._create_cursor("test_collection", {}, "name", "asc")
+
+            mock_cursor.sort.assert_called_once()
+            # Verify ascending direction was used
+            call_args = mock_cursor.sort.call_args
+            assert call_args[0][1] == ASCENDING
+
+    def test_create_cursor_with_default_sort_order(self):
+        """Test _create_cursor with no explicit sort order defaults to ascending."""
+        mock_settings = MagicMock()
+        mock_settings.user = "admin"
+        mock_settings.password = "password"
+        mock_settings.host = "localhost"
+        mock_settings.port = 27017
+        mock_settings.database = "admin"
+        mock_settings.batch_size = 100
+        mock_settings.limit = 10
+        mock_settings.sync_driver = "mongodb"
+
+        with patch('ddcDatabases.mongodb.get_mongodb_settings', return_value=mock_settings):
+            mongodb = MongoDB(collection="test_collection")
+
+            # Create proper nested mock structure
+            mock_cursor = MagicMock()
+            mock_cursor.sort.return_value = mock_cursor
+            mock_cursor.batch_size.return_value = mock_cursor
+
+            mock_collection = MagicMock()
+            mock_collection.find.return_value = mock_cursor
+
+            mock_db = MagicMock()
+            mock_db.__getitem__ = MagicMock(return_value=mock_collection)
+
+            mock_client = MagicMock()
+            mock_client.__getitem__ = MagicMock(return_value=mock_db)
+            mongodb.client = mock_client
+
+            # Test with sort column but no sort order - should default to ascending
+            from pymongo import ASCENDING
+            cursor = mongodb._create_cursor("test_collection", {}, "name", None)
+
+            mock_cursor.sort.assert_called_once()
+            call_args = mock_cursor.sort.call_args
+            assert call_args[0][1] == ASCENDING
+
+    def test_enter_with_connection_error_calls_sys_exit(self):
+        """Test that __enter__ calls sys.exit when connection fails."""
+        from pymongo.errors import PyMongoError
+
+        mock_client = MagicMock()
+        mock_client.admin.command.side_effect = PyMongoError("Connection failed")
+
+        with patch('ddcDatabases.mongodb.MongoClient', return_value=mock_client):
+            # Pass enable_retry=False directly to disable retries
+            mongodb = MongoDB(
+                collection="test_collection",
+                enable_retry=False,
+            )
+
+            with pytest.raises(SystemExit) as exc_info:
+                with mongodb:
+                    pass
+
+            assert exc_info.value.code == 1

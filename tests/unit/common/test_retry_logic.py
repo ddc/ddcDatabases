@@ -9,6 +9,7 @@ from ddcDatabases.db_utils import (
     CONNECTION_ERROR_KEYWORDS,
     _is_connection_error,
     _calculate_retry_delay,
+    _handle_retry_exception,
     _retry_operation,
     _retry_operation_async,
 )
@@ -186,6 +187,72 @@ class TestCalculateRetryDelay:
         assert all(d == delays[0] for d in delays)
 
 
+class TestHandleRetryException:
+    """Test _handle_retry_exception function."""
+
+    def test_raises_non_connection_error(self):
+        """Test that non-connection errors are re-raised immediately."""
+        config = RetryConfig()
+
+        # Must call within exception context since function uses bare 'raise'
+        try:
+            raise ValueError("bad value")
+        except ValueError as e:
+            with pytest.raises(ValueError):
+                _handle_retry_exception(e, 0, config, "test_op")
+
+    def test_raises_when_max_retries_reached(self):
+        """Test that error is re-raised when max retries reached."""
+        config = RetryConfig(max_retries=2)
+
+        # Must call within exception context since function uses bare 'raise'
+        try:
+            raise ConnectionError("fail")
+        except ConnectionError as e:
+            with pytest.raises(ConnectionError):
+                _handle_retry_exception(e, 2, config, "test_op")
+
+    def test_returns_delay_for_connection_error(self):
+        """Test that delay is returned for retryable connection errors."""
+        config = RetryConfig(max_retries=3, initial_delay=1.0, jitter=0)
+
+        try:
+            raise ConnectionError("fail")
+        except ConnectionError as e:
+            delay = _handle_retry_exception(e, 0, config, "test_op")
+            assert delay == pytest.approx(1.0)
+
+    def test_returns_exponential_delay(self):
+        """Test that delay increases exponentially."""
+        config = RetryConfig(max_retries=5, initial_delay=1.0, jitter=0)
+
+        try:
+            raise ConnectionError("fail")
+        except ConnectionError as e:
+            delay_0 = _handle_retry_exception(e, 0, config, "test_op")
+            delay_1 = _handle_retry_exception(e, 1, config, "test_op")
+            delay_2 = _handle_retry_exception(e, 2, config, "test_op")
+
+            assert delay_0 == pytest.approx(1.0)
+            assert delay_1 == pytest.approx(2.0)
+            assert delay_2 == pytest.approx(4.0)
+
+    def test_raises_at_exact_max_retries_boundary(self):
+        """Test boundary condition at exactly max_retries."""
+        config = RetryConfig(max_retries=3)
+
+        try:
+            raise ConnectionError("fail")
+        except ConnectionError as e:
+            # Attempt 3 (0-indexed) should raise since it equals max_retries
+            with pytest.raises(ConnectionError):
+                _handle_retry_exception(e, 3, config, "test_op")
+
+            # Attempt 2 should still return delay
+            delay = _handle_retry_exception(e, 2, config, "test_op")
+            assert delay > 0
+
+
 class TestRetryOperationSync:
     """Test _retry_operation synchronous function."""
 
@@ -252,6 +319,36 @@ class TestRetryOperationSync:
         assert result == "success"
         assert mock_sleep.call_count == 2
 
+    def test_zero_max_retries_single_attempt(self):
+        """Test with zero max_retries - only one attempt is made."""
+        config = RetryConfig(max_retries=0, initial_delay=0.01)
+        operation = MagicMock(side_effect=ConnectionError("fail"))
+
+        with pytest.raises(ConnectionError):
+            _retry_operation(operation, config, "test_op")
+
+        # With max_retries=0, only 1 attempt (no retries)
+        operation.assert_called_once()
+
+    def test_zero_max_retries_success(self):
+        """Test with zero max_retries succeeds on first try."""
+        config = RetryConfig(max_retries=0)
+        operation = MagicMock(return_value="success")
+
+        result = _retry_operation(operation, config, "test_op")
+
+        assert result == "success"
+        operation.assert_called_once()
+
+    def test_returns_falsy_value(self):
+        """Test that falsy return values (0, False, None, '') are returned correctly."""
+        config = RetryConfig()
+
+        for falsy_value in [0, False, None, '', [], {}]:
+            operation = MagicMock(return_value=falsy_value)
+            result = _retry_operation(operation, config, "test_op")
+            assert result == falsy_value
+
 
 class TestRetryOperationAsync:
     """Test _retry_operation_async asynchronous function."""
@@ -309,6 +406,33 @@ class TestRetryOperationAsync:
             await _retry_operation_async(operation, config, "test_op")
 
         assert call_count[0] == 1
+
+    @pytest.mark.asyncio
+    async def test_zero_max_retries_single_attempt(self):
+        """Test async with zero max_retries - only one attempt is made."""
+        config = RetryConfig(max_retries=0, initial_delay=0.01)
+        call_count = [0]
+
+        async def operation():
+            call_count[0] += 1
+            raise ConnectionError("fail")
+
+        with pytest.raises(ConnectionError):
+            await _retry_operation_async(operation, config, "test_op")
+
+        assert call_count[0] == 1
+
+    @pytest.mark.asyncio
+    async def test_returns_falsy_value(self):
+        """Test that falsy return values are returned correctly in async."""
+        config = RetryConfig()
+
+        for falsy_value in [0, False, None, '', [], {}]:
+            async def operation(val=falsy_value):
+                return val
+
+            result = await _retry_operation_async(operation, config, "test_op")
+            assert result == falsy_value
 
     @pytest.mark.asyncio
     async def test_retry_disabled(self):
