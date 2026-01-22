@@ -1,8 +1,8 @@
-<div class="shields">
+<div align="center">
   <h1>ddcDatabases</h1>
 </div>
 
-<div class="shields">
+<div align="center">
     <a href="https://www.paypal.com/ncp/payment/6G9Z78QHUD4RJ">
         <img src="https://img.shields.io/badge/Donate-PayPal-brightgreen.svg?style=plastic" alt="Donate"/>
     </a>
@@ -11,7 +11,7 @@
   </a>
 </div>
 
-<div class="shields">
+<div align="center">
     <a href="https://www.python.org/downloads">
         <img src="https://img.shields.io/pypi/pyversions/ddcDatabases.svg" alt="Python"/>
     </a>
@@ -29,10 +29,10 @@
     </a>
 </div>
 
-<div class="shields">
+<div align="center">
     <a href="https://github.com/ddc/ddcDatabases/issues">
         <img src="https://img.shields.io/github/issues/ddc/ddcDatabases" alt="issues"/>
-    </a>    
+    </a>
     <a href="https://codecov.io/gh/ddc/ddcDatabases">
         <img src="https://codecov.io/gh/ddc/ddcDatabases/graph/badge.svg?token=XWB53034GI" alt="codecov"/>
     </a>
@@ -47,16 +47,7 @@
     </a>
 </div>
 
-<div class="shields">
-  <p>A Python library for database connections and ORM queries with support for multiple database engines including SQLite, PostgreSQL, MySQL, MSSQL, Oracle, and MongoDB.</p>
-</div>
-
-<style>
-.shields {
-    justify-content: center;
-    text-align:center;
-}
-</style>
+<p align="center">A Python library for database connections and ORM queries with support for multiple database engines including SQLite, PostgreSQL, MySQL, MSSQL, Oracle, and MongoDB.</p>
 
 
 ## Table of Contents
