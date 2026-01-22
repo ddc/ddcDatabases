@@ -4,7 +4,7 @@ from typing import AsyncGenerator, Generator
 from sqlalchemy.engine import create_engine, Engine, URL
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
 from sqlalchemy.orm import Session
-from .db_utils import BaseConnection, ConnectionTester
+from .db_utils import BaseConnection, ConnectionTester, RetryConfig
 from .settings import get_mssql_settings
 
 
@@ -35,6 +35,14 @@ class MSSQLSessionConfig:
     autocommit: bool | None = None
 
 
+@dataclass(slots=True, frozen=True)
+class MSSQLRetryConfig:
+    enable_retry: bool | None = None
+    max_retries: int | None = None
+    initial_retry_delay: float | None = None
+    max_retry_delay: float | None = None
+
+
 class MSSQL(BaseConnection):
     """
     Class to handle MSSQL connections.
@@ -59,6 +67,7 @@ class MSSQL(BaseConnection):
         '_connection_config',
         '_pool_config',
         '_session_config',
+        '_retry_config',
     )
 
     def __init__(
@@ -78,6 +87,10 @@ class MSSQL(BaseConnection):
         pool_size: int | None = None,
         max_overflow: int | None = None,
         extra_engine_args: dict | None = None,
+        enable_retry: bool | None = None,
+        max_retries: int | None = None,
+        initial_retry_delay: float | None = None,
+        max_retry_delay: float | None = None,
     ):
         _settings = get_mssql_settings()
 
@@ -147,6 +160,23 @@ class MSSQL(BaseConnection):
             **self.extra_engine_args,
         }
 
+        # Create retry configuration
+        self._retry_config = MSSQLRetryConfig(
+            enable_retry=enable_retry if enable_retry is not None else _settings.enable_retry,
+            max_retries=max_retries if max_retries is not None else _settings.max_retries,
+            initial_retry_delay=(
+                initial_retry_delay if initial_retry_delay is not None else _settings.initial_retry_delay
+            ),
+            max_retry_delay=max_retry_delay if max_retry_delay is not None else _settings.max_retry_delay,
+        )
+
+        _retry_config = RetryConfig(
+            enable_retry=self._retry_config.enable_retry,
+            max_retries=self._retry_config.max_retries,
+            initial_delay=self._retry_config.initial_retry_delay,
+            max_delay=self._retry_config.max_retry_delay,
+        )
+
         super().__init__(
             connection_url=self.connection_url,
             engine_args=self.engine_args,
@@ -154,6 +184,7 @@ class MSSQL(BaseConnection):
             expire_on_commit=self.expire_on_commit,
             sync_driver=self.sync_driver,
             async_driver=self.async_driver,
+            retry_config=_retry_config,
         )
 
     def __repr__(self) -> str:
@@ -180,6 +211,10 @@ class MSSQL(BaseConnection):
     def get_session_info(self) -> MSSQLSessionConfig:
         """Get immutable session configuration."""
         return self._session_config
+
+    def get_retry_info(self) -> MSSQLRetryConfig:
+        """Get immutable retry configuration."""
+        return self._retry_config
 
     @contextmanager
     def _get_engine(self) -> Generator[Engine, None, None]:

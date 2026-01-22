@@ -5,6 +5,7 @@ from typing import Optional, Type
 from pymongo import ASCENDING, DESCENDING, MongoClient
 from pymongo.cursor import Cursor
 from pymongo.errors import PyMongoError
+from .db_utils import _retry_operation, RetryConfig
 from .settings import get_mongodb_settings
 
 
@@ -25,6 +26,14 @@ class MongoQueryConfig:
     sort_order: str | None = None
     batch_size: int | None = None
     limit: int | None = None
+
+
+@dataclass(slots=True, frozen=True)
+class MongoRetryConfig:
+    enable_retry: bool | None = None
+    max_retries: int | None = None
+    initial_retry_delay: float | None = None
+    max_retry_delay: float | None = None
 
 
 logger = logging.getLogger(__name__)
@@ -55,6 +64,8 @@ class MongoDB:
         'cursor_ref',
         '_connection_config',
         '_query_config',
+        '_retry_config',
+        'retry_config',
     )
 
     def __init__(
@@ -70,6 +81,10 @@ class MongoDB:
         sort_order: str | None = None,
         batch_size: int | None = None,
         limit: int | None = None,
+        enable_retry: bool | None = None,
+        max_retries: int | None = None,
+        initial_retry_delay: float | None = None,
+        max_retry_delay: float | None = None,
     ):
         _settings = get_mongodb_settings()
 
@@ -108,6 +123,23 @@ class MongoDB:
         self.client = None
         self.cursor_ref = None
 
+        # Create retry configuration
+        self._retry_config = MongoRetryConfig(
+            enable_retry=enable_retry if enable_retry is not None else _settings.enable_retry,
+            max_retries=max_retries if max_retries is not None else _settings.max_retries,
+            initial_retry_delay=(
+                initial_retry_delay if initial_retry_delay is not None else _settings.initial_retry_delay
+            ),
+            max_retry_delay=max_retry_delay if max_retry_delay is not None else _settings.max_retry_delay,
+        )
+
+        self.retry_config = RetryConfig(
+            enable_retry=self._retry_config.enable_retry,
+            max_retries=self._retry_config.max_retries,
+            initial_delay=self._retry_config.initial_retry_delay,
+            max_delay=self._retry_config.max_retry_delay,
+        )
+
         if not self.collection:
             raise ValueError("MongoDB collection name is required")
 
@@ -132,16 +164,27 @@ class MongoDB:
         """Get immutable query configuration."""
         return self._query_config
 
+    def get_retry_info(self) -> MongoRetryConfig:
+        """Get immutable retry configuration."""
+        return self._retry_config
+
     def __enter__(self) -> Cursor:
+        def connect() -> Cursor:
+            try:
+                _connection_url = f"{self.sync_driver}://{self.user}:{self.password}@{self.host}/{self.database}"
+                self.client = MongoClient(_connection_url)
+                self._test_connection()
+                self.is_connected = True
+                self.cursor_ref = self._create_cursor(self.collection, self.query, self.sort_column, self.sort_order)
+                return self.cursor_ref
+            except (ConnectionError, RuntimeError, ValueError, TypeError):
+                if self.client:
+                    self.client.close()
+                raise
+
         try:
-            _connection_url = f"{self.sync_driver}://{self.user}:{self.password}@{self.host}/{self.database}"
-            self.client = MongoClient(_connection_url)
-            self._test_connection()
-            self.is_connected = True
-            self.cursor_ref = self._create_cursor(self.collection, self.query, self.sort_column, self.sort_order)
-            return self.cursor_ref
-        except (ConnectionError, RuntimeError, ValueError, TypeError):
-            self.client.close() if self.client else None
+            return _retry_operation(connect, self.retry_config, "mongodb_connect")
+        except (PyMongoError, ConnectionError, RuntimeError, ValueError, TypeError):
             sys.exit(1)
 
     def __exit__(

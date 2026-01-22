@@ -187,6 +187,14 @@ class TestModuleImports:
             "Oracle",
             "PostgreSQL",
             "Sqlite",
+            "RetryConfig",
+            "PersistentConnectionConfig",
+            "PostgreSQLPersistent",
+            "MySQLPersistent",
+            "MSSQLPersistent",
+            "OraclePersistent",
+            "MongoDBPersistent",
+            "close_all_persistent_connections",
         }
 
         # Check all expected items are in __all__

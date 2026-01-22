@@ -4,7 +4,6 @@ from dotenv import load_dotenv
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-
 # Type variable for generic settings factory
 T = TypeVar('T', bound=BaseSettings)
 
@@ -24,6 +23,13 @@ PASSWORD_DESCRIPTION = "Database password"
 NAME_DESCRIPTION = "Database name"
 ASYNC_DATABASE_DRIVER_DESCRIPTION = "Async database driver"
 SYNC_DATABASE_DRIVER_DESCRIPTION = "Sync database driver"
+
+# Retry settings descriptions
+ENABLE_RETRY_DESCRIPTION = "Enable automatic retry on connection errors"
+MAX_RETRIES_DESCRIPTION = "Maximum number of retry attempts"
+INITIAL_RETRY_DELAY_DESCRIPTION = "Initial delay between retries in seconds"
+MAX_RETRY_DELAY_DESCRIPTION = "Maximum delay between retries in seconds"
+DISCONNECT_IDLE_TIMEOUT_DESCRIPTION = "Disconnect idle timeout in seconds for persistent connections"
 
 # Lazy loading flag for dotenv - thread-safe singleton pattern
 _dotenv_loaded = False
@@ -60,6 +66,12 @@ class SQLiteSettings(_BaseDBSettings):
     file_path: str = Field(default="sqlite.db", description="Path to SQLite database file")
     echo: bool = Field(default=False, description=ECHO_DESCRIPTION)
 
+    # Retry settings (minimal for file-based database)
+    enable_retry: bool = Field(default=False, description=ENABLE_RETRY_DESCRIPTION)
+    max_retries: int = Field(default=1, description=MAX_RETRIES_DESCRIPTION)
+    initial_retry_delay: float = Field(default=1.0, description=INITIAL_RETRY_DELAY_DESCRIPTION)
+    max_retry_delay: float = Field(default=30.0, description=MAX_RETRY_DELAY_DESCRIPTION)
+
     model_config = SettingsConfigDict(env_prefix="SQLITE_")
 
 
@@ -82,6 +94,13 @@ class PostgreSQLSettings(_BaseDBSettings):
     max_overflow: int = Field(default=50, description=MAX_OVERFLOW_DESCRIPTION)
     async_driver: str = Field(default="postgresql+asyncpg", description=ASYNC_DATABASE_DRIVER_DESCRIPTION)
     sync_driver: str = Field(default="postgresql+psycopg2", description=SYNC_DATABASE_DRIVER_DESCRIPTION)
+
+    # Retry settings
+    enable_retry: bool = Field(default=True, description=ENABLE_RETRY_DESCRIPTION)
+    max_retries: int = Field(default=3, description=MAX_RETRIES_DESCRIPTION)
+    initial_retry_delay: float = Field(default=1.0, description=INITIAL_RETRY_DELAY_DESCRIPTION)
+    max_retry_delay: float = Field(default=30.0, description=MAX_RETRY_DELAY_DESCRIPTION)
+    disconnect_idle_timeout: int = Field(default=300, description=DISCONNECT_IDLE_TIMEOUT_DESCRIPTION)
 
     model_config = SettingsConfigDict(env_prefix="POSTGRESQL_")
 
@@ -108,6 +127,13 @@ class MSSQLSettings(_BaseDBSettings):
     async_driver: str = Field(default="mssql+aioodbc", description=ASYNC_DATABASE_DRIVER_DESCRIPTION)
     sync_driver: str = Field(default="mssql+pyodbc", description=SYNC_DATABASE_DRIVER_DESCRIPTION)
 
+    # Retry settings
+    enable_retry: bool = Field(default=True, description=ENABLE_RETRY_DESCRIPTION)
+    max_retries: int = Field(default=3, description=MAX_RETRIES_DESCRIPTION)
+    initial_retry_delay: float = Field(default=1.0, description=INITIAL_RETRY_DELAY_DESCRIPTION)
+    max_retry_delay: float = Field(default=30.0, description=MAX_RETRY_DELAY_DESCRIPTION)
+    disconnect_idle_timeout: int = Field(default=300, description=DISCONNECT_IDLE_TIMEOUT_DESCRIPTION)
+
     model_config = SettingsConfigDict(env_prefix="MSSQL_")
 
 
@@ -131,6 +157,13 @@ class MySQLSettings(_BaseDBSettings):
     async_driver: str = Field(default="mysql+aiomysql", description=ASYNC_DATABASE_DRIVER_DESCRIPTION)
     sync_driver: str = Field(default="mysql+pymysql", description=SYNC_DATABASE_DRIVER_DESCRIPTION)
 
+    # Retry settings
+    enable_retry: bool = Field(default=True, description=ENABLE_RETRY_DESCRIPTION)
+    max_retries: int = Field(default=3, description=MAX_RETRIES_DESCRIPTION)
+    initial_retry_delay: float = Field(default=1.0, description=INITIAL_RETRY_DELAY_DESCRIPTION)
+    max_retry_delay: float = Field(default=30.0, description=MAX_RETRY_DELAY_DESCRIPTION)
+    disconnect_idle_timeout: int = Field(default=300, description=DISCONNECT_IDLE_TIMEOUT_DESCRIPTION)
+
     model_config = SettingsConfigDict(env_prefix="MYSQL_")
 
 
@@ -146,6 +179,13 @@ class MongoDBSettings(_BaseDBSettings):
     batch_size: int = Field(default=2865, description="Batch size for operations")
     limit: int = Field(default=0, description="Query result limit (0 = no limit)")
     sync_driver: str = Field(default="mongodb", description="MongoDB driver")
+
+    # Retry settings
+    enable_retry: bool = Field(default=True, description=ENABLE_RETRY_DESCRIPTION)
+    max_retries: int = Field(default=3, description=MAX_RETRIES_DESCRIPTION)
+    initial_retry_delay: float = Field(default=1.0, description=INITIAL_RETRY_DELAY_DESCRIPTION)
+    max_retry_delay: float = Field(default=30.0, description=MAX_RETRY_DELAY_DESCRIPTION)
+    disconnect_idle_timeout: int = Field(default=300, description=DISCONNECT_IDLE_TIMEOUT_DESCRIPTION)
 
     model_config = SettingsConfigDict(env_prefix="MONGODB_")
 
@@ -168,6 +208,13 @@ class OracleSettings(_BaseDBSettings):
     pool_size: int = Field(default=10, description=POOL_SIZE_DESCRIPTION)
     max_overflow: int = Field(default=20, description=MAX_OVERFLOW_DESCRIPTION)
     sync_driver: str = Field(default="oracle+cx_oracle", description="Oracle database driver")
+
+    # Retry settings
+    enable_retry: bool = Field(default=True, description=ENABLE_RETRY_DESCRIPTION)
+    max_retries: int = Field(default=3, description=MAX_RETRIES_DESCRIPTION)
+    initial_retry_delay: float = Field(default=1.0, description=INITIAL_RETRY_DELAY_DESCRIPTION)
+    max_retry_delay: float = Field(default=30.0, description=MAX_RETRY_DELAY_DESCRIPTION)
+    disconnect_idle_timeout: int = Field(default=300, description=DISCONNECT_IDLE_TIMEOUT_DESCRIPTION)
 
     model_config = SettingsConfigDict(env_prefix="ORACLE_")
 

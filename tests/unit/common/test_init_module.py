@@ -146,8 +146,25 @@ class TestInitModule:
         """Test that __all__ contains expected database classes"""
         import ddcDatabases
 
-        # Test that __all__ contains the expected database classes
-        expected_classes = {"DBUtils", "DBUtilsAsync", "MongoDB", "MSSQL", "MySQL", "Oracle", "PostgreSQL", "Sqlite"}
+        # Test that __all__ contains the expected database classes and new exports
+        expected_classes = {
+            "DBUtils",
+            "DBUtilsAsync",
+            "MongoDB",
+            "MSSQL",
+            "MySQL",
+            "Oracle",
+            "PostgreSQL",
+            "Sqlite",
+            "RetryConfig",
+            "PersistentConnectionConfig",
+            "PostgreSQLPersistent",
+            "MySQLPersistent",
+            "MSSQLPersistent",
+            "OraclePersistent",
+            "MongoDBPersistent",
+            "close_all_persistent_connections",
+        }
 
         # Verify __all__ contains expected classes
         assert set(ddcDatabases.__all__) == expected_classes

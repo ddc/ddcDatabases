@@ -21,6 +21,10 @@ class TestSQLite:
         mock_settings = MagicMock()
         mock_settings.file_path = "sqlite.db"
         mock_settings.echo = False
+        mock_settings.enable_retry = False
+        mock_settings.max_retries = 1
+        mock_settings.initial_retry_delay = 1.0
+        mock_settings.max_retry_delay = 30.0
         mock_get_settings.return_value = mock_settings
 
         sqlite = self.Sqlite()
@@ -35,6 +39,10 @@ class TestSQLite:
         mock_settings = MagicMock()
         mock_settings.file_path = "default.db"
         mock_settings.echo = False
+        mock_settings.enable_retry = False
+        mock_settings.max_retries = 1
+        mock_settings.initial_retry_delay = 1.0
+        mock_settings.max_retry_delay = 30.0
         mock_get_settings.return_value = mock_settings
 
         sqlite = self.Sqlite(filepath="custom.db", echo=True, autoflush=False, expire_on_commit=False)

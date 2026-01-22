@@ -1,9 +1,19 @@
 import logging
 from contextlib import contextmanager
+from dataclasses import dataclass
 from typing import Any, Generator, Optional, Type
 from sqlalchemy.engine import create_engine, Engine
 from sqlalchemy.orm import Session, sessionmaker
+from .db_utils import _retry_operation, RetryConfig
 from .settings import get_sqlite_settings
+
+
+@dataclass(slots=True, frozen=True)
+class SQLiteRetryConfig:
+    enable_retry: bool | None = None
+    max_retries: int | None = None
+    initial_retry_delay: float | None = None
+    max_retry_delay: float | None = None
 
 
 logger = logging.getLogger(__name__)
@@ -23,6 +33,10 @@ class Sqlite:
         autoflush: bool | None = None,
         expire_on_commit: bool | None = None,
         extra_engine_args: dict[str, Any] | None = None,
+        enable_retry: bool | None = None,
+        max_retries: int | None = None,
+        initial_retry_delay: float | None = None,
+        max_retry_delay: float | None = None,
     ) -> None:
         _settings = get_sqlite_settings()
         self.filepath: str = filepath or _settings.file_path
@@ -34,18 +48,42 @@ class Sqlite:
         self.session: Session | None = None
         self._temp_engine: Engine | None = None
 
-    def __enter__(self) -> Session:
-        with self._get_engine() as self._temp_engine:
-            session_maker = sessionmaker(
-                bind=self._temp_engine,
-                class_=Session,
-                autoflush=self.autoflush or True,
-                expire_on_commit=self.expire_on_commit or True,
-            )
+        # Create retry configuration
+        self._retry_config = SQLiteRetryConfig(
+            enable_retry=enable_retry if enable_retry is not None else _settings.enable_retry,
+            max_retries=max_retries if max_retries is not None else _settings.max_retries,
+            initial_retry_delay=(
+                initial_retry_delay if initial_retry_delay is not None else _settings.initial_retry_delay
+            ),
+            max_retry_delay=max_retry_delay if max_retry_delay is not None else _settings.max_retry_delay,
+        )
 
-        with session_maker.begin() as self.session:
-            self.is_connected = True
-            return self.session
+        self.retry_config = RetryConfig(
+            enable_retry=self._retry_config.enable_retry,
+            max_retries=self._retry_config.max_retries,
+            initial_delay=self._retry_config.initial_retry_delay,
+            max_delay=self._retry_config.max_retry_delay,
+        )
+
+    def get_retry_info(self) -> SQLiteRetryConfig:
+        """Get immutable retry configuration."""
+        return self._retry_config
+
+    def __enter__(self) -> Session:
+        def connect() -> Session:
+            with self._get_engine() as self._temp_engine:
+                session_maker = sessionmaker(
+                    bind=self._temp_engine,
+                    class_=Session,
+                    autoflush=self.autoflush or True,
+                    expire_on_commit=self.expire_on_commit or True,
+                )
+
+            with session_maker.begin() as self.session:
+                self.is_connected = True
+                return self.session
+
+        return _retry_operation(connect, self.retry_config, "sqlite_connect")
 
     def __exit__(
         self,
