@@ -19,10 +19,10 @@ jobs:
           - os: 'macos-14-arm64'
             runs-on: 'macos-14'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v4
+        uses: astral-sh/setup-uv@v7
 
       - name: Set up Python ${{ matrix.python-version }}
         run: uv python install ${{ matrix.python-version }}
@@ -63,10 +63,10 @@ jobs:
           - os: 'macos-14-arm64'
             runs-on: 'macos-14'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v4
+        uses: astral-sh/setup-uv@v7
 
       - name: Set up Python ${{ matrix.python-version }}
         run: uv python install ${{ matrix.python-version }}
@@ -95,7 +95,7 @@ jobs:
           cp dist/*.tar.gz dist-py${{ matrix.python-version }}-${{ matrix.os }}/ || true
 
       - name: Upload Python ${{ matrix.python-version }} ${{ matrix.os }} artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: python-packages-${{ matrix.python-version }}-${{ matrix.os }}
           path: dist-py${{ matrix.python-version }}-${{ matrix.os }}/
@@ -111,7 +111,7 @@ jobs:
       contents: write
     steps:
       - name: Download all artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           path: artifacts/
 
@@ -132,7 +132,7 @@ jobs:
           files: release-assets/*
 
       - name: Upload combined artifacts for PyPI
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: python-packages-combined
           path: release-assets/
@@ -149,7 +149,7 @@ jobs:
       id-token: write
     steps:
       - name: Download package artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: python-packages-combined
           path: dist
