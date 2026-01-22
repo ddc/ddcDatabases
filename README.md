@@ -33,9 +33,6 @@
     <a href="https://github.com/ddc/ddcDatabases/issues">
         <img src="https://img.shields.io/github/issues/ddc/ddcDatabases" alt="issues"/>
     </a>    
-    <a href="https://snyk.io/test/github/ddc/ddcDatabases">
-        <img src="https://snyk.io/test/github/ddc/ddcDatabases/badge.svg" alt="Known Vulnerabilities"/>
-    </a>   
     <a href="https://codecov.io/gh/ddc/ddcDatabases">
         <img src="https://codecov.io/gh/ddc/ddcDatabases/graph/badge.svg?token=XWB53034GI" alt="codecov"/>
     </a>
@@ -83,7 +80,7 @@
   - [Available Methods](#available-methods)
 - [Logging](#logging)
 - [Development](#development)
-  - [Building from Source](#building-from-source)
+  - [Building from Source](#building-the-wheel-from-source)
   - [Building DEV Environment and Running Tests](#building-dev-environment-and-running-tests)
 - [License](#license)
 - [Support](#support)
