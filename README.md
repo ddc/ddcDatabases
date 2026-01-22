@@ -84,7 +84,7 @@
 - [Logging](#logging)
 - [Development](#development)
   - [Building from Source](#building-from-source)
-  - [Running Tests](#running-tests)
+  - [Building DEV Environment and Running Tests](#building-dev-environment-and-running-tests)
 - [License](#license)
 - [Support](#support)
 
