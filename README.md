@@ -578,17 +578,18 @@ logging.getLogger('ddcDatabases').addHandler(logging.StreamHandler())
 ## Development
 Must have UV installed. See [UV Installation Guide](https://uv.run/docs/getting-started/installation)
 
-### Building from Source
+### Building DEV Environment and Running Tests
+```shell
+uv venv
+uv sync --all-extras
+poe test
+```
+
+### Building the wheel from Source
 ```shell
 poe build
 ```
 
-### Building DEV Environment and Running Tests
-```shell
-uv venv
-poe install
-poe test
-```
 
 
 

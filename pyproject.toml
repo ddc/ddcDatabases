@@ -72,12 +72,9 @@ include = ["ddcDatabases/**/*"]
 [tool.hatch.build.targets.wheel]
 packages = ["ddcDatabases"]
 
-[tool.hatch.build.targets.wheel.hooks.custom]
-path = "hatch_build.py"
-
 [tool.poe.tasks]
 build = "uv build --wheel"
-install = "uv pip install -e .[dev]"
+updatedev = "uv sync --all-extras"
 test = "pytest"
 
 [tool.pytest.ini_options]
@@ -89,8 +86,6 @@ asyncio_default_fixture_loop_scope = "function"
 
 [tool.coverage.run]
 omit = [
-    "build.py",
-    "hatch_build.py",
     "tests/*",
     "*/__init__.py",
     "*/_version.py",
