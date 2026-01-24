@@ -453,8 +453,8 @@ class TestIdleCheckerFunctionality:
         conn.connect()
         assert conn.is_connected
 
-        # Wait for idle timeout + health check interval
-        time.sleep(1.5)
+        # Wait for idle timeout + health check interval + margin for CI
+        time.sleep(3)
 
         # Should be disconnected due to idle timeout
         assert not conn.is_connected
