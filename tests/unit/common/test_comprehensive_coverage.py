@@ -1,7 +1,6 @@
-from unittest.mock import patch
 from sqlalchemy import Boolean, Column, Integer, String
 from sqlalchemy.orm import declarative_base
-
+from unittest.mock import patch
 
 Base = declarative_base()
 
@@ -17,28 +16,28 @@ class CoverageTestModel(Base):
 class TestSettingsEdgeCases:
     """Test settings edge cases for better coverage"""
 
-    @patch('ddcDatabases.settings.load_dotenv')
+    @patch('ddcDatabases.core.settings.load_dotenv')
     def test_dotenv_loading_flag(self, mock_load_dotenv):
         """Test dotenv loading flag behavior"""
-        from ddcDatabases.settings import get_sqlite_settings
+        from ddcDatabases.core.settings import get_sqlite_settings
 
         # Clear cache and reset flag
         get_sqlite_settings.cache_clear()
 
         # Mock the flag to False
-        with patch('ddcDatabases.settings._dotenv_loaded', False):
+        with patch('ddcDatabases.core.settings._dotenv_loaded', False):
             get_sqlite_settings()
             mock_load_dotenv.assert_called_once()
 
     def test_settings_field_defaults(self):
         """Test settings default field values"""
-        from ddcDatabases.settings import (
-            SQLiteSettings,
-            PostgreSQLSettings,
+        from ddcDatabases.core.settings import (
+            MongoDBSettings,
             MSSQLSettings,
             MySQLSettings,
-            MongoDBSettings,
             OracleSettings,
+            PostgreSQLSettings,
+            SQLiteSettings,
         )
 
         # Test all settings classes have expected defaults
@@ -83,7 +82,7 @@ class TestExceptionCoverageImprovement:
 
     def test_exception_class_definitions(self):
         """Test exception class definitions exist"""
-        from ddcDatabases.exceptions import (
+        from ddcDatabases.core.exceptions import (
             CustomBaseException,
             DBDeleteAllDataException,
             DBExecuteException,
@@ -111,9 +110,9 @@ class TestModuleImports:
     def test_main_imports(self):
         """Test main module imports work correctly"""
         from ddcDatabases import (
+            MSSQL,
             DBUtils,
             DBUtilsAsync,
-            MSSQL,
             MySQL,
             Oracle,
             PostgreSQL,
@@ -170,7 +169,7 @@ class TestModuleImports:
         assert ddcDatabases.__author__ == "Daniel Costa"
         assert ddcDatabases.__email__ == "danieldcsta@gmail.com>"
         assert ddcDatabases.__license__ == "MIT"
-        assert ddcDatabases.__copyright__ == "Copyright 2024-present ddc"
+        assert ddcDatabases.__copyright__ == "Copyright 2024-present DDC Softwares"
 
     def test_all_exports(self):
         """Test __all__ exports are accessible"""
@@ -182,18 +181,31 @@ class TestModuleImports:
             "DBUtils",
             "DBUtilsAsync",
             "MongoDB",
+            "MongoDBPersistent",
+            "MongoDBConnectionConfig",
+            "MongoDBTLSConfig",
+            "MongoDBQueryConfig",
             "MSSQL",
+            "MSSQLPersistent",
+            "MSSQLConnectionConfig",
+            "MSSQLSSLConfig",
             "MySQL",
+            "MySQLPersistent",
+            "MySQLConnectionConfig",
+            "MySQLSSLConfig",
             "Oracle",
+            "OraclePersistent",
+            "OracleConnectionConfig",
+            "OracleSSLConfig",
             "PostgreSQL",
+            "PostgreSQLPersistent",
+            "PostgreSQLConnectionConfig",
+            "PostgreSQLSSLConfig",
+            "PoolConfig",
+            "SessionConfig",
             "Sqlite",
             "RetryConfig",
             "PersistentConnectionConfig",
-            "PostgreSQLPersistent",
-            "MySQLPersistent",
-            "MSSQLPersistent",
-            "OraclePersistent",
-            "MongoDBPersistent",
             "close_all_persistent_connections",
         }
 

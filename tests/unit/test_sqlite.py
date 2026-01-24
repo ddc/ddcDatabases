@@ -1,8 +1,21 @@
-import tempfile
-from unittest.mock import MagicMock, patch
+from ddcDatabases.core.configs import SessionConfig
 import pytest
 import sqlalchemy as sa
-from tests.models.test_models import ModelTest
+from sqlalchemy import Boolean
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
+import tempfile
+from unittest.mock import MagicMock, patch
+
+
+class Base(DeclarativeBase):
+    pass
+
+
+class ModelTest(Base):
+    __tablename__ = "model_test"
+    id: Mapped[int] = mapped_column(primary_key=True, unique=True, autoincrement=True)
+    name: Mapped[str] = mapped_column(nullable=True, server_default="Test")
+    enabled: Mapped[bool] = mapped_column(Boolean, server_default="1")
 
 
 class TestSQLite:
@@ -10,7 +23,7 @@ class TestSQLite:
 
     def setup_method(self):
         """Import dependencies when needed"""
-        from ddcDatabases import Sqlite, DBUtils
+        from ddcDatabases import DBUtils, Sqlite
 
         self.Sqlite = Sqlite
         self.DBUtils = DBUtils
@@ -45,7 +58,9 @@ class TestSQLite:
         mock_settings.max_retry_delay = 30.0
         mock_get_settings.return_value = mock_settings
 
-        sqlite = self.Sqlite(filepath="custom.db", echo=True, autoflush=False, expire_on_commit=False)
+        sqlite = self.Sqlite(
+            filepath="custom.db", echo=True, session_config=SessionConfig(autoflush=False, expire_on_commit=False)
+        )
 
         assert sqlite.filepath == "custom.db"
         assert sqlite.echo == True
@@ -148,15 +163,17 @@ class TestSQLite:
         sqlite = self.Sqlite(filepath="test.db")
 
         with pytest.raises(Exception, match="Engine creation failed"):
-            with sqlite._get_engine():
-                pass
+            sqlite.__enter__()
 
     def test_optional_parameters(self):
         """Test SQLite with all optional parameters"""
         extra_args = {"pool_timeout": 60, "connect_timeout": 30}
 
         sqlite = self.Sqlite(
-            filepath="custom.db", echo=True, autoflush=False, expire_on_commit=False, extra_engine_args=extra_args
+            filepath="custom.db",
+            echo=True,
+            session_config=SessionConfig(autoflush=False, expire_on_commit=False),
+            extra_engine_args=extra_args,
         )
 
         assert sqlite.filepath == "custom.db"
@@ -171,7 +188,7 @@ class TestSQLiteRealOperations:
 
     def setup_method(self):
         """Import dependencies when needed"""
-        from ddcDatabases import Sqlite, DBUtils
+        from ddcDatabases import DBUtils, Sqlite
 
         self.Sqlite = Sqlite
         self.DBUtils = DBUtils
@@ -269,7 +286,9 @@ class TestSQLiteRealOperations:
             db_path = tmp.name
 
         # Test with custom settings
-        sqlite = self.Sqlite(filepath=db_path, echo=True, autoflush=True, expire_on_commit=True)
+        sqlite = self.Sqlite(
+            filepath=db_path, echo=True, session_config=SessionConfig(autoflush=True, expire_on_commit=True)
+        )
 
         assert sqlite.filepath == db_path
         assert sqlite.echo == True

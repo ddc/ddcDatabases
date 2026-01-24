@@ -1,19 +1,19 @@
-import os
-from unittest.mock import patch
-from ddcDatabases.settings import (
-    get_mongodb_settings,
-    get_mssql_settings,
-    get_mysql_settings,
-    get_oracle_settings,
-    get_postgresql_settings,
-    get_sqlite_settings,
+from ddcDatabases.core.settings import (
     MongoDBSettings,
     MSSQLSettings,
     MySQLSettings,
     OracleSettings,
     PostgreSQLSettings,
     SQLiteSettings,
+    get_mongodb_settings,
+    get_mssql_settings,
+    get_mysql_settings,
+    get_oracle_settings,
+    get_postgresql_settings,
+    get_sqlite_settings,
 )
+import os
+from unittest.mock import patch
 
 
 class TestSettingsCache:
@@ -118,9 +118,32 @@ class TestPostgreSQLSettings:
         assert settings.user == "postgres"
         assert settings.password == "postgres"
         assert settings.database == "postgres"
+        assert settings.db_schema == "public"
         assert settings.echo == False
         assert settings.async_driver == "postgresql+asyncpg"
         assert settings.sync_driver == "postgresql+psycopg2"
+        assert settings.ssl_mode == "disable"
+        assert settings.ssl_ca_cert_path is None
+        assert settings.ssl_client_cert_path is None
+        assert settings.ssl_client_key_path is None
+
+    def test_validate_ssl_mode_valid(self):
+        """Test validate_ssl_mode accepts valid modes"""
+        for mode in ("disable", "allow", "prefer", "require", "verify-ca", "verify-full"):
+            settings = PostgreSQLSettings(ssl_mode=mode)
+            assert settings.ssl_mode == mode
+
+    def test_validate_ssl_mode_default(self):
+        """Test validate_ssl_mode default is disable"""
+        settings = PostgreSQLSettings()
+        assert settings.ssl_mode == "disable"
+
+    def test_validate_ssl_mode_invalid(self):
+        """Test validate_ssl_mode rejects invalid modes"""
+        import pytest
+
+        with pytest.raises(Exception):
+            PostgreSQLSettings(ssl_mode="invalid_mode")
 
     def test_env_override(self):
         """Test environment variable overrides"""
@@ -133,6 +156,8 @@ class TestPostgreSQLSettings:
                 'POSTGRESQL_PASSWORD': 'testpass',
                 'POSTGRESQL_DATABASE': 'testdb',
                 'POSTGRESQL_ECHO': 'true',
+                'POSTGRESQL_DB_SCHEMA': 'custom_schema',
+                'POSTGRESQL_SSL_MODE': 'require',
             },
         ):
             settings = PostgreSQLSettings()
@@ -142,6 +167,8 @@ class TestPostgreSQLSettings:
             assert settings.password == 'testpass'
             assert settings.database == 'testdb'
             assert settings.echo == True
+            assert settings.db_schema == 'custom_schema'
+            assert settings.ssl_mode == 'require'
 
 
 class TestMSSQLSettings:
@@ -163,6 +190,9 @@ class TestMSSQLSettings:
         assert settings.odbcdriver_version == 18
         assert settings.async_driver == "mssql+aioodbc"
         assert settings.sync_driver == "mssql+pyodbc"
+        assert settings.ssl_encrypt == False
+        assert settings.ssl_trust_server_certificate == True
+        assert settings.ssl_ca_cert_path is None
 
 
 class TestMySQLSettings:
@@ -180,6 +210,28 @@ class TestMySQLSettings:
         assert settings.echo == False
         assert settings.async_driver == "mysql+aiomysql"
         assert settings.sync_driver == "mysql+pymysql"
+        assert settings.ssl_mode == "DISABLED"
+        assert settings.ssl_ca_cert_path is None
+        assert settings.ssl_client_cert_path is None
+        assert settings.ssl_client_key_path is None
+
+    def test_validate_ssl_mode_valid(self):
+        """Test validate_ssl_mode accepts valid MySQL modes"""
+        for mode in ("DISABLED", "PREFERRED", "REQUIRED", "VERIFY_CA", "VERIFY_IDENTITY"):
+            settings = MySQLSettings(ssl_mode=mode)
+            assert settings.ssl_mode == mode
+
+    def test_validate_ssl_mode_default(self):
+        """Test validate_ssl_mode default is DISABLED"""
+        settings = MySQLSettings()
+        assert settings.ssl_mode == "DISABLED"
+
+    def test_validate_ssl_mode_invalid(self):
+        """Test validate_ssl_mode rejects invalid modes"""
+        import pytest
+
+        with pytest.raises(Exception):
+            MySQLSettings(ssl_mode="invalid_mode")
 
 
 class TestMongoDBSettings:
@@ -197,6 +249,10 @@ class TestMongoDBSettings:
         assert settings.batch_size == 2865
         assert settings.limit == 0
         assert settings.sync_driver == "mongodb"
+        assert settings.tls_enabled == False
+        assert settings.tls_ca_cert_path is None
+        assert settings.tls_cert_key_path is None
+        assert settings.tls_allow_invalid_certificates == False
 
 
 class TestOracleSettings:
@@ -212,7 +268,9 @@ class TestOracleSettings:
         assert settings.password == "oracle"
         assert settings.servicename == "xe"
         assert settings.echo == False
-        assert settings.sync_driver == "oracle+cx_oracle"
+        assert settings.sync_driver == "oracle+oracledb"
+        assert settings.ssl_enabled == False
+        assert settings.ssl_wallet_path is None
 
 
 class TestDotenvLoading:
@@ -220,13 +278,13 @@ class TestDotenvLoading:
 
     def setup_method(self):
         """Clear all settings caches before each test to ensure isolation"""
-        from ddcDatabases.settings import (
-            get_sqlite_settings,
-            get_postgresql_settings,
+        from ddcDatabases.core.settings import (
+            get_mongodb_settings,
             get_mssql_settings,
             get_mysql_settings,
-            get_mongodb_settings,
             get_oracle_settings,
+            get_postgresql_settings,
+            get_sqlite_settings,
         )
 
         get_sqlite_settings.cache_clear()
@@ -236,12 +294,12 @@ class TestDotenvLoading:
         get_mongodb_settings.cache_clear()
         get_oracle_settings.cache_clear()
         # Reset dotenv flag to ensure clean state
-        import ddcDatabases.settings
+        import ddcDatabases.core.settings
 
-        ddcDatabases.settings._dotenv_loaded = False
+        ddcDatabases.core.settings._dotenv_loaded = False
 
-    @patch('ddcDatabases.settings._dotenv_loaded', True)
-    @patch('ddcDatabases.settings.load_dotenv')
+    @patch('ddcDatabases.core.settings._dotenv_loaded', True)
+    @patch('ddcDatabases.core.settings.load_dotenv')
     def test_dotenv_not_loaded_if_already_loaded(self, mock_load_dotenv):
         """Test that dotenv is not loaded if already loaded"""
         get_postgresql_settings.cache_clear()

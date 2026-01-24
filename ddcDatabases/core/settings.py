@@ -1,8 +1,8 @@
-from functools import lru_cache
-from typing import Callable, TypeVar
 from dotenv import load_dotenv
-from pydantic import Field
+from functools import lru_cache
+from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from typing import Callable, TypeVar
 
 # Type variable for generic settings factory
 T = TypeVar('T', bound=BaseSettings)
@@ -21,9 +21,16 @@ PORT_DESCRIPTION = "Database port"
 USERNAME_DESCRIPTION = "Database username"
 PASSWORD_DESCRIPTION = "Database password"
 NAME_DESCRIPTION = "Database name"
+DB_SCHEMA_DESCRIPTION = "Database schema"
 ASYNC_DATABASE_DRIVER_DESCRIPTION = "Async database driver"
 SYNC_DATABASE_DRIVER_DESCRIPTION = "Sync database driver"
 
+# SSL settings descriptions
+SSL_ENABLED_DESCRIPTION = "Enable SSL/TLS connections"
+SSL_MODE_DESCRIPTION = "SSL mode for database connections"
+SSL_CA_CERT_PATH_DESCRIPTION = "Path to SSL CA certificate file"
+SSL_CLIENT_CERT_PATH_DESCRIPTION = "Path to SSL client certificate file"
+SSL_CLIENT_KEY_PATH_DESCRIPTION = "Path to SSL client key file"
 # Retry settings descriptions
 ENABLE_RETRY_DESCRIPTION = "Enable automatic retry on connection errors"
 MAX_RETRIES_DESCRIPTION = "Maximum number of retry attempts"
@@ -83,6 +90,7 @@ class PostgreSQLSettings(_BaseDBSettings):
     user: str = Field(default="postgres", description=USERNAME_DESCRIPTION)
     password: str = Field(default="postgres", description=PASSWORD_DESCRIPTION)
     database: str = Field(default="postgres", description=NAME_DESCRIPTION)
+    db_schema: str | None = Field(default="public", description=DB_SCHEMA_DESCRIPTION)
 
     echo: bool = Field(default=False, description=ECHO_DESCRIPTION)
     autoflush: bool = Field(default=False, description=AUTOFLUSH_DESCRIPTION)
@@ -95,12 +103,27 @@ class PostgreSQLSettings(_BaseDBSettings):
     async_driver: str = Field(default="postgresql+asyncpg", description=ASYNC_DATABASE_DRIVER_DESCRIPTION)
     sync_driver: str = Field(default="postgresql+psycopg2", description=SYNC_DATABASE_DRIVER_DESCRIPTION)
 
+    # SSL settings
+    ssl_mode: str = Field(default="disable", description=SSL_MODE_DESCRIPTION)
+    ssl_ca_cert_path: str | None = Field(default=None, description=SSL_CA_CERT_PATH_DESCRIPTION)
+    ssl_client_cert_path: str | None = Field(default=None, description=SSL_CLIENT_CERT_PATH_DESCRIPTION)
+    ssl_client_key_path: str | None = Field(default=None, description=SSL_CLIENT_KEY_PATH_DESCRIPTION)
+
     # Retry settings
     enable_retry: bool = Field(default=True, description=ENABLE_RETRY_DESCRIPTION)
     max_retries: int = Field(default=3, description=MAX_RETRIES_DESCRIPTION)
     initial_retry_delay: float = Field(default=1.0, description=INITIAL_RETRY_DELAY_DESCRIPTION)
     max_retry_delay: float = Field(default=30.0, description=MAX_RETRY_DELAY_DESCRIPTION)
     disconnect_idle_timeout: int = Field(default=300, description=DISCONNECT_IDLE_TIMEOUT_DESCRIPTION)
+
+    @field_validator("ssl_mode")
+    @classmethod
+    def validate_ssl_mode(cls, v: str) -> str:
+        v = v.lower()
+        valid_modes = ("disable", "allow", "prefer", "require", "verify-ca", "verify-full")
+        if v not in valid_modes:
+            raise ValueError(f"ssl_mode must be one of {valid_modes}, got '{v}'")
+        return v
 
     model_config = SettingsConfigDict(env_prefix="POSTGRESQL_")
 
@@ -112,7 +135,7 @@ class MSSQLSettings(_BaseDBSettings):
     port: int = Field(default=1433, description=PORT_DESCRIPTION)
     user: str = Field(default="sa", description=USERNAME_DESCRIPTION)
     password: str = Field(default="sa", description=PASSWORD_DESCRIPTION)
-    db_schema: str = Field(default="dbo", description="Database schema")
+    db_schema: str = Field(default="dbo", description=DB_SCHEMA_DESCRIPTION)
     database: str = Field(default="master", description=NAME_DESCRIPTION)
 
     echo: bool = Field(default=False, description=ECHO_DESCRIPTION)
@@ -126,6 +149,11 @@ class MSSQLSettings(_BaseDBSettings):
     odbcdriver_version: int = Field(default=18, description="ODBC driver version")
     async_driver: str = Field(default="mssql+aioodbc", description=ASYNC_DATABASE_DRIVER_DESCRIPTION)
     sync_driver: str = Field(default="mssql+pyodbc", description=SYNC_DATABASE_DRIVER_DESCRIPTION)
+
+    # SSL settings
+    ssl_encrypt: bool = Field(default=False, description="Enable connection encryption")
+    ssl_trust_server_certificate: bool = Field(default=True, description="Trust server certificate without validation")
+    ssl_ca_cert_path: str | None = Field(default=None, description=SSL_CA_CERT_PATH_DESCRIPTION)
 
     # Retry settings
     enable_retry: bool = Field(default=True, description=ENABLE_RETRY_DESCRIPTION)
@@ -157,12 +185,27 @@ class MySQLSettings(_BaseDBSettings):
     async_driver: str = Field(default="mysql+aiomysql", description=ASYNC_DATABASE_DRIVER_DESCRIPTION)
     sync_driver: str = Field(default="mysql+pymysql", description=SYNC_DATABASE_DRIVER_DESCRIPTION)
 
+    # SSL settings
+    ssl_mode: str = Field(default="DISABLED", description=SSL_MODE_DESCRIPTION)
+    ssl_ca_cert_path: str | None = Field(default=None, description=SSL_CA_CERT_PATH_DESCRIPTION)
+    ssl_client_cert_path: str | None = Field(default=None, description=SSL_CLIENT_CERT_PATH_DESCRIPTION)
+    ssl_client_key_path: str | None = Field(default=None, description=SSL_CLIENT_KEY_PATH_DESCRIPTION)
+
     # Retry settings
     enable_retry: bool = Field(default=True, description=ENABLE_RETRY_DESCRIPTION)
     max_retries: int = Field(default=3, description=MAX_RETRIES_DESCRIPTION)
     initial_retry_delay: float = Field(default=1.0, description=INITIAL_RETRY_DELAY_DESCRIPTION)
     max_retry_delay: float = Field(default=30.0, description=MAX_RETRY_DELAY_DESCRIPTION)
     disconnect_idle_timeout: int = Field(default=300, description=DISCONNECT_IDLE_TIMEOUT_DESCRIPTION)
+
+    @field_validator("ssl_mode")
+    @classmethod
+    def validate_ssl_mode(cls, v: str) -> str:
+        v = v.upper()
+        valid_modes = ("DISABLED", "PREFERRED", "REQUIRED", "VERIFY_CA", "VERIFY_IDENTITY")
+        if v not in valid_modes:
+            raise ValueError(f"ssl_mode must be one of {valid_modes}, got '{v}'")
+        return v
 
     model_config = SettingsConfigDict(env_prefix="MYSQL_")
 
@@ -179,6 +222,12 @@ class MongoDBSettings(_BaseDBSettings):
     batch_size: int = Field(default=2865, description="Batch size for operations")
     limit: int = Field(default=0, description="Query result limit (0 = no limit)")
     sync_driver: str = Field(default="mongodb", description="MongoDB driver")
+
+    # TLS settings
+    tls_enabled: bool = Field(default=False, description="Enable TLS connections")
+    tls_ca_cert_path: str | None = Field(default=None, description="Path to TLS CA certificate file")
+    tls_cert_key_path: str | None = Field(default=None, description="Path to TLS client certificate/key file")
+    tls_allow_invalid_certificates: bool = Field(default=False, description="Allow invalid TLS certificates")
 
     # Retry settings
     enable_retry: bool = Field(default=True, description=ENABLE_RETRY_DESCRIPTION)
@@ -207,7 +256,11 @@ class OracleSettings(_BaseDBSettings):
     pool_recycle: int = Field(default=3600, description=POOL_RECYCLE_DESCRIPTION)
     pool_size: int = Field(default=10, description=POOL_SIZE_DESCRIPTION)
     max_overflow: int = Field(default=20, description=MAX_OVERFLOW_DESCRIPTION)
-    sync_driver: str = Field(default="oracle+cx_oracle", description="Oracle database driver")
+    sync_driver: str = Field(default="oracle+oracledb", description="Oracle database driver")
+
+    # SSL settings
+    ssl_enabled: bool = Field(default=False, description=SSL_ENABLED_DESCRIPTION)
+    ssl_wallet_path: str | None = Field(default=None, description="Path to Oracle SSL wallet directory")
 
     # Retry settings
     enable_retry: bool = Field(default=True, description=ENABLE_RETRY_DESCRIPTION)

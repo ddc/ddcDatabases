@@ -1,6 +1,9 @@
-import sys
 from datetime import datetime, timezone
+import logging
 from typing import Any
+
+_logger = logging.getLogger(__name__)
+_logger.addHandler(logging.NullHandler())
 
 
 class CustomBaseException(Exception):
@@ -12,7 +15,7 @@ class CustomBaseException(Exception):
         self.original_exception = msg
         now = datetime.now(timezone.utc)
         dt = now.isoformat(timespec='milliseconds')
-        sys.stderr.write(f"[{dt}]:[ERROR]:{repr(msg)}\n")
+        _logger.error(f"[{dt}]:{repr(msg)}")
         raise msg
 
 

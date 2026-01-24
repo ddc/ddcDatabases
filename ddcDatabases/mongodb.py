@@ -1,26 +1,31 @@
-import logging
-import sys
+from .core.configs import BaseConnectionConfig, RetryConfig
+from .core.retry import RetryPolicy, retry_operation
+from .core.settings import get_mongodb_settings
 from dataclasses import dataclass
-from typing import Optional, Type
+import logging
 from pymongo import ASCENDING, DESCENDING, MongoClient
 from pymongo.cursor import Cursor
 from pymongo.errors import PyMongoError
-from .db_utils import _retry_operation, RetryConfig
-from .settings import get_mongodb_settings
+import sys
+from typing import Optional, Type
 
 
-@dataclass(slots=True, frozen=True)
-class MongoConnectionConfig:
-    host: str | None = None
-    port: int | None = None
-    user: str | None = None
-    password: str | None = None
+@dataclass(frozen=True)
+class MongoDBConnectionConfig(BaseConnectionConfig):
     database: str | None = None
     collection: str | None = None
 
 
-@dataclass(slots=True, frozen=True)
-class MongoQueryConfig:
+@dataclass(frozen=True)
+class MongoDBTLSConfig:
+    tls_enabled: bool | None = None
+    tls_ca_cert_path: str | None = None
+    tls_cert_key_path: str | None = None
+    tls_allow_invalid_certificates: bool | None = None
+
+
+@dataclass(frozen=True)
+class MongoDBQueryConfig:
     query: dict | None = None
     sort_column: str | None = None
     sort_order: str | None = None
@@ -28,45 +33,14 @@ class MongoQueryConfig:
     limit: int | None = None
 
 
-@dataclass(slots=True, frozen=True)
-class MongoRetryConfig:
-    enable_retry: bool | None = None
-    max_retries: int | None = None
-    initial_retry_delay: float | None = None
-    max_retry_delay: float | None = None
-
-
-logger = logging.getLogger(__name__)
-# Add NullHandler to prevent "No handlers found" warnings in libraries
-logger.addHandler(logging.NullHandler())
+_logger = logging.getLogger(__name__)
+_logger.addHandler(logging.NullHandler())
 
 
 class MongoDB:
     """
     Class to handle MongoDB connections.
     """
-
-    __slots__ = (
-        'host',
-        'port',
-        'user',
-        'password',
-        'database',
-        'collection',
-        'query',
-        'sort_column',
-        'sort_order',
-        'batch_size',
-        'limit',
-        'sync_driver',
-        'is_connected',
-        'client',
-        'cursor_ref',
-        '_connection_config',
-        '_query_config',
-        '_retry_config',
-        'retry_config',
-    )
 
     def __init__(
         self,
@@ -76,20 +50,14 @@ class MongoDB:
         password: str | None = None,
         database: str | None = None,
         collection: str | None = None,
-        query: dict | None = None,
-        sort_column: str | None = None,
-        sort_order: str | None = None,
-        batch_size: int | None = None,
-        limit: int | None = None,
-        enable_retry: bool | None = None,
-        max_retries: int | None = None,
-        initial_retry_delay: float | None = None,
-        max_retry_delay: float | None = None,
+        query_config: MongoDBQueryConfig | None = None,
+        retry_config: RetryConfig | None = None,
+        tls_config: MongoDBTLSConfig | None = None,
+        logger: logging.Logger | None = None,
     ):
         _settings = get_mongodb_settings()
 
-        # Create configuration objects using dataclasses
-        self._connection_config = MongoConnectionConfig(
+        self._connection_config = MongoDBConnectionConfig(
             host=host or _settings.host,
             port=port or _settings.port,
             user=user or _settings.user,
@@ -98,53 +66,65 @@ class MongoDB:
             collection=collection,
         )
 
-        self._query_config = MongoQueryConfig(
-            query=query or {},
-            sort_column=sort_column,
-            sort_order=sort_order,
-            batch_size=batch_size or _settings.batch_size,
-            limit=limit or _settings.limit,
+        _qc = query_config or MongoDBQueryConfig()
+        self._query_config = MongoDBQueryConfig(
+            query=_qc.query if _qc.query is not None else {},
+            sort_column=_qc.sort_column,
+            sort_order=_qc.sort_order,
+            batch_size=_qc.batch_size if _qc.batch_size is not None else _settings.batch_size,
+            limit=_qc.limit if _qc.limit is not None else _settings.limit,
         )
 
-        # Set instance attributes for backward compatibility
-        self.host = self._connection_config.host
-        self.port = self._connection_config.port
-        self.user = self._connection_config.user
-        self.password = self._connection_config.password
-        self.database = self._connection_config.database
-        self.collection = self._connection_config.collection
-        self.query = self._query_config.query
-        self.sort_column = self._query_config.sort_column
-        self.sort_order = self._query_config.sort_order
-        self.batch_size = self._query_config.batch_size
-        self.limit = self._query_config.limit
+        _tls = tls_config or MongoDBTLSConfig()
+        self._tls_config = MongoDBTLSConfig(
+            tls_enabled=_tls.tls_enabled if _tls.tls_enabled is not None else _settings.tls_enabled,
+            tls_ca_cert_path=_tls.tls_ca_cert_path if _tls.tls_ca_cert_path is not None else _settings.tls_ca_cert_path,
+            tls_cert_key_path=(
+                _tls.tls_cert_key_path if _tls.tls_cert_key_path is not None else _settings.tls_cert_key_path
+            ),
+            tls_allow_invalid_certificates=(
+                _tls.tls_allow_invalid_certificates
+                if _tls.tls_allow_invalid_certificates is not None
+                else _settings.tls_allow_invalid_certificates
+            ),
+        )
+
         self.sync_driver = _settings.sync_driver
         self.is_connected = False
         self.client = None
         self.cursor_ref = None
 
         # Create retry configuration
-        self._retry_config = MongoRetryConfig(
-            enable_retry=enable_retry if enable_retry is not None else _settings.enable_retry,
-            max_retries=max_retries if max_retries is not None else _settings.max_retries,
+        _rc = retry_config or RetryConfig()
+        self._retry_config = RetryConfig(
+            enable_retry=_rc.enable_retry if _rc.enable_retry is not None else _settings.enable_retry,
+            max_retries=_rc.max_retries if _rc.max_retries is not None else _settings.max_retries,
             initial_retry_delay=(
-                initial_retry_delay if initial_retry_delay is not None else _settings.initial_retry_delay
+                _rc.initial_retry_delay if _rc.initial_retry_delay is not None else _settings.initial_retry_delay
             ),
-            max_retry_delay=max_retry_delay if max_retry_delay is not None else _settings.max_retry_delay,
+            max_retry_delay=_rc.max_retry_delay if _rc.max_retry_delay is not None else _settings.max_retry_delay,
         )
 
-        self.retry_config = RetryConfig(
+        self.retry_config = RetryPolicy(
             enable_retry=self._retry_config.enable_retry,
             max_retries=self._retry_config.max_retries,
             initial_delay=self._retry_config.initial_retry_delay,
             max_delay=self._retry_config.max_retry_delay,
         )
 
-        if not self.collection:
+        self.logger = logger if logger is not None else _logger
+
+        if not self._connection_config.collection:
             raise ValueError("MongoDB collection name is required")
 
+        self.logger.debug(
+            f"Initializing MongoDB(host={self._connection_config.host}, "
+            f"port={self._connection_config.port}, "
+            f"database={self._connection_config.database}, "
+            f"collection={self._connection_config.collection})"
+        )
+
     def __repr__(self) -> str:
-        """String representation using configuration objects."""
         return (
             "MongoDB("
             f"host={self._connection_config.host!r}, "
@@ -156,26 +136,42 @@ class MongoDB:
             ")"
         )
 
-    def get_connection_info(self) -> MongoConnectionConfig:
-        """Get immutable connection configuration."""
+    def get_connection_info(self) -> MongoDBConnectionConfig:
         return self._connection_config
 
-    def get_query_info(self) -> MongoQueryConfig:
-        """Get immutable query configuration."""
+    def get_query_info(self) -> MongoDBQueryConfig:
         return self._query_config
 
-    def get_retry_info(self) -> MongoRetryConfig:
-        """Get immutable retry configuration."""
+    def get_retry_info(self) -> RetryConfig:
         return self._retry_config
+
+    def get_tls_info(self) -> MongoDBTLSConfig:
+        return self._tls_config
 
     def __enter__(self) -> Cursor:
         def connect() -> Cursor:
             try:
-                _connection_url = f"{self.sync_driver}://{self.user}:{self.password}@{self.host}/{self.database}"
+                _connection_url = (
+                    f"{self.sync_driver}://{self._connection_config.user}:{self._connection_config.password}"
+                    f"@{self._connection_config.host}/{self._connection_config.database}"
+                )
+                if self._tls_config.tls_enabled:
+                    _connection_url += "?tls=true"
+                    if self._tls_config.tls_ca_cert_path:
+                        _connection_url += f"&tlsCAFile={self._tls_config.tls_ca_cert_path}"
+                    if self._tls_config.tls_cert_key_path:
+                        _connection_url += f"&tlsCertificateKeyFile={self._tls_config.tls_cert_key_path}"
+                    if self._tls_config.tls_allow_invalid_certificates:
+                        _connection_url += "&tlsAllowInvalidCertificates=true"
                 self.client = MongoClient(_connection_url)
                 self._test_connection()
                 self.is_connected = True
-                self.cursor_ref = self._create_cursor(self.collection, self.query, self.sort_column, self.sort_order)
+                self.cursor_ref = self._create_cursor(
+                    self._connection_config.collection,
+                    self._query_config.query,
+                    self._query_config.sort_column,
+                    self._query_config.sort_order,
+                )
                 return self.cursor_ref
             except (ConnectionError, RuntimeError, ValueError, TypeError):
                 if self.client:
@@ -183,7 +179,7 @@ class MongoDB:
                 raise
 
         try:
-            return _retry_operation(connect, self.retry_config, "mongodb_connect")
+            return retry_operation(connect, self.retry_config, "mongodb_connect", logger=self.logger)
         except (PyMongoError, ConnectionError, RuntimeError, ValueError, TypeError):
             sys.exit(1)
 
@@ -199,17 +195,21 @@ class MongoDB:
         if self.client:
             self.client.close()
             self.is_connected = False
+        self.logger.debug("Disconnected")
 
     def _test_connection(self) -> None:
         try:
             self.client.admin.command("ping")
-            logger.info(
-                f"Connection to database successful | {self.user}@{self.host}/{self.database}/{self.collection}"
+            self.logger.info(
+                f"Connected to "
+                f"{self._connection_config.user}@{self._connection_config.host}/"
+                f"{self._connection_config.database}/{self._connection_config.collection}"
             )
         except PyMongoError as e:
-            logger.error(
+            self.logger.error(
                 f"Connection to MongoDB failed | "
-                f"{self.user}@{self.host}/{self.database}/{self.collection} | "
+                f"{self._connection_config.user}@{self._connection_config.host}/"
+                f"{self._connection_config.database}/{self._connection_config.collection} | "
                 f"{e}"
             )
             raise ConnectionError(f"Connection to MongoDB failed | {e}") from e
@@ -221,9 +221,9 @@ class MongoDB:
         sort_column: str = None,
         sort_order: str = None,
     ) -> Cursor:
-        col = self.client[self.database][collection]
+        col = self.client[self._connection_config.database][collection]
         query = {} if query is None else query
-        cursor = col.find(query, batch_size=self.batch_size, limit=self.limit)
+        cursor = col.find(query, batch_size=self._query_config.batch_size, limit=self._query_config.limit)
 
         if sort_column is not None:
             sort_direction = DESCENDING if sort_order and sort_order.lower() in ["descending", "desc"] else ASCENDING
@@ -231,5 +231,5 @@ class MongoDB:
                 col.create_index([(sort_column, sort_direction)])
             cursor = cursor.sort(sort_column, sort_direction)
 
-        cursor.batch_size(self.batch_size)
+        cursor.batch_size(self._query_config.batch_size)
         return cursor
