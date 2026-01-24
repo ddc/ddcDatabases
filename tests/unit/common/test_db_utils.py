@@ -1,6 +1,4 @@
-from unittest.mock import AsyncMock, MagicMock, patch
 from contextlib import asynccontextmanager, contextmanager
-from typing import AsyncGenerator, Generator
 import pytest
 import sqlalchemy as sa
 from sqlalchemy import Boolean, Column, Integer, String
@@ -8,10 +6,13 @@ from sqlalchemy.engine import Engine
 from sqlalchemy.engine.url import URL
 from sqlalchemy.ext.asyncio import AsyncEngine
 from sqlalchemy.orm import declarative_base
+from typing import AsyncGenerator, Generator
+from unittest.mock import AsyncMock, MagicMock, patch
 
 try:
-    import psycopg2
     import asyncpg
+    import psycopg2
+
     POSTGRESQL_AVAILABLE = True
 except ImportError:
     POSTGRESQL_AVAILABLE = False
@@ -32,14 +33,17 @@ class ConcreteTestConnection:
     """Concrete implementation of BaseConnection for testing"""
 
     @staticmethod
-    def create_test_connection(connection_url, engine_args, autoflush, expire_on_commit, sync_driver, async_driver):
+    def create_test_connection(
+        connection_url, engine_args, autoflush, expire_on_commit, sync_driver, async_driver, retry_config=None
+    ):
         """Create a concrete test implementation of BaseConnection"""
-        from ddcDatabases.db_utils import BaseConnection
+        from ddcDatabases.core.base import BaseConnection
 
         class TestableBaseConnection(BaseConnection):
             @contextmanager
             def _get_engine(self) -> Generator[Engine, None, None]:
-                from sqlalchemy.engine import create_engine, URL
+                from sqlalchemy.engine import URL, create_engine
+
                 _connection_url = URL.create(
                     drivername=self.sync_driver,
                     **self.connection_url,
@@ -54,8 +58,9 @@ class ConcreteTestConnection:
 
             @asynccontextmanager
             async def _get_async_engine(self) -> AsyncGenerator[AsyncEngine, None]:
-                from sqlalchemy.ext.asyncio import create_async_engine
                 from sqlalchemy.engine import URL
+                from sqlalchemy.ext.asyncio import create_async_engine
+
                 _connection_url = URL.create(
                     drivername=self.async_driver,
                     **self.connection_url,
@@ -75,6 +80,7 @@ class ConcreteTestConnection:
             expire_on_commit=expire_on_commit,
             sync_driver=sync_driver,
             async_driver=async_driver,
+            retry_config=retry_config,
         )
 
 
@@ -83,7 +89,7 @@ class TestBaseConnection:
 
     def setup_method(self):
         """Import dependencies when needed"""
-        from ddcDatabases.db_utils import BaseConnection, ConnectionTester
+        from ddcDatabases.core.base import BaseConnection, ConnectionTester
 
         self.BaseConnection = BaseConnection
         self.ConnectionTester = ConnectionTester
@@ -219,7 +225,7 @@ class TestDBUtils:
         """Test fetchall with as_dict=True"""
         mock_session = MagicMock()
         mock_cursor = MagicMock()
-        
+
         # Create mock Row objects that have _asdict method
         mock_row1 = MagicMock()
         mock_row1._asdict.return_value = {"id": 1, "name": "test1"}
@@ -330,10 +336,10 @@ class TestDBUtils:
         bulk_data = [{"id": 1, "name": "test1"}, {"id": 2, "name": "test2"}]
 
         result = db_utils.insertbulk(DatabaseModel, bulk_data)
-        
+
         # Verify the method returns None
         assert result is None
-        
+
         # Verify session methods were called
         mock_session.bulk_insert_mappings.assert_called_once_with(DatabaseModel, bulk_data, return_defaults=False)
         mock_session.commit.assert_called_once()
@@ -346,10 +352,10 @@ class TestDBUtils:
         bulk_data = []
 
         result = db_utils.insertbulk(DatabaseModel, bulk_data)
-        
+
         # Verify the method returns None for empty list
         assert result is None
-        
+
         # Verify no database operations were performed
         mock_session.bulk_insert_mappings.assert_not_called()
         mock_session.commit.assert_not_called()
@@ -463,7 +469,7 @@ class TestDBUtilsAsync:
         """Test async fetchall with as_dict=True"""
         mock_session = AsyncMock()
         mock_cursor = MagicMock()
-        
+
         # Create mock Row objects that have _asdict method
         mock_row1 = MagicMock()
         mock_row1._asdict.return_value = {"id": 1, "name": "test1"}
@@ -623,13 +629,15 @@ class TestBaseConnectionContextManagers:
 
     def setup_method(self):
         """Import dependencies when needed"""
-        from ddcDatabases.db_utils import BaseConnection, ConnectionTester
+        from ddcDatabases.core.base import BaseConnection, ConnectionTester
 
         self.BaseConnection = BaseConnection
         self.ConnectionTester = ConnectionTester
 
     def test_sync_context_manager(self):
         """Test sync context manager __enter__ and __exit__ methods"""
+        from ddcDatabases.core.retry import RetryPolicy as RetryConfig
+
         connection_url = {"host": "localhost", "database": "test"}
         engine_args = {"echo": False}
 
@@ -640,6 +648,7 @@ class TestBaseConnectionContextManagers:
             expire_on_commit=False,
             sync_driver="postgresql+psycopg2",
             async_driver=None,
+            retry_config=RetryConfig(enable_retry=False),
         )
 
         # Test the context manager functionality
@@ -675,9 +684,11 @@ class TestBaseConnectionContextManagers:
         mock_session = AsyncMock()
         mock_engine = AsyncMock()
 
-        with patch.object(conn, '_get_async_engine') as mock_get_engine, patch(
-            'ddcDatabases.db_utils.async_sessionmaker'
-        ) as mock_sessionmaker, patch.object(conn, '_test_connection_async') as mock_test_conn:
+        with (
+            patch.object(conn, '_get_async_engine') as mock_get_engine,
+            patch('ddcDatabases.core.base.async_sessionmaker') as mock_sessionmaker,
+            patch.object(conn, '_test_connection_async') as mock_test_conn,
+        ):
 
             mock_get_engine.return_value.__aenter__.return_value = mock_engine
             mock_get_engine.return_value.__aexit__.return_value = None
@@ -760,7 +771,7 @@ class TestBaseConnectionContextManagers:
 
         mock_session = MagicMock()
 
-        with patch('ddcDatabases.db_utils.ConnectionTester') as mock_tester_class:
+        with patch('ddcDatabases.core.base.ConnectionTester') as mock_tester_class:
             mock_tester = MagicMock()
             mock_tester_class.return_value = mock_tester
 
@@ -793,7 +804,7 @@ class TestBaseConnectionContextManagers:
 
         mock_session = AsyncMock()
 
-        with patch('ddcDatabases.db_utils.ConnectionTester') as mock_tester_class:
+        with patch('ddcDatabases.core.base.ConnectionTester') as mock_tester_class:
             mock_tester = MagicMock()
             mock_tester.test_connection_async = AsyncMock()
             mock_tester_class.return_value = mock_tester
@@ -817,7 +828,7 @@ class TestConnectionTesterCoverage:
 
     def setup_method(self):
         """Import dependencies when needed"""
-        from ddcDatabases.db_utils import ConnectionTester
+        from ddcDatabases.core.base import ConnectionTester
 
         self.ConnectionTester = ConnectionTester
 
@@ -870,10 +881,10 @@ class TestDBUtilsAsyncInsertBulk:
         bulk_data = [{"id": 1, "name": "test1"}, {"id": 2, "name": "test2"}]
 
         result = await db_utils.insertbulk(DatabaseModel, bulk_data)
-        
+
         # Verify the method returns None
         assert result is None
-        
+
         # Verify session methods were called
         mock_session.run_sync.assert_called_once()
         mock_session.commit.assert_called_once()
@@ -888,10 +899,10 @@ class TestDBUtilsAsyncInsertBulk:
         bulk_data = []
 
         result = await db_utils.insertbulk(DatabaseModel, bulk_data)
-        
+
         # Verify the method returns None for empty list
         assert result is None
-        
+
         # Verify no database operations were performed
         mock_session.run_sync.assert_not_called()
         mock_session.commit.assert_not_called()

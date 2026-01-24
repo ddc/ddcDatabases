@@ -1,17 +1,18 @@
 import asyncio
-from unittest.mock import AsyncMock, MagicMock, patch
 from contextlib import asynccontextmanager, contextmanager
-from typing import AsyncGenerator, Generator
 import pytest
 import sqlalchemy as sa
 from sqlalchemy import Boolean, Column, Integer, String
 from sqlalchemy.engine import Engine
 from sqlalchemy.ext.asyncio import AsyncEngine
 from sqlalchemy.orm import declarative_base
+from typing import AsyncGenerator, Generator
+from unittest.mock import AsyncMock, MagicMock, patch
 
 try:
-    import psycopg2
     import asyncpg
+    import psycopg2
+
     POSTGRESQL_AVAILABLE = True
 except ImportError:
     POSTGRESQL_AVAILABLE = False
@@ -34,12 +35,13 @@ class ConcreteAsyncTestConnection:
     @staticmethod
     def create_test_connection(connection_url, engine_args, autoflush, expire_on_commit, sync_driver, async_driver):
         """Create a concrete test implementation of BaseConnection"""
-        from ddcDatabases.db_utils import BaseConnection
+        from ddcDatabases.core.base import BaseConnection
 
         class TestableAsyncBaseConnection(BaseConnection):
             @contextmanager
             def _get_engine(self) -> Generator[Engine, None, None]:
-                from sqlalchemy.engine import create_engine, URL
+                from sqlalchemy.engine import URL, create_engine
+
                 _connection_url = URL.create(
                     drivername=self.sync_driver,
                     **self.connection_url,
@@ -54,8 +56,9 @@ class ConcreteAsyncTestConnection:
 
             @asynccontextmanager
             async def _get_async_engine(self) -> AsyncGenerator[AsyncEngine, None]:
-                from sqlalchemy.ext.asyncio import create_async_engine
                 from sqlalchemy.engine import URL
+                from sqlalchemy.ext.asyncio import create_async_engine
+
                 _connection_url = URL.create(
                     drivername=self.async_driver,
                     **self.connection_url,
@@ -84,7 +87,7 @@ class TestAsyncBaseConnection:
 
     def setup_method(self):
         """Import dependencies when needed"""
-        from ddcDatabases.db_utils import BaseConnection
+        from ddcDatabases.core.base import BaseConnection
 
         self.BaseConnection = BaseConnection
 
@@ -104,7 +107,7 @@ class TestAsyncBaseConnection:
 
         with (
             patch.object(conn, '_get_async_engine') as mock_get_engine,
-            patch('ddcDatabases.db_utils.async_sessionmaker') as mock_sessionmaker,
+            patch('ddcDatabases.core.base.async_sessionmaker') as mock_sessionmaker,
             patch.object(conn, '_test_connection_async') as mock_test_conn,
         ):
 
@@ -309,7 +312,7 @@ class TestDBUtilsAsync:
 
         # Verify the method returns None
         assert result is None
-        
+
         # Verify session methods were called
         mock_session.run_sync.assert_called_once()
         mock_session.commit.assert_called_once()
@@ -492,7 +495,7 @@ class TestAsyncCompatibility:
     def setup_method(self):
         """Import dependencies when needed"""
         from ddcDatabases import DBUtilsAsync
-        from ddcDatabases.db_utils import BaseConnection
+        from ddcDatabases.core.base import BaseConnection
 
         self.DBUtilsAsync = DBUtilsAsync
         self.BaseConnection = BaseConnection

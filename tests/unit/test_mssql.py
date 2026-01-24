@@ -1,50 +1,46 @@
-from unittest.mock import AsyncMock, MagicMock, patch
+from ddcDatabases.core.configs import PoolConfig, RetryConfig, SessionConfig
+from ddcDatabases.mssql import MSSQL, MSSQLConnectionConfig, MSSQLSSLConfig
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
-from ddcDatabases.mssql import MSSQL
+from unittest.mock import AsyncMock, MagicMock, patch
 
 
 class TestMSSQL:
     """Test MSSQL database connection class"""
 
-    def setup_method(self):
-        """Clear all settings caches before each test to ensure isolation"""
-        from ddcDatabases.settings import (
-            get_sqlite_settings,
-            get_postgresql_settings,
-            get_mssql_settings,
-            get_mysql_settings,
-            get_mongodb_settings,
-            get_oracle_settings,
-        )
-
-        # Aggressive cache clearing with multiple rounds
-        for _ in range(20):
-            get_sqlite_settings.cache_clear()
-            get_postgresql_settings.cache_clear()
-            get_mssql_settings.cache_clear()
-            get_mysql_settings.cache_clear()
-            get_mongodb_settings.cache_clear()
-            get_oracle_settings.cache_clear()
-
-        # Also reset dotenv flag to ensure clean state
-        import ddcDatabases.settings
-
-        ddcDatabases.settings._dotenv_loaded = False
-
-        # Force garbage collection to clear any references
-        import gc
-
-        gc.collect()
-
-        # Try to force reload of the settings module
-        import importlib
-
-        try:
-            importlib.reload(ddcDatabases.settings)
-        except:
-            pass
+    def _create_mock_settings(self, **overrides):
+        """Create mock settings with all required fields"""
+        mock_settings = MagicMock()
+        defaults = {
+            "user": "sa",
+            "password": "password",
+            "host": "localhost",
+            "port": 1433,
+            "database": "master",
+            "db_schema": "dbo",
+            "echo": False,
+            "sync_driver": "mssql+pyodbc",
+            "async_driver": "mssql+aioodbc",
+            "autoflush": True,
+            "expire_on_commit": True,
+            "autocommit": False,
+            "connection_timeout": 30,
+            "pool_recycle": 3600,
+            "pool_size": 25,
+            "max_overflow": 50,
+            "odbcdriver_version": 17,
+            "ssl_encrypt": False,
+            "ssl_trust_server_certificate": True,
+            "enable_retry": True,
+            "max_retries": 3,
+            "initial_retry_delay": 1.0,
+            "max_retry_delay": 30.0,
+        }
+        defaults.update(overrides)
+        for key, value in defaults.items():
+            setattr(mock_settings, key, value)
+        return mock_settings
 
     # NOTE: Removed test_init_basic due to persistent cache isolation issues
     # This test was checking basic initialization parameters which are
@@ -54,19 +50,9 @@ class TestMSSQL:
     @patch('ddcDatabases.mssql.get_mssql_settings')
     def test_init_with_parameters(self, mock_get_settings):
         """Test MSSQL initialization with override parameters"""
-        mock_settings = MagicMock()
-        mock_settings.user = "defaultuser"
-        mock_settings.password = "defaultpass"
-        mock_settings.host = "defaulthost"
-        mock_settings.port = 1433
-        mock_settings.database = "defaultdb"
-        mock_settings.db_schema = "dbo"
-        mock_settings.echo = False
-        mock_settings.pool_size = 25
-        mock_settings.max_overflow = 50
-        mock_settings.odbcdriver_version = 17
-        mock_settings.sync_driver = "mssql+pyodbc"
-        mock_settings.async_driver = "mssql+aioodbc"
+        mock_settings = self._create_mock_settings(
+            user="defaultuser", password="defaultpass", host="defaulthost", database="defaultdb"
+        )
         mock_get_settings.return_value = mock_settings
 
         mssql = MSSQL(
@@ -76,9 +62,8 @@ class TestMSSQL:
             password="custompass",
             database="customdb",
             schema="customschema",
-            echo=True,
-            pool_size=30,
-            max_overflow=20,
+            session_config=SessionConfig(echo=True),
+            pool_config=PoolConfig(pool_size=30, max_overflow=20),
         )
 
         assert mssql.connection_url["host"] == "customhost"
@@ -86,10 +71,10 @@ class TestMSSQL:
         assert mssql.connection_url["database"] == "customdb"
         assert mssql.connection_url["username"] == "customuser"
         assert mssql.connection_url["password"] == "custompass"
-        assert mssql.schema == "customschema"
-        assert mssql.echo == True
-        assert mssql.pool_size == 30
-        assert mssql.max_overflow == 20
+        assert mssql._connection_config.schema == "customschema"
+        assert mssql._session_config.echo == True
+        assert mssql._pool_config.pool_size == 30
+        assert mssql._pool_config.max_overflow == 20
 
     def test_missing_credentials_error(self):
         """Test RuntimeError when credentials are missing - Line 32"""
@@ -188,43 +173,19 @@ class TestMSSQL:
     @patch('ddcDatabases.mssql.get_mssql_settings')
     def test_custom_odbcdriver_version(self, mock_get_settings):
         """Test custom ODBC driver version"""
-        mock_settings = MagicMock()
-        mock_settings.user = "sa"
-        mock_settings.password = "password"
-        mock_settings.host = "localhost"
-        mock_settings.port = 1433
-        mock_settings.database = "master"
-        mock_settings.db_schema = "dbo"
-        mock_settings.echo = False
-        mock_settings.pool_size = 25
-        mock_settings.max_overflow = 50
-        mock_settings.odbcdriver_version = 18  # Different version
-        mock_settings.sync_driver = "mssql+pyodbc"
-        mock_settings.async_driver = "mssql+aioodbc"
+        mock_settings = self._create_mock_settings(odbcdriver_version=18)
         mock_get_settings.return_value = mock_settings
 
         mssql = MSSQL()
 
         # Test that ODBC driver version is properly set
-        assert mssql.odbcdriver_version == 18
+        assert mssql._connection_config.odbcdriver_version == 18
         assert mssql.connection_url["query"]["driver"] == "ODBC Driver 18 for SQL Server"
 
     @patch('ddcDatabases.mssql.get_mssql_settings')
     def test_extra_engine_args(self, mock_get_settings):
         """Test extra engine arguments are properly included"""
-        mock_settings = MagicMock()
-        mock_settings.user = "sa"
-        mock_settings.password = "password"
-        mock_settings.host = "localhost"
-        mock_settings.port = 1433
-        mock_settings.database = "master"
-        mock_settings.db_schema = "dbo"
-        mock_settings.echo = False
-        mock_settings.pool_size = 25
-        mock_settings.max_overflow = 50
-        mock_settings.odbcdriver_version = 17
-        mock_settings.sync_driver = "mssql+pyodbc"
-        mock_settings.async_driver = "mssql+aioodbc"
+        mock_settings = self._create_mock_settings()
         mock_get_settings.return_value = mock_settings
 
         extra_args = {"custom_arg": "custom_value", "timeout": 30}
@@ -243,129 +204,61 @@ class TestMSSQL:
     @patch('ddcDatabases.mssql.get_mssql_settings')
     def test_autoflush_and_expire_on_commit(self, mock_get_settings):
         """Test MSSQL autoflush and expire_on_commit parameters"""
-        mock_settings = MagicMock()
-        mock_settings.user = "sa"
-        mock_settings.password = "password"
-        mock_settings.host = "localhost"
-        mock_settings.port = 1433
-        mock_settings.database = "master"
-        mock_settings.db_schema = "dbo"
-        mock_settings.echo = False
-        mock_settings.pool_size = 25
-        mock_settings.max_overflow = 50
-        mock_settings.odbcdriver_version = 17
-        mock_settings.sync_driver = "mssql+pyodbc"
-        mock_settings.async_driver = "mssql+aioodbc"
+        mock_settings = self._create_mock_settings()
         mock_get_settings.return_value = mock_settings
 
-        mssql = MSSQL(autoflush=False, expire_on_commit=False)
+        mssql = MSSQL(session_config=SessionConfig(autoflush=False, expire_on_commit=False))
 
-        assert mssql.autoflush == False
-        assert mssql.expire_on_commit == False
+        assert mssql._session_config.autoflush == False
+        assert mssql._session_config.expire_on_commit == False
 
     @patch('ddcDatabases.mssql.get_mssql_settings')
     def test_autocommit_parameter(self, mock_get_settings):
         """Test MSSQL autocommit parameter"""
-        mock_settings = MagicMock()
-        mock_settings.user = "sa"
-        mock_settings.password = "password"
-        mock_settings.host = "localhost"
-        mock_settings.port = 1433
-        mock_settings.database = "master"
-        mock_settings.db_schema = "dbo"
-        mock_settings.echo = False
-        mock_settings.autocommit = False
-        mock_settings.pool_size = 25
-        mock_settings.max_overflow = 50
-        mock_settings.odbcdriver_version = 18
-        mock_settings.sync_driver = "mssql+pyodbc"
-        mock_settings.async_driver = "mssql+aioodbc"
+        mock_settings = self._create_mock_settings(odbcdriver_version=18)
         mock_get_settings.return_value = mock_settings
 
-        mssql = MSSQL(autocommit=True)
+        mssql = MSSQL(session_config=SessionConfig(autocommit=True))
 
-        assert mssql.autocommit == True
+        assert mssql._session_config.autocommit == True
         assert mssql.engine_args["connect_args"]["autocommit"] == True
 
     @patch('ddcDatabases.mssql.get_mssql_settings')
     def test_connection_timeout_parameter(self, mock_get_settings):
         """Test MSSQL connection_timeout parameter"""
-        mock_settings = MagicMock()
-        mock_settings.user = "sa"
-        mock_settings.password = "password"
-        mock_settings.host = "localhost"
-        mock_settings.port = 1433
-        mock_settings.database = "master"
-        mock_settings.db_schema = "dbo"
-        mock_settings.echo = False
-        mock_settings.connection_timeout = 30
-        mock_settings.pool_size = 25
-        mock_settings.max_overflow = 50
-        mock_settings.odbcdriver_version = 18
-        mock_settings.sync_driver = "mssql+pyodbc"
-        mock_settings.async_driver = "mssql+aioodbc"
+        mock_settings = self._create_mock_settings(odbcdriver_version=18)
         mock_get_settings.return_value = mock_settings
 
-        mssql = MSSQL(connection_timeout=60)
+        mssql = MSSQL(pool_config=PoolConfig(connection_timeout=60))
 
-        assert mssql.connection_timeout == 60
+        assert mssql._pool_config.connection_timeout == 60
         assert mssql.engine_args["connect_args"]["timeout"] == 60
         assert mssql.engine_args["connect_args"]["login_timeout"] == 60
 
     @patch('ddcDatabases.mssql.get_mssql_settings')
     def test_pool_recycle_parameter(self, mock_get_settings):
         """Test MSSQL pool_recycle parameter"""
-        mock_settings = MagicMock()
-        mock_settings.user = "sa"
-        mock_settings.password = "password"
-        mock_settings.host = "localhost"
-        mock_settings.port = 1433
-        mock_settings.database = "master"
-        mock_settings.db_schema = "dbo"
-        mock_settings.echo = False
-        mock_settings.pool_recycle = 3600
-        mock_settings.pool_size = 25
-        mock_settings.max_overflow = 50
-        mock_settings.odbcdriver_version = 18
-        mock_settings.sync_driver = "mssql+pyodbc"
-        mock_settings.async_driver = "mssql+aioodbc"
+        mock_settings = self._create_mock_settings(odbcdriver_version=18)
         mock_get_settings.return_value = mock_settings
 
-        mssql = MSSQL(pool_recycle=7200)
+        mssql = MSSQL(pool_config=PoolConfig(pool_recycle=7200))
 
-        assert mssql.pool_recycle == 7200
+        assert mssql._pool_config.pool_recycle == 7200
         assert mssql.engine_args["pool_recycle"] == 7200
 
     @patch('ddcDatabases.mssql.get_mssql_settings')
     def test_all_parameters_defaults(self, mock_get_settings):
         """Test MSSQL parameters use settings defaults"""
-        mock_settings = MagicMock()
-        mock_settings.user = "sa"
-        mock_settings.password = "password"
-        mock_settings.host = "localhost"
-        mock_settings.port = 1433
-        mock_settings.database = "master"
-        mock_settings.db_schema = "dbo"
-        mock_settings.echo = False
-        mock_settings.autoflush = False
-        mock_settings.expire_on_commit = False
-        mock_settings.autocommit = False
-        mock_settings.connection_timeout = 30
-        mock_settings.pool_recycle = 3600
-        mock_settings.pool_size = 25
-        mock_settings.max_overflow = 50
-        mock_settings.odbcdriver_version = 18
-        mock_settings.sync_driver = "mssql+pyodbc"
-        mock_settings.async_driver = "mssql+aioodbc"
+        mock_settings = self._create_mock_settings(autoflush=False, expire_on_commit=False, odbcdriver_version=18)
         mock_get_settings.return_value = mock_settings
 
         mssql = MSSQL()
 
-        assert mssql.autoflush == False
-        assert mssql.expire_on_commit == False
-        assert mssql.autocommit == False
-        assert mssql.connection_timeout == 30
-        assert mssql.pool_recycle == 3600
+        assert mssql._session_config.autoflush == False
+        assert mssql._session_config.expire_on_commit == False
+        assert mssql._session_config.autocommit == False
+        assert mssql._pool_config.connection_timeout == 30
+        assert mssql._pool_config.pool_recycle == 3600
         assert mssql.engine_args["connect_args"]["autocommit"] == False
         assert mssql.engine_args["connect_args"]["timeout"] == 30
         assert mssql.engine_args["pool_recycle"] == 3600
@@ -373,19 +266,7 @@ class TestMSSQL:
     @patch('ddcDatabases.mssql.get_mssql_settings')
     def test_test_connection_sync_url_creation(self, mock_get_settings):
         """Test _test_connection_sync URL creation logic - Lines 73-77"""
-        mock_settings = MagicMock()
-        mock_settings.user = "sa"
-        mock_settings.password = "password"
-        mock_settings.host = "localhost"
-        mock_settings.port = 1433
-        mock_settings.database = "master"
-        mock_settings.db_schema = "dbo"
-        mock_settings.echo = False
-        mock_settings.pool_size = 25
-        mock_settings.max_overflow = 50
-        mock_settings.odbcdriver_version = 17
-        mock_settings.sync_driver = "mssql+pyodbc"
-        mock_settings.async_driver = "mssql+aioodbc"
+        mock_settings = self._create_mock_settings()
         mock_get_settings.return_value = mock_settings
 
         # Create MSSQL instance
@@ -405,7 +286,7 @@ class TestMSSQL:
         _connection_url = URL.create(
             **test_connection_url,
             drivername=mssql.sync_driver,
-            query={"schema": mssql.schema},
+            query={"schema": mssql._connection_config.schema},
         )
 
         # Verify URL was created correctly
@@ -418,19 +299,7 @@ class TestMSSQL:
     @patch('ddcDatabases.mssql.get_mssql_settings')
     def test_test_connection_async_url_creation(self, mock_get_settings):
         """Test _test_connection_async URL creation logic - Lines 87-91"""
-        mock_settings = MagicMock()
-        mock_settings.user = "sa"
-        mock_settings.password = "password"
-        mock_settings.host = "localhost"
-        mock_settings.port = 1433
-        mock_settings.database = "master"
-        mock_settings.db_schema = "dbo"
-        mock_settings.echo = False
-        mock_settings.pool_size = 25
-        mock_settings.max_overflow = 50
-        mock_settings.odbcdriver_version = 17
-        mock_settings.sync_driver = "mssql+pyodbc"
-        mock_settings.async_driver = "mssql+aioodbc"
+        mock_settings = self._create_mock_settings()
         mock_get_settings.return_value = mock_settings
 
         # Create MSSQL instance
@@ -450,7 +319,7 @@ class TestMSSQL:
         _connection_url = URL.create(
             **test_connection_url,
             drivername=mssql.async_driver,  # Note: async_driver instead of sync_driver
-            query={"schema": mssql.schema},
+            query={"schema": mssql._connection_config.schema},
         )
 
         # Verify URL was created correctly for async
@@ -463,19 +332,7 @@ class TestMSSQL:
     @patch('ddcDatabases.mssql.get_mssql_settings')
     def test_connection_url_modification_sync(self, mock_get_settings):
         """Test that connection_url is properly modified in _test_connection_sync - Lines 71-72"""
-        mock_settings = MagicMock()
-        mock_settings.user = "sa"
-        mock_settings.password = "password"
-        mock_settings.host = "localhost"
-        mock_settings.port = 1433
-        mock_settings.database = "master"
-        mock_settings.db_schema = "dbo"
-        mock_settings.echo = False
-        mock_settings.pool_size = 25
-        mock_settings.max_overflow = 50
-        mock_settings.odbcdriver_version = 17
-        mock_settings.sync_driver = "mssql+pyodbc"
-        mock_settings.async_driver = "mssql+aioodbc"
+        mock_settings = self._create_mock_settings()
         mock_get_settings.return_value = mock_settings
 
         mssql = MSSQL()
@@ -499,19 +356,7 @@ class TestMSSQL:
     @pytest.mark.asyncio
     async def test_connection_url_modification_async(self, mock_get_settings):
         """Test that connection_url is properly modified in _test_connection_async - Lines 85-86"""
-        mock_settings = MagicMock()
-        mock_settings.user = "sa"
-        mock_settings.password = "password"
-        mock_settings.host = "localhost"
-        mock_settings.port = 1433
-        mock_settings.database = "master"
-        mock_settings.db_schema = "dbo"
-        mock_settings.echo = False
-        mock_settings.pool_size = 25
-        mock_settings.max_overflow = 50
-        mock_settings.odbcdriver_version = 18
-        mock_settings.sync_driver = "mssql+pyodbc"
-        mock_settings.async_driver = "mssql+aioodbc"
+        mock_settings = self._create_mock_settings(odbcdriver_version=18)
         mock_get_settings.return_value = mock_settings
 
         mssql = MSSQL()
@@ -545,3 +390,48 @@ class TestMSSQL:
         # Verify password and query were deleted from connection_url
         assert "password" not in mssql.connection_url
         assert "query" not in mssql.connection_url
+
+    @patch('ddcDatabases.mssql.get_mssql_settings')
+    def test_ssl_encrypt_enabled(self, mock_get_settings):
+        """Test MSSQL SSL encrypt enabled"""
+        mock_settings = self._create_mock_settings(odbcdriver_version=18)
+        mock_get_settings.return_value = mock_settings
+
+        mssql = MSSQL(ssl_config=MSSQLSSLConfig(ssl_encrypt=True, ssl_trust_server_certificate=False))
+
+        assert mssql._ssl_config.ssl_encrypt == True
+        assert mssql._ssl_config.ssl_trust_server_certificate == False
+        assert mssql.connection_url["query"]["Encrypt"] == "yes"
+        assert mssql.connection_url["query"]["TrustServerCertificate"] == "no"
+
+    @patch('ddcDatabases.mssql.get_mssql_settings')
+    def test_ssl_encrypt_disabled(self, mock_get_settings):
+        """Test MSSQL SSL encrypt disabled"""
+        mock_settings = self._create_mock_settings(odbcdriver_version=18)
+        mock_get_settings.return_value = mock_settings
+
+        mssql = MSSQL()
+
+        assert mssql._ssl_config.ssl_encrypt == False
+        assert mssql._ssl_config.ssl_trust_server_certificate == True
+        assert mssql.connection_url["query"]["Encrypt"] == "no"
+        assert mssql.connection_url["query"]["TrustServerCertificate"] == "yes"
+
+    @patch('ddcDatabases.mssql.get_mssql_settings')
+    def test_get_ssl_info(self, mock_get_settings):
+        """Test get_ssl_info() returns the immutable SSL configuration"""
+        mock_settings = self._create_mock_settings(odbcdriver_version=18)
+        mock_get_settings.return_value = mock_settings
+
+        mssql = MSSQL(
+            ssl_config=MSSQLSSLConfig(
+                ssl_encrypt=True, ssl_trust_server_certificate=False, ssl_ca_cert_path="/path/to/ca.pem"
+            )
+        )
+
+        ssl_info = mssql.get_ssl_info()
+
+        assert isinstance(ssl_info, MSSQLSSLConfig)
+        assert ssl_info.ssl_encrypt == True
+        assert ssl_info.ssl_trust_server_certificate == False
+        assert ssl_info.ssl_ca_cert_path == "/path/to/ca.pem"

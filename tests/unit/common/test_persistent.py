@@ -1,26 +1,26 @@
 """Tests for persistent connection functionality."""
 
 import asyncio
-import threading
-import time
-from unittest.mock import MagicMock, patch, AsyncMock
-import pytest
-from sqlalchemy.exc import SQLAlchemyError
-from ddcDatabases.persistent import (
-    PersistentConnectionConfig,
-    PersistentSQLAlchemyConnection,
-    PersistentSQLAlchemyAsyncConnection,
-    PersistentMongoDBConnection,
-    PostgreSQLPersistent,
-    MySQLPersistent,
-    MSSQLPersistent,
-    OraclePersistent,
+from ddcDatabases.core.persistent import (
     MongoDBPersistent,
-    close_all_persistent_connections,
+    MSSQLPersistent,
+    MySQLPersistent,
+    OraclePersistent,
+    PersistentConnectionConfig,
+    PersistentMongoDBConnection,
+    PersistentSQLAlchemyAsyncConnection,
+    PersistentSQLAlchemyConnection,
+    PostgreSQLPersistent,
     _persistent_connections,
     _registry_lock,
+    close_all_persistent_connections,
 )
-from ddcDatabases.db_utils import RetryConfig
+from ddcDatabases.core.retry import RetryPolicy as RetryConfig
+import pytest
+from sqlalchemy.exc import SQLAlchemyError
+import threading
+import time
+from unittest.mock import AsyncMock, MagicMock, patch
 
 
 class TestPersistentConnectionConfig:
@@ -93,7 +93,7 @@ class TestPersistentSQLAlchemyConnection:
         assert conn._engine is not None
         assert conn._session is not None
 
-        conn.disconnect()
+        conn.shutdown()
 
     def test_disconnect(self):
         """Test disconnection."""
@@ -123,6 +123,8 @@ class TestPersistentSQLAlchemyConnection:
         with conn as session:
             assert session is not None
             assert conn.is_connected
+
+        conn.shutdown()
 
     def test_shutdown(self):
         """Test shutdown method."""
@@ -210,6 +212,8 @@ class TestPersistentMongoDBConnection:
 
         assert conn.is_connected
         mock_client.admin.command.assert_called_with("ping")
+
+        conn.shutdown()
 
     def test_disconnect(self):
         """Test MongoDB disconnection."""
@@ -450,7 +454,7 @@ class TestIdleCheckerFunctionality:
         assert conn.is_connected
 
         # Wait for idle timeout + health check interval
-        time.sleep(3)
+        time.sleep(1.5)
 
         # Should be disconnected due to idle timeout
         assert not conn.is_connected
@@ -483,7 +487,7 @@ class TestIdleCheckerFunctionality:
         )
 
         old_time = conn._last_used
-        time.sleep(0.1)
+        time.sleep(0.01)
         conn._update_last_used()
 
         assert conn._last_used > old_time
@@ -503,7 +507,7 @@ class TestIdleCheckerFunctionality:
         conn.shutdown()
 
         # Give thread time to stop
-        time.sleep(0.5)
+        time.sleep(0.2)
         assert not conn._idle_checker_thread.is_alive()
 
 
@@ -661,6 +665,8 @@ class TestPersistentMongoDBConnectionAdvanced:
         # Should have called ping at least twice (one fail, one success)
         assert mock_client.admin.command.call_count >= 2
 
+        conn.shutdown()
+
     def test_disconnect_internal_handles_close_error(self):
         """Test _disconnect_internal handles client close errors."""
         conn = PersistentMongoDBConnection(
@@ -747,7 +753,7 @@ class TestPersistentSQLAlchemyConnectionAdvanced:
             assert conn.is_connected
             assert session2 is not None
 
-        conn.disconnect()
+        conn.shutdown()
 
 
 class TestRetrySettingsIntegration:
@@ -755,7 +761,7 @@ class TestRetrySettingsIntegration:
 
     def test_postgresql_retry_settings(self):
         """Test PostgreSQL settings include retry fields."""
-        from ddcDatabases.settings import PostgreSQLSettings
+        from ddcDatabases.core.settings import PostgreSQLSettings
 
         settings = PostgreSQLSettings()
         assert hasattr(settings, 'enable_retry')
@@ -772,7 +778,7 @@ class TestRetrySettingsIntegration:
 
     def test_mysql_retry_settings(self):
         """Test MySQL settings include retry fields."""
-        from ddcDatabases.settings import MySQLSettings
+        from ddcDatabases.core.settings import MySQLSettings
 
         settings = MySQLSettings()
         assert settings.enable_retry is True
@@ -781,7 +787,7 @@ class TestRetrySettingsIntegration:
 
     def test_mssql_retry_settings(self):
         """Test MSSQL settings include retry fields."""
-        from ddcDatabases.settings import MSSQLSettings
+        from ddcDatabases.core.settings import MSSQLSettings
 
         settings = MSSQLSettings()
         assert settings.enable_retry is True
@@ -790,7 +796,7 @@ class TestRetrySettingsIntegration:
 
     def test_oracle_retry_settings(self):
         """Test Oracle settings include retry fields."""
-        from ddcDatabases.settings import OracleSettings
+        from ddcDatabases.core.settings import OracleSettings
 
         settings = OracleSettings()
         assert settings.enable_retry is True
@@ -799,7 +805,7 @@ class TestRetrySettingsIntegration:
 
     def test_mongodb_retry_settings(self):
         """Test MongoDB settings include retry fields."""
-        from ddcDatabases.settings import MongoDBSettings
+        from ddcDatabases.core.settings import MongoDBSettings
 
         settings = MongoDBSettings()
         assert settings.enable_retry is True
@@ -808,7 +814,7 @@ class TestRetrySettingsIntegration:
 
     def test_sqlite_retry_settings(self):
         """Test SQLite settings include retry fields (minimal)."""
-        from ddcDatabases.settings import SQLiteSettings
+        from ddcDatabases.core.settings import SQLiteSettings
 
         settings = SQLiteSettings()
         assert settings.enable_retry is False  # SQLite disabled by default

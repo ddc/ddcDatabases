@@ -7,22 +7,31 @@ on failure and idle timeout for resource management.
 """
 
 from __future__ import annotations
-import asyncio
-import logging
-import threading
-import time
-import weakref
+
+from .retry import RetryPolicy, retry_operation, retry_operation_async
+from .settings import (
+    get_mongodb_settings,
+    get_mssql_settings,
+    get_mysql_settings,
+    get_oracle_settings,
+    get_postgresql_settings,
+)
 from abc import ABC, abstractmethod
+import asyncio
 from dataclasses import dataclass
-from typing import Any, cast, Generic, TypeVar
+import logging
 from sqlalchemy import text
-from sqlalchemy.engine import create_engine, Engine, URL
+from sqlalchemy.engine import URL, Engine, create_engine
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
 from sqlalchemy.orm import Session, sessionmaker
-from .db_utils import _retry_operation, _retry_operation_async, RetryConfig
+import threading
+import time
+from typing import Any, Generic, TypeVar, cast
+import weakref
 
-logger = logging.getLogger(__name__)
+_logger = logging.getLogger(__name__)
+_logger.addHandler(logging.NullHandler())
 
 # Type variables
 T = TypeVar('T')
@@ -79,7 +88,9 @@ class IdleCheckerMixin:
                 if self._is_connected:
                     idle_time = time.time() - self._last_used
                     if idle_time >= self._config.idle_timeout:
-                        logger.info(f"[{self._connection_key}] Connection idle for {idle_time:.0f}s, disconnecting...")
+                        self._logger.info(
+                            f"[{self._connection_key}] Connection idle for {idle_time:.0f}s, disconnecting..."
+                        )
                         self._disconnect_internal()
 
     def _update_last_used(self: Any) -> None:
@@ -112,6 +123,7 @@ class BasePersistentConnection(IdleCheckerMixin, ABC, Generic[SessionT]):
         '_idle_checker_thread',
         '_shutdown_event',
         '_is_connected',
+        '_logger',
         '__weakref__',  # Required for WeakValueDictionary
     )
 
@@ -119,11 +131,12 @@ class BasePersistentConnection(IdleCheckerMixin, ABC, Generic[SessionT]):
         self,
         connection_key: str,
         config: PersistentConnectionConfig | None = None,
-        retry_config: RetryConfig | None = None,
+        retry_config: RetryPolicy | None = None,
+        logger: logging.Logger | None = None,
     ) -> None:
         self._connection_key = connection_key
         self._config = config or PersistentConnectionConfig()
-        self._retry_config = retry_config or RetryConfig()
+        self._retry_config = retry_config or RetryPolicy()
         self._engine: Engine | AsyncEngine | None = None
         self._session: SessionT | None = None
         self._last_used = time.time()
@@ -131,6 +144,7 @@ class BasePersistentConnection(IdleCheckerMixin, ABC, Generic[SessionT]):
         self._shutdown_event = threading.Event()
         self._is_connected = False
         self._idle_checker_thread: threading.Thread | None = None
+        self._logger = logger if logger is not None else _logger
 
     @property
     def is_connected(self) -> bool:
@@ -197,9 +211,10 @@ class PersistentSQLAlchemyConnection(BasePersistentConnection[Session]):
         autoflush: bool = False,
         expire_on_commit: bool = False,
         config: PersistentConnectionConfig | None = None,
-        retry_config: RetryConfig | None = None,
+        retry_config: RetryPolicy | None = None,
+        logger: logging.Logger | None = None,
     ) -> None:
-        super().__init__(connection_key, config, retry_config)
+        super().__init__(connection_key, config, retry_config, logger)
         self._connection_url = connection_url
         self._engine_args = engine_args or {}
         self._autoflush = autoflush
@@ -227,14 +242,14 @@ class PersistentSQLAlchemyConnection(BasePersistentConnection[Session]):
             try:
                 self._session.close()
             except Exception as e:
-                logger.warning(f"[{self._connection_key}] Error closing session: {e}")
+                self._logger.warning(f"[{self._connection_key}] Error closing session: {e}")
             self._session = None
 
         if self._engine:
             try:
                 self._engine.dispose()
             except Exception as e:
-                logger.warning(f"[{self._connection_key}] Error disposing engine: {e}")
+                self._logger.warning(f"[{self._connection_key}] Error disposing engine: {e}")
             self._engine = None
 
         self._is_connected = False
@@ -254,7 +269,7 @@ class PersistentSQLAlchemyConnection(BasePersistentConnection[Session]):
                     self._session.execute(text("SELECT 1"))
                     return self._session
                 except SQLAlchemyError:
-                    logger.warning(f"[{self._connection_key}] Connection lost, reconnecting...")
+                    self._logger.warning(f"[{self._connection_key}] Connection lost, reconnecting...")
                     self._disconnect_internal()
 
             def do_connect() -> Session:
@@ -262,14 +277,15 @@ class PersistentSQLAlchemyConnection(BasePersistentConnection[Session]):
                 self._session = self._create_session(self._engine)
                 self._is_connected = True
                 self._start_idle_checker()
-                logger.info(f"[{self._connection_key}] Connected successfully")
+                self._logger.info(f"[{self._connection_key}] Connected successfully")
                 return self._session
 
             if self._config.auto_reconnect:
-                return _retry_operation(
+                return retry_operation(
                     do_connect,
                     self._retry_config,
                     f"{self._connection_key}_connect",
+                    logger=self._logger,
                 )
             else:
                 return do_connect()
@@ -278,7 +294,7 @@ class PersistentSQLAlchemyConnection(BasePersistentConnection[Session]):
         """Disconnect from the database."""
         with self._lock:
             self._disconnect_internal()
-            logger.info(f"[{self._connection_key}] Disconnected")
+            self._logger.info(f"[{self._connection_key}] Disconnected")
 
     def __enter__(self) -> Session:
         """Context manager entry."""
@@ -317,9 +333,10 @@ class PersistentSQLAlchemyAsyncConnection(BasePersistentConnection[AsyncSession]
         autoflush: bool = False,
         expire_on_commit: bool = False,
         config: PersistentConnectionConfig | None = None,
-        retry_config: RetryConfig | None = None,
+        retry_config: RetryPolicy | None = None,
+        logger: logging.Logger | None = None,
     ) -> None:
-        super().__init__(connection_key, config, retry_config)
+        super().__init__(connection_key, config, retry_config, logger)
         self._connection_url = connection_url
         self._engine_args = engine_args or {}
         self._autoflush = autoflush
@@ -358,14 +375,14 @@ class PersistentSQLAlchemyAsyncConnection(BasePersistentConnection[AsyncSession]
             try:
                 await self._session.close()
             except Exception as e:
-                logger.warning(f"[{self._connection_key}] Error closing session: {e}")
+                self._logger.warning(f"[{self._connection_key}] Error closing session: {e}")
             self._session = None
 
         if self._engine:
             try:
                 await self._engine.dispose()
             except Exception as e:
-                logger.warning(f"[{self._connection_key}] Error disposing engine: {e}")
+                self._logger.warning(f"[{self._connection_key}] Error disposing engine: {e}")
             self._engine = None
 
         self._is_connected = False
@@ -389,7 +406,7 @@ class PersistentSQLAlchemyAsyncConnection(BasePersistentConnection[AsyncSession]
                     await self._session.execute(text("SELECT 1"))
                     return self._session
                 except SQLAlchemyError:
-                    logger.warning(f"[{self._connection_key}] Connection lost, reconnecting...")
+                    self._logger.warning(f"[{self._connection_key}] Connection lost, reconnecting...")
                     await self._async_disconnect_internal()
 
             async def do_connect() -> AsyncSession:
@@ -398,14 +415,15 @@ class PersistentSQLAlchemyAsyncConnection(BasePersistentConnection[AsyncSession]
                 self._session = self._create_session(self._engine)
                 self._is_connected = True
                 self._start_idle_checker()
-                logger.info(f"[{self._connection_key}] Connected successfully")
+                self._logger.info(f"[{self._connection_key}] Connected successfully")
                 return self._session
 
             if self._config.auto_reconnect:
-                return await _retry_operation_async(
+                return await retry_operation_async(
                     do_connect,
                     self._retry_config,
                     f"{self._connection_key}_async_connect",
+                    logger=self._logger,
                 )
             else:
                 return await do_connect()
@@ -414,13 +432,13 @@ class PersistentSQLAlchemyAsyncConnection(BasePersistentConnection[AsyncSession]
         """Sync disconnect - marks as disconnected."""
         with self._lock:
             self._disconnect_internal()
-            logger.info(f"[{self._connection_key}] Disconnected (sync)")
+            self._logger.info(f"[{self._connection_key}] Disconnected (sync)")
 
     async def async_disconnect(self) -> None:
         """Disconnect from the database asynchronously."""
         async with self._async_lock:
             await self._async_disconnect_internal()
-            logger.info(f"[{self._connection_key}] Disconnected")
+            self._logger.info(f"[{self._connection_key}] Disconnected")
 
     async def __aenter__(self) -> AsyncSession:
         """Async context manager entry."""
@@ -456,6 +474,7 @@ class PersistentMongoDBConnection(IdleCheckerMixin):
         '_idle_checker_thread',
         '_shutdown_event',
         '_is_connected',
+        '_logger',
         '__weakref__',  # Required for WeakValueDictionary
     )
 
@@ -465,13 +484,14 @@ class PersistentMongoDBConnection(IdleCheckerMixin):
         connection_url: str,
         database: str,
         config: PersistentConnectionConfig | None = None,
-        retry_config: RetryConfig | None = None,
+        retry_config: RetryPolicy | None = None,
+        logger: logging.Logger | None = None,
     ) -> None:
         self._connection_key = connection_key
         self._connection_url = connection_url
         self._database = database
         self._config = config or PersistentConnectionConfig()
-        self._retry_config = retry_config or RetryConfig()
+        self._retry_config = retry_config or RetryPolicy()
         self._client = None
         self._db = None
         self._last_used = time.time()
@@ -479,6 +499,7 @@ class PersistentMongoDBConnection(IdleCheckerMixin):
         self._shutdown_event = threading.Event()
         self._is_connected = False
         self._idle_checker_thread: threading.Thread | None = None
+        self._logger = logger if logger is not None else _logger
 
     @property
     def is_connected(self) -> bool:
@@ -496,7 +517,7 @@ class PersistentMongoDBConnection(IdleCheckerMixin):
             try:
                 self._client.close()
             except Exception as e:
-                logger.warning(f"[{self._connection_key}] Error closing client: {e}")
+                self._logger.warning(f"[{self._connection_key}] Error closing client: {e}")
             self._client = None
             self._db = None
         self._is_connected = False
@@ -519,7 +540,7 @@ class PersistentMongoDBConnection(IdleCheckerMixin):
                     self._client.admin.command("ping")
                     return self._db
                 except PyMongoError:
-                    logger.warning(f"[{self._connection_key}] Connection lost, reconnecting...")
+                    self._logger.warning(f"[{self._connection_key}] Connection lost, reconnecting...")
                     self._disconnect_internal()
 
             def do_connect() -> Any:
@@ -528,14 +549,15 @@ class PersistentMongoDBConnection(IdleCheckerMixin):
                 self._db = self._client[self._database]
                 self._is_connected = True
                 self._start_idle_checker()
-                logger.info(f"[{self._connection_key}] Connected successfully")
+                self._logger.info(f"[{self._connection_key}] Connected successfully")
                 return self._db
 
             if self._config.auto_reconnect:
-                return _retry_operation(
+                return retry_operation(
                     do_connect,
                     self._retry_config,
                     f"{self._connection_key}_connect",
+                    logger=self._logger,
                 )
             else:
                 return do_connect()
@@ -544,7 +566,7 @@ class PersistentMongoDBConnection(IdleCheckerMixin):
         """Disconnect from MongoDB."""
         with self._lock:
             self._disconnect_internal()
-            logger.info(f"[{self._connection_key}] Disconnected")
+            self._logger.info(f"[{self._connection_key}] Disconnected")
 
     def shutdown(self) -> None:
         """Shutdown the persistent connection and stop background threads."""
@@ -591,18 +613,24 @@ class PostgreSQLPersistent:
 
     def __new__(
         cls,
-        host: str = "localhost",
-        port: int = 5432,
-        user: str = "postgres",
-        password: str = "postgres",
-        database: str = "postgres",
+        host: str | None = None,
+        port: int | None = None,
+        user: str | None = None,
+        password: str | None = None,
+        database: str | None = None,
         async_mode: bool = False,
         config: PersistentConnectionConfig | None = None,
-        retry_config: RetryConfig | None = None,
+        retry_config: RetryPolicy | None = None,
         **engine_kwargs: Any,
     ) -> PersistentSQLAlchemyConnection | PersistentSQLAlchemyAsyncConnection:
         """Create or return existing persistent PostgreSQL connection."""
-        connection_key = f"postgresql://{user}@{host}:{port}/{database}"
+        _settings = get_postgresql_settings()
+        host = host or _settings.host
+        port = port or int(_settings.port)
+        user = user or _settings.user
+        password = password or _settings.password
+        database = database or _settings.database
+        connection_key = f"postgresql://{user}@{host}:{port}/{database}"  # NOSONAR
 
         with _registry_lock:
             if connection_key in _persistent_connections:
@@ -669,18 +697,24 @@ class MySQLPersistent:
 
     def __new__(
         cls,
-        host: str = "localhost",
-        port: int = 3306,
-        user: str = "root",
-        password: str = "root",
-        database: str = "dev",
+        host: str | None = None,
+        port: int | None = None,
+        user: str | None = None,
+        password: str | None = None,
+        database: str | None = None,
         async_mode: bool = False,
         config: PersistentConnectionConfig | None = None,
-        retry_config: RetryConfig | None = None,
+        retry_config: RetryPolicy | None = None,
         **engine_kwargs: Any,
     ) -> PersistentSQLAlchemyConnection | PersistentSQLAlchemyAsyncConnection:
         """Create or return existing persistent MySQL connection."""
-        connection_key = f"mysql://{user}@{host}:{port}/{database}"
+        _settings = get_mysql_settings()
+        host = host or _settings.host
+        port = port or int(_settings.port)
+        user = user or _settings.user
+        password = password or _settings.password
+        database = database or _settings.database
+        connection_key = f"mysql://{user}@{host}:{port}/{database}"  # NOSONAR
 
         with _registry_lock:
             if connection_key in _persistent_connections:
@@ -747,18 +781,24 @@ class MSSQLPersistent:
 
     def __new__(
         cls,
-        host: str = "localhost",
-        port: int = 1433,
-        user: str = "sa",
-        password: str = "sa",
-        database: str = "master",
+        host: str | None = None,
+        port: int | None = None,
+        user: str | None = None,
+        password: str | None = None,
+        database: str | None = None,
         async_mode: bool = False,
         config: PersistentConnectionConfig | None = None,
-        retry_config: RetryConfig | None = None,
+        retry_config: RetryPolicy | None = None,
         **engine_kwargs: Any,
     ) -> PersistentSQLAlchemyConnection | PersistentSQLAlchemyAsyncConnection:
         """Create or return existing persistent MSSQL connection."""
-        connection_key = f"mssql://{user}@{host}:{port}/{database}"
+        _settings = get_mssql_settings()
+        host = host or _settings.host
+        port = port or int(_settings.port)
+        user = user or _settings.user
+        password = password or _settings.password
+        database = database or _settings.database
+        connection_key = f"mssql://{user}@{host}:{port}/{database}"  # NOSONAR
 
         with _registry_lock:
             if connection_key in _persistent_connections:
@@ -821,24 +861,30 @@ class OraclePersistent:
 
     def __new__(
         cls,
-        host: str = "localhost",
-        port: int = 1521,
-        user: str = "system",
-        password: str = "oracle",
-        servicename: str = "xe",
+        host: str | None = None,
+        port: int | None = None,
+        user: str | None = None,
+        password: str | None = None,
+        servicename: str | None = None,
         config: PersistentConnectionConfig | None = None,
-        retry_config: RetryConfig | None = None,
+        retry_config: RetryPolicy | None = None,
         **engine_kwargs: Any,
     ) -> PersistentSQLAlchemyConnection:
         """Create or return existing persistent Oracle connection."""
-        connection_key = f"oracle://{user}@{host}:{port}/{servicename}"
+        _settings = get_oracle_settings()
+        host = host or _settings.host
+        port = port or int(_settings.port)
+        user = user or _settings.user
+        password = password or _settings.password
+        servicename = servicename or _settings.servicename
+        connection_key = f"oracle://{user}@{host}:{port}/{servicename}"  # NOSONAR
 
         with _registry_lock:
             if connection_key in _persistent_connections:
                 return cast(PersistentSQLAlchemyConnection, _persistent_connections[connection_key])
 
             connection_url = URL.create(
-                drivername="oracle+cx_oracle",
+                drivername="oracle+oracledb",
                 username=user,
                 password=password,
                 host=host,
@@ -872,16 +918,22 @@ class MongoDBPersistent:
 
     def __new__(
         cls,
-        host: str = "localhost",
-        port: int = 27017,
-        user: str = "admin",
-        password: str = "admin",
-        database: str = "admin",
+        host: str | None = None,
+        port: int | None = None,
+        user: str | None = None,
+        password: str | None = None,
+        database: str | None = None,
         config: PersistentConnectionConfig | None = None,
-        retry_config: RetryConfig | None = None,
+        retry_config: RetryPolicy | None = None,
     ) -> PersistentMongoDBConnection:
         """Create or return existing persistent MongoDB connection."""
-        connection_key = f"mongodb://{user}@{host}:{port}/{database}"
+        _settings = get_mongodb_settings()
+        host = host or _settings.host
+        port = port or int(_settings.port)
+        user = user or _settings.user
+        password = password or _settings.password
+        database = database or _settings.database
+        connection_key = f"mongodb://{user}@{host}:{port}/{database}"  # NOSONAR
 
         with _registry_lock:
             if connection_key in _persistent_connections:
@@ -907,5 +959,5 @@ def close_all_persistent_connections() -> None:
             try:
                 conn.shutdown()
             except Exception as e:
-                logger.warning(f"Error shutting down connection {key}: {e}")
+                _logger.warning(f"Error shutting down connection {key}: {e}")
         _persistent_connections.clear()

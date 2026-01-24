@@ -1,86 +1,74 @@
-import logging
-from importlib.metadata import version
-from typing import Literal, NamedTuple
-from ddcDatabases.db_utils import DBUtils, DBUtilsAsync, RetryConfig
-from ddcDatabases.persistent import close_all_persistent_connections, PersistentConnectionConfig
+from ddcDatabases.core.configs import PoolConfig, RetryConfig, SessionConfig
+from ddcDatabases.core.operations import DBUtils, DBUtilsAsync
+from ddcDatabases.core.persistent import PersistentConnectionConfig, close_all_persistent_connections
 from ddcDatabases.sqlite import Sqlite
+from importlib.metadata import version
+import logging
+from typing import Literal, NamedTuple
 
-# Conditional imports based on available dependencies
-try:
-    from .mongodb import MongoDB
-    from .persistent import MongoDBPersistent
-except ImportError:
-    MongoDB = None
-    MongoDBPersistent = None
-
-try:
-    from .mssql import MSSQL
-    from .persistent import MSSQLPersistent
-except ImportError:
-    MSSQL = None
-    MSSQLPersistent = None
-
-try:
-    from .mysql import MySQL
-    from .persistent import MySQLPersistent
-except ImportError:
-    MySQL = None
-    MySQLPersistent = None
-
-try:
-    from .oracle import Oracle
-    from .persistent import OraclePersistent
-except ImportError:
-    Oracle = None
-    OraclePersistent = None
-
-try:
-    from .postgresql import PostgreSQL
-    from .persistent import PostgreSQLPersistent
-except ImportError:
-    PostgreSQL = None
-    PostgreSQLPersistent = None
-
-
-# Build __all__ dynamically based on successfully imported classes
 __all__ = [
     "DBUtils",
     "DBUtilsAsync",
     "Sqlite",
+    "PoolConfig",
+    "SessionConfig",
     "RetryConfig",
     "PersistentConnectionConfig",
     "close_all_persistent_connections",
 ]
 
-if MongoDB is not None:
-    __all__.append("MongoDB")
-if MongoDBPersistent is not None:
-    __all__.append("MongoDBPersistent")
-if MSSQL is not None:
-    __all__.append("MSSQL")
-if MSSQLPersistent is not None:
-    __all__.append("MSSQLPersistent")
-if MySQL is not None:
-    __all__.append("MySQL")
-if MySQLPersistent is not None:
-    __all__.append("MySQLPersistent")
-if Oracle is not None:
-    __all__.append("Oracle")
-if OraclePersistent is not None:
-    __all__.append("OraclePersistent")
-if PostgreSQL is not None:
-    __all__.append("PostgreSQL")
-if PostgreSQLPersistent is not None:
-    __all__.append("PostgreSQLPersistent")
+# Conditional imports based on available dependencies
+try:
+    from .core.persistent import MongoDBPersistent
+    from .mongodb import (
+        MongoDB,
+        MongoDBConnectionConfig,
+        MongoDBQueryConfig,
+        MongoDBTLSConfig,
+    )
+
+    __all__ += ["MongoDB", "MongoDBPersistent", "MongoDBConnectionConfig", "MongoDBTLSConfig", "MongoDBQueryConfig"]
+except ImportError:
+    pass
+
+try:
+    from .core.persistent import MSSQLPersistent
+    from .mssql import MSSQL, MSSQLConnectionConfig, MSSQLSSLConfig
+
+    __all__ += ["MSSQL", "MSSQLPersistent", "MSSQLConnectionConfig", "MSSQLSSLConfig"]
+except ImportError:
+    pass
+
+try:
+    from .core.persistent import MySQLPersistent
+    from .mysql import MySQL, MySQLConnectionConfig, MySQLSSLConfig
+
+    __all__ += ["MySQL", "MySQLPersistent", "MySQLConnectionConfig", "MySQLSSLConfig"]
+except ImportError:
+    pass
+
+try:
+    from .core.persistent import OraclePersistent
+    from .oracle import Oracle, OracleConnectionConfig, OracleSSLConfig
+
+    __all__ += ["Oracle", "OraclePersistent", "OracleConnectionConfig", "OracleSSLConfig"]
+except ImportError:
+    pass
+
+try:
+    from .core.persistent import PostgreSQLPersistent
+    from .postgresql import PostgreSQL, PostgreSQLConnectionConfig, PostgreSQLSSLConfig
+
+    __all__ += ["PostgreSQL", "PostgreSQLPersistent", "PostgreSQLConnectionConfig", "PostgreSQLSSLConfig"]
+except ImportError:
+    pass
 
 __all__ = tuple(__all__)
-
-
 __title__ = "ddcDatabases"
 __author__ = "Daniel Costa"
 __email__ = "danieldcsta@gmail.com>"
 __license__ = "MIT"
-__copyright__ = "Copyright 2024-present ddc"
+__copyright__ = "Copyright 2024-present DDC Softwares"
 _req_python_version = (3, 12, 0)
 
 
