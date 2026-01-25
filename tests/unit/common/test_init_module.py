@@ -148,9 +148,6 @@ class TestInitModule:
 
         # Test that __all__ contains the expected database classes and new exports (alphabetically sorted)
         expected_classes = {
-            "BasePoolConfig",
-            "BaseRetryConfig",
-            "BaseSessionConfig",
             "close_all_persistent_connections",
             "DBUtils",
             "DBUtilsAsync",
