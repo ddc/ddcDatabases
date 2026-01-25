@@ -1,4 +1,3 @@
-from ddcDatabases.core.configs import BasePoolConfig, BaseRetryConfig, BaseSessionConfig
 from ddcDatabases.core.operations import DBUtils, DBUtilsAsync
 from ddcDatabases.core.persistent import PersistentConnectionConfig, close_all_persistent_connections
 from ddcDatabases.sqlite import Sqlite, SqliteRetryConfig, SqliteSessionConfig
@@ -7,9 +6,6 @@ import logging
 from typing import Literal, NamedTuple
 
 __all__ = [
-    "BasePoolConfig",
-    "BaseRetryConfig",
-    "BaseSessionConfig",
     "close_all_persistent_connections",
     "DBUtils",
     "DBUtilsAsync",

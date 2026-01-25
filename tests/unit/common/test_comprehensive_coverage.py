@@ -178,9 +178,6 @@ class TestModuleImports:
         # Test __all__ exists and contains expected items (alphabetically sorted)
         assert hasattr(ddcDatabases, '__all__')
         expected_exports = {
-            "BasePoolConfig",
-            "BaseRetryConfig",
-            "BaseSessionConfig",
             "close_all_persistent_connections",
             "DBUtils",
             "DBUtilsAsync",
