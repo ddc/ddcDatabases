@@ -1,20 +1,22 @@
-from ddcDatabases.core.configs import PoolConfig, RetryConfig, SessionConfig
+from ddcDatabases.core.configs import BasePoolConfig, BaseRetryConfig, BaseSessionConfig
 from ddcDatabases.core.operations import DBUtils, DBUtilsAsync
 from ddcDatabases.core.persistent import PersistentConnectionConfig, close_all_persistent_connections
-from ddcDatabases.sqlite import Sqlite
+from ddcDatabases.sqlite import Sqlite, SqliteRetryConfig, SqliteSessionConfig
 from importlib.metadata import version
 import logging
 from typing import Literal, NamedTuple
 
 __all__ = [
+    "BasePoolConfig",
+    "BaseRetryConfig",
+    "BaseSessionConfig",
+    "close_all_persistent_connections",
     "DBUtils",
     "DBUtilsAsync",
-    "Sqlite",
-    "PoolConfig",
-    "SessionConfig",
-    "RetryConfig",
     "PersistentConnectionConfig",
-    "close_all_persistent_connections",
+    "Sqlite",
+    "SqliteRetryConfig",
+    "SqliteSessionConfig",
 ]
 
 # Conditional imports based on available dependencies
@@ -24,42 +26,110 @@ try:
         MongoDB,
         MongoDBConnectionConfig,
         MongoDBQueryConfig,
+        MongoDBRetryConfig,
         MongoDBTLSConfig,
     )
 
-    __all__ += ["MongoDB", "MongoDBPersistent", "MongoDBConnectionConfig", "MongoDBTLSConfig", "MongoDBQueryConfig"]
+    __all__ += [
+        "MongoDB",
+        "MongoDBConnectionConfig",
+        "MongoDBPersistent",
+        "MongoDBQueryConfig",
+        "MongoDBRetryConfig",
+        "MongoDBTLSConfig",
+    ]
 except ImportError:
     pass
 
 try:
     from .core.persistent import MSSQLPersistent
-    from .mssql import MSSQL, MSSQLConnectionConfig, MSSQLSSLConfig
+    from .mssql import (
+        MSSQL,
+        MSSQLConnectionConfig,
+        MSSQLPoolConfig,
+        MSSQLRetryConfig,
+        MSSQLSessionConfig,
+        MSSQLSSLConfig,
+    )
 
-    __all__ += ["MSSQL", "MSSQLPersistent", "MSSQLConnectionConfig", "MSSQLSSLConfig"]
+    __all__ += [
+        "MSSQL",
+        "MSSQLConnectionConfig",
+        "MSSQLPersistent",
+        "MSSQLPoolConfig",
+        "MSSQLRetryConfig",
+        "MSSQLSessionConfig",
+        "MSSQLSSLConfig",
+    ]
 except ImportError:
     pass
 
 try:
     from .core.persistent import MySQLPersistent
-    from .mysql import MySQL, MySQLConnectionConfig, MySQLSSLConfig
+    from .mysql import (
+        MySQL,
+        MySQLConnectionConfig,
+        MySQLPoolConfig,
+        MySQLRetryConfig,
+        MySQLSessionConfig,
+        MySQLSSLConfig,
+    )
 
-    __all__ += ["MySQL", "MySQLPersistent", "MySQLConnectionConfig", "MySQLSSLConfig"]
+    __all__ += [
+        "MySQL",
+        "MySQLConnectionConfig",
+        "MySQLPersistent",
+        "MySQLPoolConfig",
+        "MySQLRetryConfig",
+        "MySQLSessionConfig",
+        "MySQLSSLConfig",
+    ]
 except ImportError:
     pass
 
 try:
     from .core.persistent import OraclePersistent
-    from .oracle import Oracle, OracleConnectionConfig, OracleSSLConfig
+    from .oracle import (
+        Oracle,
+        OracleConnectionConfig,
+        OraclePoolConfig,
+        OracleRetryConfig,
+        OracleSessionConfig,
+        OracleSSLConfig,
+    )
 
-    __all__ += ["Oracle", "OraclePersistent", "OracleConnectionConfig", "OracleSSLConfig"]
+    __all__ += [
+        "Oracle",
+        "OracleConnectionConfig",
+        "OraclePersistent",
+        "OraclePoolConfig",
+        "OracleRetryConfig",
+        "OracleSessionConfig",
+        "OracleSSLConfig",
+    ]
 except ImportError:
     pass
 
 try:
     from .core.persistent import PostgreSQLPersistent
-    from .postgresql import PostgreSQL, PostgreSQLConnectionConfig, PostgreSQLSSLConfig
+    from .postgresql import (
+        PostgreSQL,
+        PostgreSQLConnectionConfig,
+        PostgreSQLPoolConfig,
+        PostgreSQLRetryConfig,
+        PostgreSQLSessionConfig,
+        PostgreSQLSSLConfig,
+    )
 
-    __all__ += ["PostgreSQL", "PostgreSQLPersistent", "PostgreSQLConnectionConfig", "PostgreSQLSSLConfig"]
+    __all__ += [
+        "PostgreSQL",
+        "PostgreSQLConnectionConfig",
+        "PostgreSQLPersistent",
+        "PostgreSQLPoolConfig",
+        "PostgreSQLRetryConfig",
+        "PostgreSQLSessionConfig",
+        "PostgreSQLSSLConfig",
+    ]
 except ImportError:
     pass
 

@@ -1,5 +1,5 @@
 from .core.base import BaseConnection
-from .core.configs import BaseConnectionConfig, BaseSSLConfig, PoolConfig, RetryConfig, SessionConfig
+from .core.configs import BaseConnectionConfig, BasePoolConfig, BaseRetryConfig, BaseSessionConfig, BaseSSLConfig
 from .core.retry import RetryPolicy
 from .core.settings import get_mysql_settings
 from contextlib import asynccontextmanager, contextmanager
@@ -13,13 +13,28 @@ _logger = logging.getLogger(__name__)
 _logger.addHandler(logging.NullHandler())
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class MySQLConnectionConfig(BaseConnectionConfig):
     database: str | None = None
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class MySQLSSLConfig(BaseSSLConfig):
+    pass
+
+
+@dataclass(frozen=True, slots=True)
+class MySQLPoolConfig(BasePoolConfig):
+    pass
+
+
+@dataclass(frozen=True, slots=True)
+class MySQLSessionConfig(BaseSessionConfig):
+    pass
+
+
+@dataclass(frozen=True, slots=True)
+class MySQLRetryConfig(BaseRetryConfig):
     pass
 
 
@@ -35,13 +50,13 @@ class MySQL(BaseConnection):
         user: str | None = None,
         password: str | None = None,
         database: str | None = None,
-        pool_config: PoolConfig | None = None,
-        session_config: SessionConfig | None = None,
-        retry_config: RetryConfig | None = None,
+        pool_config: MySQLPoolConfig | None = None,
+        session_config: MySQLSessionConfig | None = None,
+        retry_config: MySQLRetryConfig | None = None,
         ssl_config: MySQLSSLConfig | None = None,
         extra_engine_args: dict | None = None,
         logger: logging.Logger | None = None,
-    ):
+    ) -> None:
         _settings = get_mysql_settings()
 
         self._connection_config = MySQLConnectionConfig(
@@ -52,8 +67,8 @@ class MySQL(BaseConnection):
             database=database or _settings.database,
         )
 
-        _pc = pool_config or PoolConfig()
-        self._pool_config = PoolConfig(
+        _pc = pool_config or MySQLPoolConfig()
+        self._pool_config = MySQLPoolConfig(
             pool_size=_pc.pool_size if _pc.pool_size is not None else _settings.pool_size,
             max_overflow=_pc.max_overflow if _pc.max_overflow is not None else _settings.max_overflow,
             pool_recycle=_pc.pool_recycle if _pc.pool_recycle is not None else _settings.pool_recycle,
@@ -62,8 +77,8 @@ class MySQL(BaseConnection):
             ),
         )
 
-        _sc = session_config or SessionConfig()
-        self._session_config = SessionConfig(
+        _sc = session_config or MySQLSessionConfig()
+        self._session_config = MySQLSessionConfig(
             echo=_sc.echo if _sc.echo is not None else _settings.echo,
             autoflush=_sc.autoflush if _sc.autoflush is not None else _settings.autoflush,
             expire_on_commit=_sc.expire_on_commit if _sc.expire_on_commit is not None else _settings.expire_on_commit,
@@ -119,8 +134,8 @@ class MySQL(BaseConnection):
         }
 
         # Create retry configuration
-        _rc = retry_config or RetryConfig()
-        self._retry_config = RetryConfig(
+        _rc = retry_config or MySQLRetryConfig()
+        self._retry_config = MySQLRetryConfig(
             enable_retry=_rc.enable_retry if _rc.enable_retry is not None else _settings.enable_retry,
             max_retries=_rc.max_retries if _rc.max_retries is not None else _settings.max_retries,
             initial_retry_delay=(
@@ -169,13 +184,13 @@ class MySQL(BaseConnection):
     def get_connection_info(self) -> MySQLConnectionConfig:
         return self._connection_config
 
-    def get_pool_info(self) -> PoolConfig:
+    def get_pool_info(self) -> MySQLPoolConfig:
         return self._pool_config
 
-    def get_session_info(self) -> SessionConfig:
+    def get_session_info(self) -> MySQLSessionConfig:
         return self._session_config
 
-    def get_retry_info(self) -> RetryConfig:
+    def get_retry_info(self) -> MySQLRetryConfig:
         return self._retry_config
 
     def get_ssl_info(self) -> MySQLSSLConfig:

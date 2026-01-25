@@ -1,5 +1,4 @@
-from ddcDatabases.core.configs import PoolConfig, RetryConfig, SessionConfig
-from ddcDatabases.mysql import MySQL, MySQLConnectionConfig, MySQLSSLConfig
+from ddcDatabases.mysql import MySQL, MySQLConnectionConfig, MySQLPoolConfig, MySQLSessionConfig, MySQLSSLConfig
 import pytest
 from unittest.mock import MagicMock, patch
 
@@ -90,7 +89,7 @@ class TestMySQL:
             user="customuser",
             password="custompass",
             database="customdb",
-            session_config=SessionConfig(echo=True),
+            session_config=MySQLSessionConfig(echo=True),
         )
 
         assert mysql.connection_url["host"] == "customhost"
@@ -135,7 +134,7 @@ class TestMySQL:
         mock_settings = self._create_mock_settings(database="dev")
         mock_get_settings.return_value = mock_settings
 
-        mysql = MySQL(session_config=SessionConfig(autoflush=False, expire_on_commit=False))
+        mysql = MySQL(session_config=MySQLSessionConfig(autoflush=False, expire_on_commit=False))
 
         assert mysql._session_config.autoflush == False
         assert mysql._session_config.expire_on_commit == False
@@ -146,7 +145,7 @@ class TestMySQL:
         mock_settings = self._create_mock_settings(database="dev", pool_size=10)
         mock_get_settings.return_value = mock_settings
 
-        mysql = MySQL(pool_config=PoolConfig(pool_size=15))
+        mysql = MySQL(pool_config=MySQLPoolConfig(pool_size=15))
 
         assert mysql._pool_config.pool_size == 15
         assert mysql.engine_args["pool_size"] == 15
@@ -157,7 +156,7 @@ class TestMySQL:
         mock_settings = self._create_mock_settings(database="dev", max_overflow=20)
         mock_get_settings.return_value = mock_settings
 
-        mysql = MySQL(pool_config=PoolConfig(max_overflow=30))
+        mysql = MySQL(pool_config=MySQLPoolConfig(max_overflow=30))
 
         assert mysql._pool_config.max_overflow == 30
         assert mysql.engine_args["max_overflow"] == 30

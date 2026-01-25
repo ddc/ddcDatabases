@@ -40,7 +40,7 @@ class BaseConnection(ABC):
         async_driver: str | None,
         retry_config: RetryPolicy | None = None,
         logger: logging.Logger | None = None,
-    ):
+    ) -> None:
         self.connection_url = connection_url
         self.engine_args = engine_args
         self.autoflush = autoflush
@@ -152,7 +152,7 @@ class ConnectionTester:
         async_session: AsyncSession | None = None,
         host_url: URL | str = "",
         logger: logging.Logger | None = None,
-    ):
+    ) -> None:
         self.sync_session = sync_session
         self.async_session = async_session
         self.host_url = host_url

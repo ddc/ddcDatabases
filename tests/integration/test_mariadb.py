@@ -109,7 +109,7 @@ class TestMariaDBIntegration:
         port = mariadb_container.get_exposed_port(3306)
         host = mariadb_container.get_container_host_ip()
 
-        from ddcDatabases.core.configs import PoolConfig
+        from ddcDatabases.mysql import MySQLPoolConfig
 
         with MySQL(
             host=host,
@@ -117,7 +117,7 @@ class TestMariaDBIntegration:
             user=mariadb_container.username,
             password=mariadb_container.password,
             database=mariadb_container.dbname,
-            pool_config=PoolConfig(pool_size=5, max_overflow=10),
+            pool_config=MySQLPoolConfig(pool_size=5, max_overflow=10),
         ) as session:
             result = session.execute(sa.text("SELECT 1"))
             assert result.scalar() == 1

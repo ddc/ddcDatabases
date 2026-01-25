@@ -82,7 +82,7 @@ class TestOracleIntegration:
         port = oracle_container.get_exposed_port(1521)
         host = oracle_container.get_container_host_ip()
 
-        from ddcDatabases.core.configs import PoolConfig
+        from ddcDatabases.oracle import OraclePoolConfig
 
         with Oracle(
             host=host,
@@ -90,7 +90,7 @@ class TestOracleIntegration:
             user="system",
             password=oracle_container.oracle_password,
             servicename="FREEPDB1",
-            pool_config=PoolConfig(pool_size=5, max_overflow=10, pool_recycle=1800),
+            pool_config=OraclePoolConfig(pool_size=5, max_overflow=10, pool_recycle=1800),
         ) as session:
             result = session.execute(sa.text("SELECT 1 FROM dual"))
             assert result.scalar() == 1

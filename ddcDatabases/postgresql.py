@@ -1,5 +1,5 @@
 from .core.base import BaseConnection
-from .core.configs import BaseConnectionConfig, BaseSSLConfig, PoolConfig, RetryConfig, SessionConfig
+from .core.configs import BaseConnectionConfig, BasePoolConfig, BaseRetryConfig, BaseSessionConfig, BaseSSLConfig
 from .core.retry import RetryPolicy
 from .core.settings import get_postgresql_settings
 from contextlib import asynccontextmanager, contextmanager
@@ -14,14 +14,29 @@ _logger = logging.getLogger(__name__)
 _logger.addHandler(logging.NullHandler())
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class PostgreSQLConnectionConfig(BaseConnectionConfig):
     database: str | None = None
     db_schema: str | None = None
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class PostgreSQLSSLConfig(BaseSSLConfig):
+    pass
+
+
+@dataclass(frozen=True, slots=True)
+class PostgreSQLPoolConfig(BasePoolConfig):
+    pass
+
+
+@dataclass(frozen=True, slots=True)
+class PostgreSQLSessionConfig(BaseSessionConfig):
+    pass
+
+
+@dataclass(frozen=True, slots=True)
+class PostgreSQLRetryConfig(BaseRetryConfig):
     pass
 
 
@@ -38,13 +53,13 @@ class PostgreSQL(BaseConnection):
         password: str | None = None,
         database: str | None = None,
         db_schema: str | None = None,
-        pool_config: PoolConfig | None = None,
-        session_config: SessionConfig | None = None,
-        retry_config: RetryConfig | None = None,
+        pool_config: PostgreSQLPoolConfig | None = None,
+        session_config: PostgreSQLSessionConfig | None = None,
+        retry_config: PostgreSQLRetryConfig | None = None,
         ssl_config: PostgreSQLSSLConfig | None = None,
         extra_engine_args: dict | None = None,
         logger: logging.Logger | None = None,
-    ):
+    ) -> None:
         _settings = get_postgresql_settings()
 
         self._connection_config = PostgreSQLConnectionConfig(
@@ -56,8 +71,8 @@ class PostgreSQL(BaseConnection):
             db_schema=db_schema if db_schema is not None else _settings.db_schema,
         )
 
-        _pc = pool_config or PoolConfig()
-        self._pool_config = PoolConfig(
+        _pc = pool_config or PostgreSQLPoolConfig()
+        self._pool_config = PostgreSQLPoolConfig(
             pool_size=_pc.pool_size if _pc.pool_size is not None else _settings.pool_size,
             max_overflow=_pc.max_overflow if _pc.max_overflow is not None else _settings.max_overflow,
             pool_recycle=_pc.pool_recycle if _pc.pool_recycle is not None else _settings.pool_recycle,
@@ -66,8 +81,8 @@ class PostgreSQL(BaseConnection):
             ),
         )
 
-        _sc = session_config or SessionConfig()
-        self._session_config = SessionConfig(
+        _sc = session_config or PostgreSQLSessionConfig()
+        self._session_config = PostgreSQLSessionConfig(
             echo=_sc.echo if _sc.echo is not None else _settings.echo,
             autoflush=_sc.autoflush if _sc.autoflush is not None else _settings.autoflush,
             expire_on_commit=_sc.expire_on_commit if _sc.expire_on_commit is not None else _settings.expire_on_commit,
@@ -106,8 +121,8 @@ class PostgreSQL(BaseConnection):
         }
 
         # Create retry configuration
-        _rc = retry_config or RetryConfig()
-        self._retry_config = RetryConfig(
+        _rc = retry_config or PostgreSQLRetryConfig()
+        self._retry_config = PostgreSQLRetryConfig(
             enable_retry=_rc.enable_retry if _rc.enable_retry is not None else _settings.enable_retry,
             max_retries=_rc.max_retries if _rc.max_retries is not None else _settings.max_retries,
             initial_retry_delay=(
@@ -156,13 +171,13 @@ class PostgreSQL(BaseConnection):
     def get_connection_info(self) -> PostgreSQLConnectionConfig:
         return self._connection_config
 
-    def get_pool_info(self) -> PoolConfig:
+    def get_pool_info(self) -> PostgreSQLPoolConfig:
         return self._pool_config
 
-    def get_session_info(self) -> SessionConfig:
+    def get_session_info(self) -> PostgreSQLSessionConfig:
         return self._session_config
 
-    def get_retry_info(self) -> RetryConfig:
+    def get_retry_info(self) -> PostgreSQLRetryConfig:
         return self._retry_config
 
     def get_ssl_info(self) -> PostgreSQLSSLConfig:
