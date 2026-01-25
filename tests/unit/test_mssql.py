@@ -1,5 +1,4 @@
-from ddcDatabases.core.configs import PoolConfig, RetryConfig, SessionConfig
-from ddcDatabases.mssql import MSSQL, MSSQLConnectionConfig, MSSQLSSLConfig
+from ddcDatabases.mssql import MSSQL, MSSQLConnectionConfig, MSSQLPoolConfig, MSSQLSessionConfig, MSSQLSSLConfig
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
@@ -62,8 +61,8 @@ class TestMSSQL:
             password="custompass",
             database="customdb",
             schema="customschema",
-            session_config=SessionConfig(echo=True),
-            pool_config=PoolConfig(pool_size=30, max_overflow=20),
+            session_config=MSSQLSessionConfig(echo=True),
+            pool_config=MSSQLPoolConfig(pool_size=30, max_overflow=20),
         )
 
         assert mssql.connection_url["host"] == "customhost"
@@ -207,7 +206,7 @@ class TestMSSQL:
         mock_settings = self._create_mock_settings()
         mock_get_settings.return_value = mock_settings
 
-        mssql = MSSQL(session_config=SessionConfig(autoflush=False, expire_on_commit=False))
+        mssql = MSSQL(session_config=MSSQLSessionConfig(autoflush=False, expire_on_commit=False))
 
         assert mssql._session_config.autoflush == False
         assert mssql._session_config.expire_on_commit == False
@@ -218,7 +217,7 @@ class TestMSSQL:
         mock_settings = self._create_mock_settings(odbcdriver_version=18)
         mock_get_settings.return_value = mock_settings
 
-        mssql = MSSQL(session_config=SessionConfig(autocommit=True))
+        mssql = MSSQL(session_config=MSSQLSessionConfig(autocommit=True))
 
         assert mssql._session_config.autocommit == True
         assert mssql.engine_args["connect_args"]["autocommit"] == True
@@ -229,7 +228,7 @@ class TestMSSQL:
         mock_settings = self._create_mock_settings(odbcdriver_version=18)
         mock_get_settings.return_value = mock_settings
 
-        mssql = MSSQL(pool_config=PoolConfig(connection_timeout=60))
+        mssql = MSSQL(pool_config=MSSQLPoolConfig(connection_timeout=60))
 
         assert mssql._pool_config.connection_timeout == 60
         assert mssql.engine_args["connect_args"]["timeout"] == 60
@@ -241,7 +240,7 @@ class TestMSSQL:
         mock_settings = self._create_mock_settings(odbcdriver_version=18)
         mock_get_settings.return_value = mock_settings
 
-        mssql = MSSQL(pool_config=PoolConfig(pool_recycle=7200))
+        mssql = MSSQL(pool_config=MSSQLPoolConfig(pool_recycle=7200))
 
         assert mssql._pool_config.pool_recycle == 7200
         assert mssql.engine_args["pool_recycle"] == 7200

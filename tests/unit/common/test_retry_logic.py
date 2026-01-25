@@ -517,11 +517,10 @@ class TestRetryPolicyInDatabaseClasses:
 
     def test_custom_retry_settings(self):
         """Test passing custom retry settings to database class."""
-        from ddcDatabases.core.configs import RetryConfig
-        from ddcDatabases.postgresql import PostgreSQL
+        from ddcDatabases.postgresql import PostgreSQL, PostgreSQLRetryConfig
 
         pg = PostgreSQL(
-            retry_config=RetryConfig(
+            retry_config=PostgreSQLRetryConfig(
                 enable_retry=False,
                 max_retries=5,
                 initial_retry_delay=2.0,

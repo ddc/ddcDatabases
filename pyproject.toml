@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "ddcDatabases"
-version = "3.0.3"
+version = "3.0.4"
 description = "Simplified Database ORM Connections"
 license = {text = "MIT"}
 readme = "README.md"
@@ -78,10 +78,10 @@ packages = ["ddcDatabases"]
 
 [tool.poe.tasks]
 build = "uv build --wheel"
-updatedev = "uv sync --all-extras"
+updatedev.shell = "uv lock && uv sync --all-extras"
 linter.shell = "uv run ruff check --fix --select I . && uv run black ."
 test = "uv run pytest tests/unit"
-test-integration = "uv run pytest tests/integration"
+test-integration = "uv run pytest tests/integration --no-cov"
 
 [tool.pytest.ini_options]
 addopts = "-v --cov --cov-report=term --cov-report=xml --junitxml=junit.xml"

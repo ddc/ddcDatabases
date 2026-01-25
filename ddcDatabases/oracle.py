@@ -1,5 +1,5 @@
 from .core.base import BaseConnection
-from .core.configs import BaseConnectionConfig, PoolConfig, RetryConfig, SessionConfig
+from .core.configs import BaseConnectionConfig, BasePoolConfig, BaseRetryConfig, BaseSessionConfig
 from .core.retry import RetryPolicy
 from .core.settings import get_oracle_settings
 from contextlib import asynccontextmanager, contextmanager
@@ -13,15 +13,30 @@ _logger = logging.getLogger(__name__)
 _logger.addHandler(logging.NullHandler())
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class OracleConnectionConfig(BaseConnectionConfig):
     servicename: str | None = None
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class OracleSSLConfig:
     ssl_enabled: bool | None = None
     ssl_wallet_path: str | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class OraclePoolConfig(BasePoolConfig):
+    pass
+
+
+@dataclass(frozen=True, slots=True)
+class OracleSessionConfig(BaseSessionConfig):
+    pass
+
+
+@dataclass(frozen=True, slots=True)
+class OracleRetryConfig(BaseRetryConfig):
+    pass
 
 
 class Oracle(BaseConnection):
@@ -36,13 +51,13 @@ class Oracle(BaseConnection):
         user: str | None = None,
         password: str | None = None,
         servicename: str | None = None,
-        pool_config: PoolConfig | None = None,
-        session_config: SessionConfig | None = None,
-        retry_config: RetryConfig | None = None,
+        pool_config: OraclePoolConfig | None = None,
+        session_config: OracleSessionConfig | None = None,
+        retry_config: OracleRetryConfig | None = None,
         ssl_config: OracleSSLConfig | None = None,
         extra_engine_args: dict | None = None,
         logger: logging.Logger | None = None,
-    ):
+    ) -> None:
         _settings = get_oracle_settings()
 
         self._connection_config = OracleConnectionConfig(
@@ -53,8 +68,8 @@ class Oracle(BaseConnection):
             servicename=servicename or _settings.servicename,
         )
 
-        _pc = pool_config or PoolConfig()
-        self._pool_config = PoolConfig(
+        _pc = pool_config or OraclePoolConfig()
+        self._pool_config = OraclePoolConfig(
             pool_size=_pc.pool_size if _pc.pool_size is not None else _settings.pool_size,
             max_overflow=_pc.max_overflow if _pc.max_overflow is not None else _settings.max_overflow,
             pool_recycle=_pc.pool_recycle if _pc.pool_recycle is not None else _settings.pool_recycle,
@@ -63,8 +78,8 @@ class Oracle(BaseConnection):
             ),
         )
 
-        _sc = session_config or SessionConfig()
-        self._session_config = SessionConfig(
+        _sc = session_config or OracleSessionConfig()
+        self._session_config = OracleSessionConfig(
             echo=_sc.echo if _sc.echo is not None else _settings.echo,
             autoflush=_sc.autoflush if _sc.autoflush is not None else _settings.autoflush,
             expire_on_commit=_sc.expire_on_commit if _sc.expire_on_commit is not None else _settings.expire_on_commit,
@@ -104,8 +119,8 @@ class Oracle(BaseConnection):
         }
 
         # Create retry configuration
-        _rc = retry_config or RetryConfig()
-        self._retry_config = RetryConfig(
+        _rc = retry_config or OracleRetryConfig()
+        self._retry_config = OracleRetryConfig(
             enable_retry=_rc.enable_retry if _rc.enable_retry is not None else _settings.enable_retry,
             max_retries=_rc.max_retries if _rc.max_retries is not None else _settings.max_retries,
             initial_retry_delay=(
@@ -154,13 +169,13 @@ class Oracle(BaseConnection):
     def get_connection_info(self) -> OracleConnectionConfig:
         return self._connection_config
 
-    def get_pool_info(self) -> PoolConfig:
+    def get_pool_info(self) -> OraclePoolConfig:
         return self._pool_config
 
-    def get_session_info(self) -> SessionConfig:
+    def get_session_info(self) -> OracleSessionConfig:
         return self._session_config
 
-    def get_retry_info(self) -> RetryConfig:
+    def get_retry_info(self) -> OracleRetryConfig:
         return self._retry_config
 
     def get_ssl_info(self) -> OracleSSLConfig:

@@ -1,6 +1,5 @@
 from ddcDatabases.core.base import ConnectionTester
-from ddcDatabases.core.configs import PoolConfig, RetryConfig, SessionConfig
-from ddcDatabases.oracle import Oracle, OracleConnectionConfig, OracleSSLConfig
+from ddcDatabases.oracle import Oracle, OracleConnectionConfig, OraclePoolConfig, OracleSessionConfig, OracleSSLConfig
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -111,7 +110,7 @@ class TestOracle:
             user="customuser",
             password="custompass",
             servicename="customxe",
-            session_config=SessionConfig(echo=True),
+            session_config=OracleSessionConfig(echo=True),
         )
 
         assert oracle.connection_url["host"] == "customhost"
@@ -185,7 +184,7 @@ class TestOracle:
         mock_settings = self._create_mock_settings()
         mock_get_settings.return_value = mock_settings
 
-        oracle = Oracle(session_config=SessionConfig(autoflush=False, expire_on_commit=False))
+        oracle = Oracle(session_config=OracleSessionConfig(autoflush=False, expire_on_commit=False))
 
         assert oracle._session_config.autoflush == False
         assert oracle._session_config.expire_on_commit == False
@@ -196,7 +195,7 @@ class TestOracle:
         mock_settings = self._create_mock_settings()
         mock_get_settings.return_value = mock_settings
 
-        oracle = Oracle(session_config=SessionConfig(autocommit=False))
+        oracle = Oracle(session_config=OracleSessionConfig(autocommit=False))
 
         assert oracle._session_config.autocommit == False
 
@@ -206,7 +205,7 @@ class TestOracle:
         mock_settings = self._create_mock_settings()
         mock_get_settings.return_value = mock_settings
 
-        oracle = Oracle(pool_config=PoolConfig(connection_timeout=60))
+        oracle = Oracle(pool_config=OraclePoolConfig(connection_timeout=60))
 
         assert oracle._pool_config.connection_timeout == 60
 
@@ -229,7 +228,7 @@ class TestOracle:
         mock_settings = self._create_mock_settings()
         mock_get_settings.return_value = mock_settings
 
-        oracle = Oracle(pool_config=PoolConfig(pool_recycle=7200))
+        oracle = Oracle(pool_config=OraclePoolConfig(pool_recycle=7200))
 
         assert oracle._pool_config.pool_recycle == 7200
         assert oracle.engine_args["pool_recycle"] == 7200
@@ -240,7 +239,7 @@ class TestOracle:
         mock_settings = self._create_mock_settings()
         mock_get_settings.return_value = mock_settings
 
-        oracle = Oracle(pool_config=PoolConfig(pool_size=15))
+        oracle = Oracle(pool_config=OraclePoolConfig(pool_size=15))
 
         assert oracle._pool_config.pool_size == 15
         assert oracle.engine_args["pool_size"] == 15
@@ -251,7 +250,7 @@ class TestOracle:
         mock_settings = self._create_mock_settings()
         mock_get_settings.return_value = mock_settings
 
-        oracle = Oracle(pool_config=PoolConfig(max_overflow=30))
+        oracle = Oracle(pool_config=OraclePoolConfig(max_overflow=30))
 
         assert oracle._pool_config.max_overflow == 30
         assert oracle.engine_args["max_overflow"] == 30

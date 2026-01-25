@@ -191,7 +191,7 @@ class DBUtils:
 class DBUtilsAsync:
     __slots__ = ('session', 'retry_config')
 
-    def __init__(self, session: AsyncSession, retry_config: RetryPolicy | None = None):
+    def __init__(self, session: AsyncSession, retry_config: RetryPolicy | None = None) -> None:
         self.session = session
         self.retry_config = retry_config or RetryPolicy()
 

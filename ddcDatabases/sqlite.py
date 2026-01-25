@@ -1,13 +1,24 @@
-from .core.configs import RetryConfig, SessionConfig
+from .core.configs import BaseRetryConfig, BaseSessionConfig
 from .core.retry import RetryPolicy, retry_operation
 from .core.settings import get_sqlite_settings
+from dataclasses import dataclass
 import logging
 from sqlalchemy.engine import Engine, create_engine
 from sqlalchemy.orm import Session, sessionmaker
-from typing import Any, Optional, Type
+from typing import Any
 
 _logger = logging.getLogger(__name__)
 _logger.addHandler(logging.NullHandler())
+
+
+@dataclass(frozen=True, slots=True)
+class SqliteSessionConfig(BaseSessionConfig):
+    pass
+
+
+@dataclass(frozen=True, slots=True)
+class SqliteRetryConfig(BaseRetryConfig):
+    pass
 
 
 class Sqlite:
@@ -19,17 +30,18 @@ class Sqlite:
         self,
         filepath: str | None = None,
         echo: bool | None = None,
-        session_config: SessionConfig | None = None,
-        retry_config: RetryConfig | None = None,
+        session_config: SqliteSessionConfig | None = None,
+        retry_config: SqliteRetryConfig | None = None,
         extra_engine_args: dict[str, Any] | None = None,
         logger: logging.Logger | None = None,
     ) -> None:
         _settings = get_sqlite_settings()
+
         self.filepath: str = filepath or _settings.file_path
         self.echo: bool = echo or _settings.echo
 
-        _sc = session_config or SessionConfig()
-        self._session_config = SessionConfig(
+        _sc = session_config or SqliteSessionConfig()
+        self._session_config = SqliteSessionConfig(
             autoflush=_sc.autoflush,
             expire_on_commit=_sc.expire_on_commit,
         )
@@ -42,8 +54,8 @@ class Sqlite:
         self._temp_engine: Engine | None = None
 
         # Create retry configuration
-        _rc = retry_config or RetryConfig()
-        self._retry_config = RetryConfig(
+        _rc = retry_config or SqliteRetryConfig()
+        self._retry_config = SqliteRetryConfig(
             enable_retry=_rc.enable_retry if _rc.enable_retry is not None else _settings.enable_retry,
             max_retries=_rc.max_retries if _rc.max_retries is not None else _settings.max_retries,
             initial_retry_delay=(
@@ -62,11 +74,11 @@ class Sqlite:
         self.logger = logger if logger is not None else _logger
         self.logger.debug(f"Initializing Sqlite(filepath={self.filepath})")
 
-    def get_session_info(self) -> SessionConfig:
+    def get_session_info(self) -> SqliteSessionConfig:
         """Get immutable session configuration."""
         return self._session_config
 
-    def get_retry_info(self) -> RetryConfig:
+    def get_retry_info(self) -> SqliteRetryConfig:
         """Get immutable retry configuration."""
         return self._retry_config
 
@@ -98,9 +110,9 @@ class Sqlite:
 
     def __exit__(
         self,
-        exc_type: Optional[Type[BaseException]],
-        exc_val: Optional[BaseException],
-        exc_tb: Optional[object],
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: Any,
     ) -> None:
         if self.session:
             self.session.close()

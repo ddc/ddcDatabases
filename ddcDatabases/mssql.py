@@ -1,5 +1,5 @@
 from .core.base import BaseConnection, ConnectionTester
-from .core.configs import BaseConnectionConfig, PoolConfig, RetryConfig, SessionConfig
+from .core.configs import BaseConnectionConfig, BasePoolConfig, BaseRetryConfig, BaseSessionConfig
 from .core.retry import RetryPolicy
 from .core.settings import get_mssql_settings
 from contextlib import asynccontextmanager, contextmanager
@@ -14,18 +14,33 @@ _logger = logging.getLogger(__name__)
 _logger.addHandler(logging.NullHandler())
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class MSSQLConnectionConfig(BaseConnectionConfig):
     database: str | None = None
     schema: str | None = None
     odbcdriver_version: int | None = None
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class MSSQLSSLConfig:
     ssl_encrypt: bool | None = None
     ssl_trust_server_certificate: bool | None = None
     ssl_ca_cert_path: str | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class MSSQLPoolConfig(BasePoolConfig):
+    pass
+
+
+@dataclass(frozen=True, slots=True)
+class MSSQLSessionConfig(BaseSessionConfig):
+    pass
+
+
+@dataclass(frozen=True, slots=True)
+class MSSQLRetryConfig(BaseRetryConfig):
+    pass
 
 
 class MSSQL(BaseConnection):
@@ -41,13 +56,14 @@ class MSSQL(BaseConnection):
         password: str | None = None,
         database: str | None = None,
         schema: str | None = None,
-        pool_config: PoolConfig | None = None,
-        session_config: SessionConfig | None = None,
-        retry_config: RetryConfig | None = None,
+        odbcdriver_version: int | None = None,
+        pool_config: MSSQLPoolConfig | None = None,
+        session_config: MSSQLSessionConfig | None = None,
+        retry_config: MSSQLRetryConfig | None = None,
         ssl_config: MSSQLSSLConfig | None = None,
         extra_engine_args: dict | None = None,
         logger: logging.Logger | None = None,
-    ):
+    ) -> None:
         _settings = get_mssql_settings()
 
         self._connection_config = MSSQLConnectionConfig(
@@ -57,11 +73,11 @@ class MSSQL(BaseConnection):
             password=password or _settings.password,
             database=database or _settings.database,
             schema=schema or _settings.db_schema,
-            odbcdriver_version=int(_settings.odbcdriver_version),
+            odbcdriver_version=int(odbcdriver_version or _settings.odbcdriver_version),
         )
 
-        _pc = pool_config or PoolConfig()
-        self._pool_config = PoolConfig(
+        _pc = pool_config or MSSQLPoolConfig()
+        self._pool_config = MSSQLPoolConfig(
             pool_size=_pc.pool_size if _pc.pool_size is not None else int(_settings.pool_size),
             max_overflow=_pc.max_overflow if _pc.max_overflow is not None else int(_settings.max_overflow),
             pool_recycle=_pc.pool_recycle if _pc.pool_recycle is not None else _settings.pool_recycle,
@@ -70,8 +86,8 @@ class MSSQL(BaseConnection):
             ),
         )
 
-        _sc = session_config or SessionConfig()
-        self._session_config = SessionConfig(
+        _sc = session_config or MSSQLSessionConfig()
+        self._session_config = MSSQLSessionConfig(
             echo=_sc.echo if _sc.echo is not None else _settings.echo,
             autoflush=_sc.autoflush if _sc.autoflush is not None else _settings.autoflush,
             expire_on_commit=_sc.expire_on_commit if _sc.expire_on_commit is not None else _settings.expire_on_commit,
@@ -121,8 +137,8 @@ class MSSQL(BaseConnection):
         }
 
         # Create retry configuration
-        _rc = retry_config or RetryConfig()
-        self._retry_config = RetryConfig(
+        _rc = retry_config or MSSQLRetryConfig()
+        self._retry_config = MSSQLRetryConfig(
             enable_retry=_rc.enable_retry if _rc.enable_retry is not None else _settings.enable_retry,
             max_retries=_rc.max_retries if _rc.max_retries is not None else _settings.max_retries,
             initial_retry_delay=(
@@ -172,13 +188,13 @@ class MSSQL(BaseConnection):
     def get_connection_info(self) -> MSSQLConnectionConfig:
         return self._connection_config
 
-    def get_pool_info(self) -> PoolConfig:
+    def get_pool_info(self) -> MSSQLPoolConfig:
         return self._pool_config
 
-    def get_session_info(self) -> SessionConfig:
+    def get_session_info(self) -> MSSQLSessionConfig:
         return self._session_config
 
-    def get_retry_info(self) -> RetryConfig:
+    def get_retry_info(self) -> MSSQLRetryConfig:
         return self._retry_config
 
     def get_ssl_info(self) -> MSSQLSSLConfig:

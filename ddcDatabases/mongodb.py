@@ -1,4 +1,4 @@
-from .core.configs import BaseConnectionConfig, RetryConfig
+from .core.configs import BaseConnectionConfig, BaseRetryConfig
 from .core.retry import RetryPolicy, retry_operation
 from .core.settings import get_mongodb_settings
 from dataclasses import dataclass
@@ -7,16 +7,16 @@ from pymongo import ASCENDING, DESCENDING, MongoClient
 from pymongo.cursor import Cursor
 from pymongo.errors import PyMongoError
 import sys
-from typing import Optional, Type
+from typing import Any
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class MongoDBConnectionConfig(BaseConnectionConfig):
     database: str | None = None
     collection: str | None = None
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class MongoDBTLSConfig:
     tls_enabled: bool | None = None
     tls_ca_cert_path: str | None = None
@@ -24,13 +24,18 @@ class MongoDBTLSConfig:
     tls_allow_invalid_certificates: bool | None = None
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class MongoDBQueryConfig:
     query: dict | None = None
     sort_column: str | None = None
     sort_order: str | None = None
     batch_size: int | None = None
     limit: int | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class MongoDBRetryConfig(BaseRetryConfig):
+    pass
 
 
 _logger = logging.getLogger(__name__)
@@ -51,10 +56,10 @@ class MongoDB:
         database: str | None = None,
         collection: str | None = None,
         query_config: MongoDBQueryConfig | None = None,
-        retry_config: RetryConfig | None = None,
+        retry_config: MongoDBRetryConfig | None = None,
         tls_config: MongoDBTLSConfig | None = None,
         logger: logging.Logger | None = None,
-    ):
+    ) -> None:
         _settings = get_mongodb_settings()
 
         self._connection_config = MongoDBConnectionConfig(
@@ -95,8 +100,8 @@ class MongoDB:
         self.cursor_ref = None
 
         # Create retry configuration
-        _rc = retry_config or RetryConfig()
-        self._retry_config = RetryConfig(
+        _rc = retry_config or MongoDBRetryConfig()
+        self._retry_config = MongoDBRetryConfig(
             enable_retry=_rc.enable_retry if _rc.enable_retry is not None else _settings.enable_retry,
             max_retries=_rc.max_retries if _rc.max_retries is not None else _settings.max_retries,
             initial_retry_delay=(
@@ -142,7 +147,7 @@ class MongoDB:
     def get_query_info(self) -> MongoDBQueryConfig:
         return self._query_config
 
-    def get_retry_info(self) -> RetryConfig:
+    def get_retry_info(self) -> MongoDBRetryConfig:
         return self._retry_config
 
     def get_tls_info(self) -> MongoDBTLSConfig:
@@ -185,9 +190,9 @@ class MongoDB:
 
     def __exit__(
         self,
-        exc_type: Optional[Type[BaseException]],
-        exc_val: Optional[BaseException],
-        exc_tb: Optional[object],
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: Any,
     ) -> None:
         if self.cursor_ref:
             self.cursor_ref.close()
@@ -217,9 +222,9 @@ class MongoDB:
     def _create_cursor(
         self,
         collection: str,
-        query: dict = None,
-        sort_column: str = None,
-        sort_order: str = None,
+        query: dict | None = None,
+        sort_column: str | None = None,
+        sort_order: str | None = None,
     ) -> Cursor:
         col = self.client[self._connection_config.database][collection]
         query = {} if query is None else query

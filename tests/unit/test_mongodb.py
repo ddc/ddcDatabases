@@ -1,5 +1,10 @@
-from ddcDatabases.core.configs import RetryConfig
-from ddcDatabases.mongodb import MongoDB, MongoDBConnectionConfig, MongoDBQueryConfig, MongoDBTLSConfig
+from ddcDatabases.mongodb import (
+    MongoDB,
+    MongoDBConnectionConfig,
+    MongoDBQueryConfig,
+    MongoDBRetryConfig,
+    MongoDBTLSConfig,
+)
 import pytest
 from unittest.mock import MagicMock, patch
 
@@ -841,7 +846,7 @@ class TestMongoDB:
         with patch('ddcDatabases.mongodb.MongoClient', return_value=mock_client):
             mongodb = MongoDB(
                 collection="test_collection",
-                retry_config=RetryConfig(enable_retry=False),
+                retry_config=MongoDBRetryConfig(enable_retry=False),
             )
 
             with pytest.raises(SystemExit) as exc_info:

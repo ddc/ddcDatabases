@@ -109,7 +109,7 @@ class TestMySQLIntegration:
         port = mysql_container.get_exposed_port(3306)
         host = mysql_container.get_container_host_ip()
 
-        from ddcDatabases.core.configs import PoolConfig
+        from ddcDatabases.mysql import MySQLPoolConfig
 
         with MySQL(
             host=host,
@@ -117,7 +117,7 @@ class TestMySQLIntegration:
             user=mysql_container.username,
             password=mysql_container.password,
             database=mysql_container.dbname,
-            pool_config=PoolConfig(pool_size=5, max_overflow=10),
+            pool_config=MySQLPoolConfig(pool_size=5, max_overflow=10),
         ) as session:
             result = session.execute(sa.text("SELECT 1"))
             assert result.scalar() == 1

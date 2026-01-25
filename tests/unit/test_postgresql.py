@@ -11,8 +11,13 @@ except ImportError:
 
 pytestmark = pytest.mark.skipif(not POSTGRESQL_AVAILABLE, reason="PostgreSQL drivers not available")
 
-from ddcDatabases.core.configs import PoolConfig, RetryConfig, SessionConfig
-from ddcDatabases.postgresql import PostgreSQL, PostgreSQLConnectionConfig, PostgreSQLSSLConfig
+from ddcDatabases.postgresql import (
+    PostgreSQL,
+    PostgreSQLConnectionConfig,
+    PostgreSQLPoolConfig,
+    PostgreSQLSessionConfig,
+    PostgreSQLSSLConfig,
+)
 
 
 class TestPostgreSQL:
@@ -82,7 +87,7 @@ class TestPostgreSQL:
             user="customuser",
             password="custompass",
             database="customdb",
-            session_config=SessionConfig(echo=True),
+            session_config=PostgreSQLSessionConfig(echo=True),
         )
 
         assert postgresql.connection_url["host"] == "customhost"
@@ -131,7 +136,7 @@ class TestPostgreSQL:
         mock_settings.async_driver = "postgresql+asyncpg"
         mock_get_settings.return_value = mock_settings
 
-        postgresql = PostgreSQL(session_config=SessionConfig(autoflush=False, expire_on_commit=False))
+        postgresql = PostgreSQL(session_config=PostgreSQLSessionConfig(autoflush=False, expire_on_commit=False))
 
         assert postgresql._session_config.autoflush == False
         assert postgresql._session_config.expire_on_commit == False
@@ -151,7 +156,7 @@ class TestPostgreSQL:
         mock_settings.async_driver = "postgresql+asyncpg"
         mock_get_settings.return_value = mock_settings
 
-        postgresql = PostgreSQL(session_config=SessionConfig(autocommit=True))
+        postgresql = PostgreSQL(session_config=PostgreSQLSessionConfig(autocommit=True))
 
         assert postgresql._session_config.autocommit == True
 
@@ -353,7 +358,7 @@ class TestPostgreSQL:
         mock_settings.async_driver = "postgresql+asyncpg"
         mock_get_settings.return_value = mock_settings
 
-        postgresql = PostgreSQL(session_config=SessionConfig(autocommit=True))
+        postgresql = PostgreSQL(session_config=PostgreSQLSessionConfig(autocommit=True))
 
         # Test autocommit logic by simulating the engine args creation
         from sqlalchemy import URL
@@ -398,7 +403,7 @@ class TestPostgreSQL:
         mock_settings.async_driver = "postgresql+asyncpg"
         mock_get_settings.return_value = mock_settings
 
-        postgresql = PostgreSQL(session_config=SessionConfig(autocommit=True))
+        postgresql = PostgreSQL(session_config=PostgreSQLSessionConfig(autocommit=True))
 
         # Test async autocommit logic
         from sqlalchemy import URL
@@ -440,7 +445,7 @@ class TestPostgreSQL:
         mock_settings.pool_size = 10
         mock_get_settings.return_value = mock_settings
 
-        postgresql = PostgreSQL(pool_config=PoolConfig(pool_size=15))
+        postgresql = PostgreSQL(pool_config=PostgreSQLPoolConfig(pool_size=15))
 
         assert postgresql._pool_config.pool_size == 15
 
@@ -459,7 +464,7 @@ class TestPostgreSQL:
         mock_settings.max_overflow = 20
         mock_get_settings.return_value = mock_settings
 
-        postgresql = PostgreSQL(pool_config=PoolConfig(max_overflow=30))
+        postgresql = PostgreSQL(pool_config=PostgreSQLPoolConfig(max_overflow=30))
 
         assert postgresql._pool_config.max_overflow == 30
 
@@ -511,8 +516,10 @@ class TestPostgreSQL:
             user="customuser",
             password="custompass",
             database="customdb",
-            session_config=SessionConfig(echo=False, autoflush=False, expire_on_commit=False, autocommit=True),
-            pool_config=PoolConfig(connection_timeout=60, pool_recycle=9000, pool_size=40, max_overflow=80),
+            session_config=PostgreSQLSessionConfig(
+                echo=False, autoflush=False, expire_on_commit=False, autocommit=True
+            ),
+            pool_config=PostgreSQLPoolConfig(connection_timeout=60, pool_recycle=9000, pool_size=40, max_overflow=80),
         )
 
         # Test get_connection_info method (line 153)
@@ -558,7 +565,7 @@ class TestPostgreSQL:
         mock_settings.async_driver = "postgresql+asyncpg"
         mock_get_settings.return_value = mock_settings
 
-        postgresql = PostgreSQL(session_config=SessionConfig(autocommit=True))
+        postgresql = PostgreSQL(session_config=PostgreSQLSessionConfig(autocommit=True))
 
         # Test that _get_engine context manager works and returns an engine
         with postgresql._get_engine() as engine:
@@ -602,7 +609,7 @@ class TestPostgreSQL:
         mock_settings.async_driver = "postgresql+asyncpg"
         mock_get_settings.return_value = mock_settings
 
-        postgresql = PostgreSQL(session_config=SessionConfig(autocommit=False))
+        postgresql = PostgreSQL(session_config=PostgreSQLSessionConfig(autocommit=False))
 
         # Test the _get_engine context manager without autocommit
         with postgresql._get_engine() as engine:
@@ -688,7 +695,8 @@ class TestPostgreSQL:
         mock_get_settings.return_value = mock_settings
 
         postgresql = PostgreSQL(
-            session_config=SessionConfig(autocommit=True), pool_config=PoolConfig(connection_timeout=60)
+            session_config=PostgreSQLSessionConfig(autocommit=True),
+            pool_config=PostgreSQLPoolConfig(connection_timeout=60),
         )
 
         # Test the _get_async_engine context manager
@@ -727,7 +735,7 @@ class TestPostgreSQL:
         mock_settings.async_driver = "postgresql+asyncpg"
         mock_get_settings.return_value = mock_settings
 
-        postgresql = PostgreSQL(session_config=SessionConfig(autocommit=False))
+        postgresql = PostgreSQL(session_config=PostgreSQLSessionConfig(autocommit=False))
 
         # Test the _get_async_engine context manager without autocommit
         async def test_async():
@@ -803,8 +811,8 @@ class TestPostgreSQL:
             host="myhost",
             port=5433,
             database="mydb",
-            pool_config=PoolConfig(pool_size=30),
-            session_config=SessionConfig(echo=True),
+            pool_config=PostgreSQLPoolConfig(pool_size=30),
+            session_config=PostgreSQLSessionConfig(echo=True),
         )
 
         repr_str = repr(postgresql)

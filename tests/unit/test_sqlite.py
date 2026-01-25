@@ -1,4 +1,4 @@
-from ddcDatabases.core.configs import SessionConfig
+from ddcDatabases.sqlite import SqliteSessionConfig
 import pytest
 import sqlalchemy as sa
 from sqlalchemy import Boolean
@@ -59,7 +59,7 @@ class TestSQLite:
         mock_get_settings.return_value = mock_settings
 
         sqlite = self.Sqlite(
-            filepath="custom.db", echo=True, session_config=SessionConfig(autoflush=False, expire_on_commit=False)
+            filepath="custom.db", echo=True, session_config=SqliteSessionConfig(autoflush=False, expire_on_commit=False)
         )
 
         assert sqlite.filepath == "custom.db"
@@ -172,7 +172,7 @@ class TestSQLite:
         sqlite = self.Sqlite(
             filepath="custom.db",
             echo=True,
-            session_config=SessionConfig(autoflush=False, expire_on_commit=False),
+            session_config=SqliteSessionConfig(autoflush=False, expire_on_commit=False),
             extra_engine_args=extra_args,
         )
 
@@ -287,7 +287,7 @@ class TestSQLiteRealOperations:
 
         # Test with custom settings
         sqlite = self.Sqlite(
-            filepath=db_path, echo=True, session_config=SessionConfig(autoflush=True, expire_on_commit=True)
+            filepath=db_path, echo=True, session_config=SqliteSessionConfig(autoflush=True, expire_on_commit=True)
         )
 
         assert sqlite.filepath == db_path
