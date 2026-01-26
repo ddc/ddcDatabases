@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "ddcDatabases"
-version = "3.0.5"
+version = "3.0.6"
 description = "Simplified database ORM connections with support for multiple database engines"
 license = {text = "MIT"}
 readme = "README.md"
@@ -36,9 +36,8 @@ classifiers = [
 ]
 requires-python = ">=3.12"
 dependencies = [
-    "greenlet>=3.3.1",
     "pydantic-settings>=2.12.0",
-    "sqlalchemy>=2.0.46",
+    "sqlalchemy[asyncio]>=2.0.46"
 ]
 
 [project.urls]

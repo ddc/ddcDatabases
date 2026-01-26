@@ -24,10 +24,10 @@
     <a href="https://actions-badge.atrox.dev/ddc/ddcDatabases/goto?ref=main"><img src="https://img.shields.io/endpoint.svg?url=https%3A//actions-badge.atrox.dev/ddc/ddcDatabases/badge?ref=main&label=build&logo=none&style=plastic" alt="Build Status"/></a>
 </p>
 
-<p align="center">A Python library for database connections and ORM queries with support for multiple database engines including SQLite, PostgreSQL, MySQL, MSSQL, Oracle, and MongoDB.</p>
+<p align="center">A Python library for database connections and ORM queries with support for multiple database engines including SQLite, PostgreSQL, MySQL, MSSQL, Oracle, and MongoDB</p>
 
 
-## Table of Contents
+# Table of Contents
 
 - [Features](#features)
   - [Default Session Settings](#default-session-settings)
@@ -39,7 +39,7 @@
   - [Database-Specific Installations](#database-specific-installations)
 - [Database Classes](#database-classes)
   - [SQLite](#sqlite)
-  - [MSSQL (SQL Server)](#mssql-sql-server)
+  - [MSSQL (SQL Server)](#mssql-microsoft-sql-server)
   - [PostgreSQL](#postgresql)
   - [MySQL/MariaDB](#mysqlmariadb)
   - [Oracle](#oracle)
@@ -50,22 +50,22 @@
 - [Logging](#logging)
 - [Development](#development)
   - [Building DEV Environment and Running Tests](#building-dev-environment-and-running-tests)
-  - [Building the wheel from Source](#building-the-wheel-from-source)
+  - [Building the wheel from Source](#building-wheel-from-source)
 - [License](#license)
 - [Support](#support)
 
 
-## Features
+# Features
 
-- **Multiple Database Support**: SQLite, PostgreSQL, MySQL/MariaDB, MSSQL, Oracle, and MongoDB
-- **Sync and Async Support**: Both synchronous and asynchronous operations
-- **Environment Configuration**: Optional parameters with `.env` file fallback
-- **SQLAlchemy Integration**: Built on top of SQLAlchemy ORM
-- **Connection Pooling**: Configurable connection pooling for better performance
-- **Retry Logic**: Automatic retry with exponential backoff for connection errors
-- **Persistent Connections**: Singleton connection managers with idle timeout and auto-reconnection
+- 🗄️ **Multiple Database Support**: SQLite, PostgreSQL, MySQL/MariaDB, MSSQL, Oracle, and MongoDB
+- ⚡ **Sync and Async Support**: Both synchronous and asynchronous operations
+- 🔧 **Environment Configuration**: Optional parameters with `.env` file fallback
+- 🔗 **SQLAlchemy Integration**: Built on top of SQLAlchemy ORM
+- 🏊 **Connection Pooling**: Configurable connection pooling for better performance
+- 🔁 **Retry Logic**: Automatic retry with exponential backoff for connection errors
+- 🔌 **Persistent Connections**: Singleton connection managers with idle timeout and auto-reconnection
 
-### Default Session Settings
+## Default Session Settings
 
 - `autoflush = False`
 - `expire_on_commit = False` 
@@ -74,7 +74,7 @@
 **Note:** All constructor parameters are optional and fall back to [.env](./ddcDatabases/.env.example) file variables.
 
 
-### Configuration Classes
+## Configuration Classes
 
 Database classes use structured configuration dataclasses instead of flat keyword arguments:
 
@@ -102,7 +102,7 @@ Database classes use structured configuration dataclasses instead of flat keywor
 | `MongoDBQueryConfig` | Query settings | `query`, `sort_column`, `sort_order`, `batch_size`, `limit` |
 
 
-### Retry Logic
+## Retry Logic
 
 Retry with exponential backoff is enabled by default at two levels:
 
@@ -154,7 +154,7 @@ with PostgreSQL() as session:
 | SQLite     | `False`        | `1`           |
 
 
-### Persistent Connections
+## Persistent Connections
 
 For long-running applications, use persistent connections with automatic reconnection and idle timeout:
 
@@ -207,16 +207,16 @@ close_all_persistent_connections()
 - `MongoDBPersistent` - MongoDB (sync only)
 
 
-## Installation
+# Installation
 
-### Basic Installation (SQLite only)
+## Basic Installation (SQLite only)
 ```shell
 pip install ddcDatabases
 ```
 
 **Note:** The basic installation includes only SQlite. Database-specific drivers are optional extras that you can install as needed.
 
-### Database-Specific Installations
+## Database-Specific Installations
 
 Install only the database drivers you need:
 
@@ -259,9 +259,9 @@ pip install "ddcDatabases[mysql,pgsql,mongodb]"
 - All extras support both synchronous and asynchronous operations where applicable
 
 
-## Database Classes
+# Database Classes
 
-### SQLite
+## SQLite
 
 **Example:**
 
@@ -279,7 +279,7 @@ with Sqlite(filepath="data.db") as session:
 ```
 
 
-### MSSQL (SQL Server)
+## MSSQL (Microsoft SQL Server)
 
 **Synchronous Example:**
 
@@ -339,7 +339,7 @@ asyncio.run(main())
 ```
 
 
-### PostgreSQL
+## PostgreSQL
 
 **Synchronous Example:**
 
@@ -401,7 +401,7 @@ asyncio.run(main())
 ```
 
 
-### MySQL/MariaDB
+## MySQL/MariaDB
 
 The MySQL class is fully compatible with both MySQL and MariaDB databases.
 
@@ -462,7 +462,7 @@ asyncio.run(main())
 ```
 
 
-### Oracle
+## Oracle
 
 **Example:**
 
@@ -505,7 +505,7 @@ with Oracle(
 
 
 
-### MongoDB
+## MongoDB
 
 **Example:**
 
@@ -540,7 +540,7 @@ with MongoDB(
 
 
 
-## Database Engines
+# Database Engines
 
 Access the underlying SQLAlchemy engine for advanced operations:
 
@@ -569,11 +569,11 @@ asyncio.run(main())
 ```
 
 
-## Database Utilities
+# Database Utilities
 
 The `DBUtils` and `DBUtilsAsync` classes provide convenient methods for common database operations with built-in retry support:
 
-### Available Methods
+## Available Methods
 
 ```python
 from ddcDatabases import DBUtils, DBUtilsAsync
@@ -601,7 +601,7 @@ results = await db_utils_async.fetchall(stmt)
 ```
 
 
-## Logging
+# Logging
 
 All database classes accept an optional `logger` parameter. By default, logs are silenced (NullHandler).
 
@@ -629,12 +629,14 @@ logging.getLogger("ddcDatabases").addHandler(logging.StreamHandler())
 ```
 
 
-## Development
+# Development
+
 Must have [UV](https://uv.run/docs/getting-started/installation), 
 [Black](https://black.readthedocs.io/en/stable/getting_started.html), and 
 [Ruff](https://docs.astral.sh/ruff/installation/) installed.
 
-### Building DEV Environment and Running Tests
+## Building DEV Environment and Running Tests
+
 ```shell
 uv venv
 uv sync --all-extras
@@ -643,22 +645,20 @@ poe test
 poe test-integration
 ```
 
-### Building the wheel from Source
+## Building wheel from Source
+
 ```shell
 poe build
 ```
 
 
+# License
 
-
-## License
 Released under the [MIT License](LICENSE)
 
 
+# Support
 
-
-
-## Support
 If you find this project helpful, consider supporting development:
 
 - [GitHub Sponsor](https://github.com/sponsors/ddc)
