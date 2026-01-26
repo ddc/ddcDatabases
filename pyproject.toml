@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "ddcDatabases"
 version = "3.0.5"
-description = "Simplified Database ORM Connections"
+description = "Simplified database ORM connections with support for multiple database engines"
 license = {text = "MIT"}
 readme = "README.md"
 authors = [{name = "Daniel Costa", email = "danieldcsta@gmail.com"}]
@@ -13,13 +13,13 @@ maintainers = [{name = "Daniel Costa"}]
 keywords = [
     "python3", "python-3", "python",
     "databases", "database", "ddcDatabases",
-    "mongodb", "mongodb-database",
     "mssql", "mssql-database",
     "mysql", "mysql-database",
-    "mariadb", "mariadb-database",
     "oracle", "oracle-database",
-    "pgsql", "postgres", "postgresql", "postgresql-database",
+    "mariadb", "mariadb-database",
+    "mongodb", "mongodb-database",
     "sqlite", "sqlite3", "sqlite3-database",
+    "pgsql", "postgres", "postgresql", "postgresql-database",
 ]
 classifiers = [
     "Topic :: Software Development :: Libraries :: Python Modules",
