@@ -1,6 +1,20 @@
 from dataclasses import dataclass
 
 
+def _validate_retry_config(
+    max_retries: int | None,
+    initial_retry_delay: float | None,
+    max_retry_delay: float | None,
+) -> None:
+    """Validation for retry configs to avoid super() issues with frozen slotted dataclasses"""
+    if max_retries is not None and max_retries < 0:
+        raise ValueError("max_retries must be non-negative")
+    if initial_retry_delay is not None and initial_retry_delay < 0:
+        raise ValueError("initial_retry_delay must be non-negative")
+    if max_retry_delay is not None and initial_retry_delay is not None and max_retry_delay < initial_retry_delay:
+        raise ValueError("max_retry_delay must be >= initial_retry_delay")
+
+
 @dataclass(frozen=True, slots=True)
 class BaseConnectionConfig:
     host: str | None = None
@@ -55,16 +69,7 @@ class BaseRetryConfig:
     max_retry_delay: float | None = None
 
     def __post_init__(self) -> None:
-        if self.max_retries is not None and self.max_retries < 0:
-            raise ValueError("max_retries must be non-negative")
-        if self.initial_retry_delay is not None and self.initial_retry_delay < 0:
-            raise ValueError("initial_retry_delay must be non-negative")
-        if (
-            self.max_retry_delay is not None
-            and self.initial_retry_delay is not None
-            and self.max_retry_delay < self.initial_retry_delay
-        ):
-            raise ValueError("max_retry_delay must be >= initial_retry_delay")
+        _validate_retry_config(self.max_retries, self.initial_retry_delay, self.max_retry_delay)
 
 
 @dataclass(frozen=True, slots=True)
@@ -72,6 +77,6 @@ class BaseOperationRetryConfig(BaseRetryConfig):
     jitter: float | None = None
 
     def __post_init__(self) -> None:
-        super().__post_init__()
+        _validate_retry_config(self.max_retries, self.initial_retry_delay, self.max_retry_delay)
         if self.jitter is not None and not (0 <= self.jitter <= 1):
             raise ValueError("jitter must be between 0 and 1")

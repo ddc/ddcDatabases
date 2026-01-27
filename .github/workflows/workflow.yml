@@ -35,19 +35,12 @@ jobs:
         if: startsWith(matrix.os, 'macos')
         run: brew install mysql-client pkg-config
 
-      - name: Install MySQL client libraries (Windows)
-        if: matrix.os == 'windows-latest'
-        run: choco install mysql -y
-        shell: powershell
-
       - name: Install dependencies
         run: |
           uv venv
           if [[ '${{ matrix.os }}' == 'windows-latest' ]]; then
-            export PATH="/c/tools/mysql/current/bin:$PATH"
-            export MYSQLCLIENT_CFLAGS="-I/c/tools/mysql/current/include"
-            export MYSQLCLIENT_LDFLAGS="-L/c/tools/mysql/current/lib"
-            uv pip install -e .[mongodb,mssql,mysql,oracle,test]
+            # Skip MySQL on Windows - mysqlclient requires C compilation with MySQL headers
+            uv pip install -e .[mongodb,mssql,oracle,pgsql,test]
           elif [[ '${{ matrix.os }}' == macos* ]]; then
             export PKG_CONFIG_PATH="$(brew --prefix mysql-client)/lib/pkgconfig"
             uv pip install -e .[all,test]
