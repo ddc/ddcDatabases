@@ -659,20 +659,31 @@ class TestBaseConnectionContextManagers:
             conn_retry_config=BaseRetryConfig(enable_retry=False),
         )
 
-        # Test the context manager functionality
-        # Note: Our concrete implementation uses real engines, so we'll test the actual behavior
-        try:
+        mock_session = MagicMock()
+        mock_engine = MagicMock()
+
+        with (
+            patch.object(conn, '_get_engine') as mock_get_engine,
+            patch('ddcDatabases.core.base.sessionmaker') as mock_sessionmaker,
+            patch.object(conn, '_test_connection_sync') as mock_test_conn,
+        ):
+            mock_get_engine.return_value.__enter__.return_value = mock_engine
+            mock_get_engine.return_value.__exit__.return_value = None
+
+            mock_session_maker = MagicMock()
+            mock_session_maker.begin.return_value.__enter__.return_value = mock_session
+            mock_session_maker.begin.return_value.__exit__.return_value = None
+            mock_sessionmaker.return_value = mock_session_maker
+
             with conn as session:
-                assert session is not None
+                assert session is mock_session
                 assert conn.is_connected == True
-                # Session should be a real SQLAlchemy session
-                assert hasattr(session, 'execute')
+                mock_test_conn.assert_called_once_with(mock_session)
 
             # After exiting context, connection should be cleaned up
             assert conn.is_connected == False
-        except Exception:
-            # It's ok if the connection fails (no real database), we're testing the structure
-            pass
+            mock_session.close.assert_called_once()
+            mock_engine.dispose.assert_called_once()
 
     @pytest.mark.asyncio
     async def test_async_context_manager(self):
