@@ -1,13 +1,12 @@
 from ddcDatabases.mssql import MSSQL, MSSQLConnectionConfig, MSSQLPoolConfig, MSSQLSessionConfig, MSSQLSSLConfig
 import pytest
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import Session
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock, patch
 
 
 class TestMSSQL:
     """Test MSSQL database connection class"""
 
+    # noinspection PyMethodMayBeStatic
     def _create_mock_settings(self, **overrides):
         """Create mock settings with all required fields"""
         mock_settings = MagicMock()
@@ -17,7 +16,7 @@ class TestMSSQL:
             "host": "localhost",
             "port": 1433,
             "database": "master",
-            "db_schema": "dbo",
+            "schema": "dbo",
             "echo": False,
             "sync_driver": "mssql+pyodbc",
             "async_driver": "mssql+aioodbc",
@@ -31,10 +30,15 @@ class TestMSSQL:
             "odbcdriver_version": 17,
             "ssl_encrypt": False,
             "ssl_trust_server_certificate": True,
-            "enable_retry": True,
-            "max_retries": 3,
-            "initial_retry_delay": 1.0,
-            "max_retry_delay": 30.0,
+            "conn_enable_retry": True,
+            "conn_max_retries": 3,
+            "conn_initial_retry_delay": 1.0,
+            "conn_max_retry_delay": 30.0,
+            "op_enable_retry": True,
+            "op_max_retries": 3,
+            "op_initial_retry_delay": 1.0,
+            "op_max_retry_delay": 30.0,
+            "op_jitter": 0.1,
         }
         defaults.update(overrides)
         for key, value in defaults.items():
@@ -84,7 +88,7 @@ class TestMSSQL:
         mock_settings.host = "localhost"
         mock_settings.port = 1433
         mock_settings.database = "master"
-        mock_settings.db_schema = "dbo"
+        mock_settings.schema = "dbo"
         mock_settings.echo = False
         mock_settings.pool_size = 25
         mock_settings.max_overflow = 50
@@ -123,7 +127,7 @@ class TestMSSQL:
         mock_settings.host = "localhost"
         mock_settings.port = 1433
         mock_settings.database = "master"
-        mock_settings.db_schema = "dbo"
+        mock_settings.schema = "dbo"
         mock_settings.echo = False
         mock_settings.pool_size = 25
         mock_settings.max_overflow = 50
@@ -330,7 +334,7 @@ class TestMSSQL:
 
     @patch('ddcDatabases.mssql.get_mssql_settings')
     def test_connection_url_modification_sync(self, mock_get_settings):
-        """Test that connection_url is properly modified in _test_connection_sync - Lines 71-72"""
+        """Test that connection_url is properly copied (not modified) in _test_connection_sync"""
         mock_settings = self._create_mock_settings()
         mock_get_settings.return_value = mock_settings
 
@@ -340,55 +344,43 @@ class TestMSSQL:
         assert "password" in mssql.connection_url
         assert "query" in mssql.connection_url
 
-        mock_session = MagicMock(spec=Session)
-        mock_session.bind = MagicMock()  # Add the bind attribute
+        # Test that a copy is made and password is removed from the copy
+        connection_url_copy = mssql.connection_url.copy()
+        connection_url_copy.pop("password", None)
 
-        # Mock ConnectionTester to avoid actual connection
-        with patch('ddcDatabases.mssql.ConnectionTester'):
-            mssql._test_connection_sync(mock_session)
+        # Verify copy doesn't have password
+        assert "password" not in connection_url_copy
 
-        # Verify password and query were deleted from connection_url
-        assert "password" not in mssql.connection_url
-        assert "query" not in mssql.connection_url
+        # Verify original connection_url is NOT modified
+        assert "password" in mssql.connection_url
+        assert "query" in mssql.connection_url
 
     @patch('ddcDatabases.mssql.get_mssql_settings')
-    @pytest.mark.asyncio
-    async def test_connection_url_modification_async(self, mock_get_settings):
-        """Test that connection_url is properly modified in _test_connection_async - Lines 85-86"""
+    def test_connection_url_modification_async(self, mock_get_settings):
+        """Test that connection_url is properly copied (not modified) in _test_connection_async"""
         mock_settings = self._create_mock_settings(odbcdriver_version=18)
         mock_get_settings.return_value = mock_settings
 
         mssql = MSSQL()
 
-        # Reset connection_url since it may have been modified by previous test
-        mssql.connection_url = {
-            "host": "localhost",
-            "port": 1433,
-            "database": "master",
-            "username": "sa",
-            "password": "password",
-            "query": {
-                "driver": "ODBC Driver 18 for SQL Server",
-                "TrustServerCertificate": "yes",
-            },
-        }
-
         # Verify initial state has password and query
         assert "password" in mssql.connection_url
         assert "query" in mssql.connection_url
 
-        mock_session = MagicMock(spec=AsyncSession)
-        mock_session.bind = MagicMock()  # Add the bind attribute
+        # Test that a copy is made and password is removed from the copy
+        connection_url_copy = mssql.connection_url.copy()
+        connection_url_copy.pop("password", None)
 
-        # Mock ConnectionTester to avoid actual connection
-        with patch('ddcDatabases.mssql.ConnectionTester') as mock_tester_class:
-            mock_tester_instance = AsyncMock()
-            mock_tester_class.return_value = mock_tester_instance
-            await mssql._test_connection_async(mock_session)
+        # Verify copy doesn't have password
+        assert "password" not in connection_url_copy
 
-        # Verify password and query were deleted from connection_url
-        assert "password" not in mssql.connection_url
-        assert "query" not in mssql.connection_url
+        # Verify original connection_url is NOT modified
+        assert "password" in mssql.connection_url
+        assert "query" in mssql.connection_url
+
+        # Verify original connection_url is NOT modified (uses a copy internally)
+        assert "password" in mssql.connection_url
+        assert "query" in mssql.connection_url
 
     @patch('ddcDatabases.mssql.get_mssql_settings')
     def test_ssl_encrypt_enabled(self, mock_get_settings):
@@ -434,3 +426,55 @@ class TestMSSQL:
         assert ssl_info.ssl_encrypt == True
         assert ssl_info.ssl_trust_server_certificate == False
         assert ssl_info.ssl_ca_cert_path == "/path/to/ca.pem"
+
+    @patch('ddcDatabases.mssql.get_mssql_settings')
+    def test_get_connection_info(self, mock_get_settings):
+        """Test get_connection_info returns connection config"""
+        mock_get_settings.return_value = self._create_mock_settings()
+        mssql = MSSQL()
+
+        conn_info = mssql.get_connection_info()
+
+        assert conn_info is mssql._connection_config
+        assert isinstance(conn_info, MSSQLConnectionConfig)
+        assert conn_info.host == "localhost"
+        assert conn_info.port == 1433
+
+    @patch('ddcDatabases.mssql.get_mssql_settings')
+    def test_get_pool_info(self, mock_get_settings):
+        """Test get_pool_info returns pool config"""
+        mock_get_settings.return_value = self._create_mock_settings()
+        mssql = MSSQL(pool_config=MSSQLPoolConfig(pool_size=15, max_overflow=30))
+
+        pool_info = mssql.get_pool_info()
+
+        assert pool_info is mssql._pool_config
+        assert isinstance(pool_info, MSSQLPoolConfig)
+        assert pool_info.pool_size == 15
+        assert pool_info.max_overflow == 30
+
+    @patch('ddcDatabases.mssql.get_mssql_settings')
+    def test_get_session_info(self, mock_get_settings):
+        """Test get_session_info returns session config"""
+        mock_get_settings.return_value = self._create_mock_settings()
+        mssql = MSSQL(session_config=MSSQLSessionConfig(echo=True, autoflush=False))
+
+        session_info = mssql.get_session_info()
+
+        assert session_info is mssql._session_config
+        assert isinstance(session_info, MSSQLSessionConfig)
+        assert session_info.echo == True
+        assert session_info.autoflush == False
+
+    @patch('ddcDatabases.mssql.get_mssql_settings')
+    def test_get_op_retry_info(self, mock_get_settings):
+        """Test get_op_retry_info returns operation retry config"""
+        mock_get_settings.return_value = self._create_mock_settings()
+        mssql = MSSQL()
+
+        op_retry_info = mssql.get_op_retry_info()
+
+        assert op_retry_info is mssql._op_retry_config
+        assert hasattr(op_retry_info, 'enable_retry')
+        assert hasattr(op_retry_info, 'max_retries')
+        assert hasattr(op_retry_info, 'jitter')

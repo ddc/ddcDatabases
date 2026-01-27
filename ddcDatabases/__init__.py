@@ -1,18 +1,24 @@
 from ddcDatabases.core.operations import DBUtils, DBUtilsAsync
 from ddcDatabases.core.persistent import PersistentConnectionConfig, close_all_persistent_connections
-from ddcDatabases.sqlite import Sqlite, SqliteRetryConfig, SqliteSessionConfig
+from ddcDatabases.sqlite import (
+    Sqlite,
+    SqliteConnRetryConfig,
+    SqliteOpRetryConfig,
+    SqliteSessionConfig,
+)
 from importlib.metadata import version
 import logging
 from typing import Literal, NamedTuple
 
 __all__ = [
-    "close_all_persistent_connections",
     "DBUtils",
     "DBUtilsAsync",
     "PersistentConnectionConfig",
     "Sqlite",
-    "SqliteRetryConfig",
+    "SqliteConnRetryConfig",
+    "SqliteOpRetryConfig",
     "SqliteSessionConfig",
+    "close_all_persistent_connections",
 ]
 
 # Conditional imports based on available dependencies
@@ -21,17 +27,19 @@ try:
     from .mongodb import (
         MongoDB,
         MongoDBConnectionConfig,
+        MongoDBConnRetryConfig,
+        MongoDBOpRetryConfig,
         MongoDBQueryConfig,
-        MongoDBRetryConfig,
         MongoDBTLSConfig,
     )
 
     __all__ += [
         "MongoDB",
         "MongoDBConnectionConfig",
+        "MongoDBConnRetryConfig",
+        "MongoDBOpRetryConfig",
         "MongoDBPersistent",
         "MongoDBQueryConfig",
-        "MongoDBRetryConfig",
         "MongoDBTLSConfig",
     ]
 except ImportError:
@@ -42,8 +50,9 @@ try:
     from .mssql import (
         MSSQL,
         MSSQLConnectionConfig,
+        MSSQLConnRetryConfig,
+        MSSQLOpRetryConfig,
         MSSQLPoolConfig,
-        MSSQLRetryConfig,
         MSSQLSessionConfig,
         MSSQLSSLConfig,
     )
@@ -51,9 +60,10 @@ try:
     __all__ += [
         "MSSQL",
         "MSSQLConnectionConfig",
+        "MSSQLConnRetryConfig",
+        "MSSQLOpRetryConfig",
         "MSSQLPersistent",
         "MSSQLPoolConfig",
-        "MSSQLRetryConfig",
         "MSSQLSessionConfig",
         "MSSQLSSLConfig",
     ]
@@ -65,20 +75,41 @@ try:
     from .mysql import (
         MySQL,
         MySQLConnectionConfig,
+        MySQLConnRetryConfig,
+        MySQLOpRetryConfig,
         MySQLPoolConfig,
-        MySQLRetryConfig,
         MySQLSessionConfig,
         MySQLSSLConfig,
     )
 
+    # MariaDB aliases (MariaDB is fully compatible with MySQL driver)
+    MariaDB = MySQL
+    MariaDBConnectionConfig = MySQLConnectionConfig
+    MariaDBConnRetryConfig = MySQLConnRetryConfig
+    MariaDBOpRetryConfig = MySQLOpRetryConfig
+    MariaDBPersistent = MySQLPersistent
+    MariaDBPoolConfig = MySQLPoolConfig
+    MariaDBSessionConfig = MySQLSessionConfig
+    MariaDBSSLConfig = MySQLSSLConfig
+
     __all__ += [
         "MySQL",
         "MySQLConnectionConfig",
+        "MySQLConnRetryConfig",
+        "MySQLOpRetryConfig",
         "MySQLPersistent",
         "MySQLPoolConfig",
-        "MySQLRetryConfig",
         "MySQLSessionConfig",
         "MySQLSSLConfig",
+        # MariaDB aliases
+        "MariaDB",
+        "MariaDBConnectionConfig",
+        "MariaDBConnRetryConfig",
+        "MariaDBOpRetryConfig",
+        "MariaDBPersistent",
+        "MariaDBPoolConfig",
+        "MariaDBSessionConfig",
+        "MariaDBSSLConfig",
     ]
 except ImportError:
     pass
@@ -88,8 +119,9 @@ try:
     from .oracle import (
         Oracle,
         OracleConnectionConfig,
+        OracleConnRetryConfig,
+        OracleOpRetryConfig,
         OraclePoolConfig,
-        OracleRetryConfig,
         OracleSessionConfig,
         OracleSSLConfig,
     )
@@ -97,9 +129,10 @@ try:
     __all__ += [
         "Oracle",
         "OracleConnectionConfig",
+        "OracleConnRetryConfig",
+        "OracleOpRetryConfig",
         "OraclePersistent",
         "OraclePoolConfig",
-        "OracleRetryConfig",
         "OracleSessionConfig",
         "OracleSSLConfig",
     ]
@@ -111,8 +144,9 @@ try:
     from .postgresql import (
         PostgreSQL,
         PostgreSQLConnectionConfig,
+        PostgreSQLConnRetryConfig,
+        PostgreSQLOpRetryConfig,
         PostgreSQLPoolConfig,
-        PostgreSQLRetryConfig,
         PostgreSQLSessionConfig,
         PostgreSQLSSLConfig,
     )
@@ -120,9 +154,10 @@ try:
     __all__ += [
         "PostgreSQL",
         "PostgreSQLConnectionConfig",
+        "PostgreSQLConnRetryConfig",
+        "PostgreSQLOpRetryConfig",
         "PostgreSQLPersistent",
         "PostgreSQLPoolConfig",
-        "PostgreSQLRetryConfig",
         "PostgreSQLSessionConfig",
         "PostgreSQLSSLConfig",
     ]

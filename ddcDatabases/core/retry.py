@@ -1,7 +1,8 @@
 from __future__ import annotations
 
+from .configs import BaseRetryConfig
+from .constants import CONNECTION_ERROR_KEYWORDS
 import asyncio
-from dataclasses import dataclass
 import logging
 import random
 import time
@@ -10,64 +11,8 @@ from typing import Awaitable, Callable, TypeVar
 # Type variable for generic return types
 T = TypeVar('T')
 
-# Logger for retry operations
 _logger = logging.getLogger(__name__)
 _logger.addHandler(logging.NullHandler())
-
-# Keywords that indicate connection-related errors
-CONNECTION_ERROR_KEYWORDS: frozenset[str] = frozenset(
-    {
-        "connection",
-        "connect",
-        "timeout",
-        "timed out",
-        "refused",
-        "reset",
-        "broken pipe",
-        "network",
-        "socket",
-        "server closed",
-        "lost connection",
-        "server has gone away",
-        "communication link",
-        "operational error",
-        "connection refused",
-        "connection reset",
-        "connection timed out",
-        "no route to host",
-        "host unreachable",
-        "name or service not known",
-        "temporary failure",
-        "eof detected",
-        "ssl error",
-        "handshake failure",
-        "authentication failed",
-        "too many connections",
-        "connection pool",
-        "pool exhausted",
-    }
-)
-
-
-@dataclass(slots=True, frozen=True)
-class RetryPolicy:
-    """Configuration for retry behavior on database operations."""
-
-    enable_retry: bool = True
-    max_retries: int = 3
-    initial_delay: float = 1.0
-    max_delay: float = 30.0
-    jitter: float = 0.1
-
-    def __post_init__(self) -> None:
-        if self.max_retries < 0:
-            raise ValueError("max_retries must be non-negative")
-        if self.initial_delay < 0:
-            raise ValueError("initial_delay must be non-negative")
-        if self.max_delay < self.initial_delay:
-            raise ValueError("max_delay must be >= initial_delay")
-        if not 0 <= self.jitter <= 1:
-            raise ValueError("jitter must be between 0 and 1")
 
 
 def _is_connection_error(exc: Exception) -> bool:
@@ -91,7 +36,7 @@ def _is_connection_error(exc: Exception) -> bool:
     return any(keyword in error_str for keyword in CONNECTION_ERROR_KEYWORDS)
 
 
-def _calculate_retry_delay(attempt: int, config: RetryPolicy) -> float:
+def _calculate_retry_delay(attempt: int, config: BaseRetryConfig) -> float:
     """
     Calculate the delay before the next retry using exponential backoff with jitter.
 
@@ -102,14 +47,15 @@ def _calculate_retry_delay(attempt: int, config: RetryPolicy) -> float:
     Returns:
         Delay in seconds
     """
-    # Exponential backoff: delay = initial_delay * 2^attempt
-    base_delay = config.initial_delay * (2**attempt)
+    # Exponential backoff: delay = initial_retry_delay * 2^attempt
+    base_delay = config.initial_retry_delay * (2**attempt)
 
-    # Cap at max_delay
-    capped_delay = min(base_delay, config.max_delay)
+    # Cap at max_retry_delay
+    capped_delay = min(base_delay, config.max_retry_delay)
 
     # Add jitter (randomize +/- jitter%)
-    jitter_range = capped_delay * config.jitter
+    jitter = getattr(config, 'jitter', 0.0) or 0.0
+    jitter_range = capped_delay * jitter
     jitter_offset = random.uniform(-jitter_range, jitter_range)
 
     return max(0, capped_delay + jitter_offset)
@@ -118,7 +64,7 @@ def _calculate_retry_delay(attempt: int, config: RetryPolicy) -> float:
 def _handle_retry_exception(
     e: Exception,
     attempt: int,
-    config: RetryPolicy,
+    config: BaseRetryConfig,
     operation_name: str,
     logger: logging.Logger | None = None,
 ) -> float:
@@ -159,7 +105,7 @@ def _handle_retry_exception(
 
 def retry_operation(
     operation: Callable[[], T],
-    config: RetryPolicy,
+    config: BaseRetryConfig,
     operation_name: str = "operation",
     logger: logging.Logger | None = None,
 ) -> T:
@@ -199,7 +145,7 @@ def retry_operation(
 
 async def retry_operation_async(
     operation: Callable[[], Awaitable[T]],
-    config: RetryPolicy,
+    config: BaseRetryConfig,
     operation_name: str = "operation",
     logger: logging.Logger | None = None,
 ) -> T:

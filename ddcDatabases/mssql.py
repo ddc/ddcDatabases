@@ -1,6 +1,11 @@
 from .core.base import BaseConnection, ConnectionTester
-from .core.configs import BaseConnectionConfig, BasePoolConfig, BaseRetryConfig, BaseSessionConfig
-from .core.retry import RetryPolicy
+from .core.configs import (
+    BaseConnectionConfig,
+    BaseOperationRetryConfig,
+    BasePoolConfig,
+    BaseRetryConfig,
+    BaseSessionConfig,
+)
 from .core.settings import get_mssql_settings
 from contextlib import asynccontextmanager, contextmanager
 from dataclasses import dataclass
@@ -39,7 +44,12 @@ class MSSQLSessionConfig(BaseSessionConfig):
 
 
 @dataclass(frozen=True, slots=True)
-class MSSQLRetryConfig(BaseRetryConfig):
+class MSSQLConnRetryConfig(BaseRetryConfig):
+    pass
+
+
+@dataclass(frozen=True, slots=True)
+class MSSQLOpRetryConfig(BaseOperationRetryConfig):
     pass
 
 
@@ -56,10 +66,10 @@ class MSSQL(BaseConnection):
         password: str | None = None,
         database: str | None = None,
         schema: str | None = None,
-        odbcdriver_version: int | None = None,
         pool_config: MSSQLPoolConfig | None = None,
         session_config: MSSQLSessionConfig | None = None,
-        retry_config: MSSQLRetryConfig | None = None,
+        conn_retry_config: MSSQLConnRetryConfig | None = None,
+        op_retry_config: MSSQLOpRetryConfig | None = None,
         ssl_config: MSSQLSSLConfig | None = None,
         extra_engine_args: dict | None = None,
         logger: logging.Logger | None = None,
@@ -72,8 +82,8 @@ class MSSQL(BaseConnection):
             user=user or _settings.user,
             password=password or _settings.password,
             database=database or _settings.database,
-            schema=schema or _settings.db_schema,
-            odbcdriver_version=int(odbcdriver_version or _settings.odbcdriver_version),
+            schema=schema or _settings.schema,
+            odbcdriver_version=int(_settings.odbcdriver_version),
         )
 
         _pc = pool_config or MSSQLPoolConfig()
@@ -136,22 +146,29 @@ class MSSQL(BaseConnection):
             **self.extra_engine_args,
         }
 
-        # Create retry configuration
-        _rc = retry_config or MSSQLRetryConfig()
-        self._retry_config = MSSQLRetryConfig(
-            enable_retry=_rc.enable_retry if _rc.enable_retry is not None else _settings.enable_retry,
-            max_retries=_rc.max_retries if _rc.max_retries is not None else _settings.max_retries,
+        # Create connection retry configuration
+        _crc = conn_retry_config or MSSQLConnRetryConfig()
+        self._conn_retry_config = MSSQLConnRetryConfig(
+            enable_retry=_crc.enable_retry if _crc.enable_retry is not None else _settings.conn_enable_retry,
+            max_retries=_crc.max_retries if _crc.max_retries is not None else _settings.conn_max_retries,
             initial_retry_delay=(
-                _rc.initial_retry_delay if _rc.initial_retry_delay is not None else _settings.initial_retry_delay
+                _crc.initial_retry_delay if _crc.initial_retry_delay is not None else _settings.conn_initial_retry_delay
             ),
-            max_retry_delay=_rc.max_retry_delay if _rc.max_retry_delay is not None else _settings.max_retry_delay,
+            max_retry_delay=(
+                _crc.max_retry_delay if _crc.max_retry_delay is not None else _settings.conn_max_retry_delay
+            ),
         )
 
-        _retry_policy = RetryPolicy(
-            enable_retry=self._retry_config.enable_retry,
-            max_retries=self._retry_config.max_retries,
-            initial_delay=self._retry_config.initial_retry_delay,
-            max_delay=self._retry_config.max_retry_delay,
+        # Create operation retry configuration
+        _orc = op_retry_config or MSSQLOpRetryConfig()
+        self._op_retry_config = MSSQLOpRetryConfig(
+            enable_retry=_orc.enable_retry if _orc.enable_retry is not None else _settings.op_enable_retry,
+            max_retries=_orc.max_retries if _orc.max_retries is not None else _settings.op_max_retries,
+            initial_retry_delay=(
+                _orc.initial_retry_delay if _orc.initial_retry_delay is not None else _settings.op_initial_retry_delay
+            ),
+            max_retry_delay=_orc.max_retry_delay if _orc.max_retry_delay is not None else _settings.op_max_retry_delay,
+            jitter=_orc.jitter if _orc.jitter is not None else _settings.op_jitter,
         )
 
         self.logger = logger if logger is not None else _logger
@@ -163,7 +180,8 @@ class MSSQL(BaseConnection):
             expire_on_commit=self._session_config.expire_on_commit,
             sync_driver=self.sync_driver,
             async_driver=self.async_driver,
-            retry_config=_retry_policy,
+            conn_retry_config=self._conn_retry_config,
+            op_retry_config=self._op_retry_config,
             logger=self.logger,
         )
 
@@ -179,7 +197,6 @@ class MSSQL(BaseConnection):
             f"host={self._connection_config.host!r}, "
             f"port={self._connection_config.port}, "
             f"database={self._connection_config.database!r}, "
-            f"schema={self._connection_config.schema!r}, "
             f"pool_size={self._pool_config.pool_size}, "
             f"echo={self._session_config.echo}"
             ")"
@@ -194,8 +211,11 @@ class MSSQL(BaseConnection):
     def get_session_info(self) -> MSSQLSessionConfig:
         return self._session_config
 
-    def get_retry_info(self) -> MSSQLRetryConfig:
-        return self._retry_config
+    def get_conn_retry_info(self) -> MSSQLConnRetryConfig:
+        return self._conn_retry_config
+
+    def get_op_retry_info(self) -> MSSQLOpRetryConfig:
+        return self._op_retry_config
 
     def get_ssl_info(self) -> MSSQLSSLConfig:
         return self._ssl_config
@@ -206,12 +226,7 @@ class MSSQL(BaseConnection):
             drivername=self.sync_driver,
             **self.connection_url,
         )
-        _engine_args = {
-            "url": _connection_url,
-            **self.engine_args,
-        }
-        _engine = create_engine(**_engine_args)
-        _engine.update_execution_options(schema_translate_map={None: self._connection_config.schema})
+        _engine = create_engine(url=_connection_url, **self.engine_args)
         yield _engine
         _engine.dispose()
 
@@ -221,22 +236,16 @@ class MSSQL(BaseConnection):
             drivername=self.async_driver,
             **self.connection_url,
         )
-        _engine_args = {
-            "url": _connection_url,
-            **self.engine_args,
-        }
-        _engine = create_async_engine(**_engine_args)
-        _engine.update_execution_options(schema_translate_map={None: self._connection_config.schema})
+        _engine = create_async_engine(url=_connection_url, **self.engine_args)
         yield _engine
         await _engine.dispose()
 
     def _test_connection_sync(self, session: Session) -> None:
-        del self.connection_url["password"]
-        del self.connection_url["query"]
+        _connection_url_copy = self.connection_url.copy()
+        _connection_url_copy.pop("password", None)
         _connection_url = URL.create(
-            **self.connection_url,
+            **_connection_url_copy,
             drivername=self.sync_driver,
-            query={"schema": self._connection_config.schema},
         )
         test_connection = ConnectionTester(
             sync_session=session,
@@ -246,12 +255,11 @@ class MSSQL(BaseConnection):
         test_connection.test_connection_sync()
 
     async def _test_connection_async(self, session: AsyncSession) -> None:
-        del self.connection_url["password"]
-        del self.connection_url["query"]
+        _connection_url_copy = self.connection_url.copy()
+        _connection_url_copy.pop("password", None)
         _connection_url = URL.create(
-            **self.connection_url,
+            **_connection_url_copy,
             drivername=self.async_driver,
-            query={"schema": self._connection_config.schema},
         )
         test_connection = ConnectionTester(
             async_session=session,

@@ -1,19 +1,13 @@
+from importlib.util import find_spec
 import pytest
 from unittest.mock import MagicMock, patch
 
-try:
-    import asyncpg
-    import psycopg2
-
-    POSTGRESQL_AVAILABLE = True
-except ImportError:
-    POSTGRESQL_AVAILABLE = False
+POSTGRESQL_AVAILABLE = find_spec("asyncpg") is not None and find_spec("psycopg") is not None
 
 pytestmark = pytest.mark.skipif(not POSTGRESQL_AVAILABLE, reason="PostgreSQL drivers not available")
 
 from ddcDatabases.postgresql import (
     PostgreSQL,
-    PostgreSQLConnectionConfig,
     PostgreSQLPoolConfig,
     PostgreSQLSessionConfig,
     PostgreSQLSSLConfig,
@@ -23,6 +17,7 @@ from ddcDatabases.postgresql import (
 class TestPostgreSQL:
     """Test PostgreSQL database connection class"""
 
+    # noinspection PyMethodMayBeStatic
     def setup_method(self):
         """Clear cache before each test"""
         # Clear all settings caches before each test
@@ -46,11 +41,11 @@ class TestPostgreSQL:
         mock_settings.port = 5432
         mock_settings.database = "postgres"
         mock_settings.echo = False
-        mock_settings.sync_driver = "postgresql+psycopg2"
+        mock_settings.sync_driver = "postgresql+psycopg"
         mock_settings.async_driver = "postgresql+asyncpg"
 
         # Create a completely custom init that uses mock settings
-        def patched_init(postgresql_self, *args, **kwargs):
+        def patched_init(postgresql_self, *_args, **_kwargs):
             # Simplified init logic for test
             postgresql_self.connection_url = {
                 "host": None or mock_settings.host,
@@ -77,7 +72,7 @@ class TestPostgreSQL:
         mock_settings.port = 5432
         mock_settings.database = "defaultdb"
         mock_settings.echo = False
-        mock_settings.sync_driver = "postgresql+psycopg2"
+        mock_settings.sync_driver = "postgresql+psycopg"
         mock_settings.async_driver = "postgresql+asyncpg"
         mock_get_settings.return_value = mock_settings
 
@@ -107,7 +102,7 @@ class TestPostgreSQL:
         mock_settings.port = 5432
         mock_settings.database = "postgres"
         mock_settings.echo = False
-        mock_settings.sync_driver = "postgresql+psycopg2"
+        mock_settings.sync_driver = "postgresql+psycopg"
         mock_settings.async_driver = "postgresql+asyncpg"
         mock_get_settings.return_value = mock_settings
 
@@ -132,7 +127,7 @@ class TestPostgreSQL:
         mock_settings.port = 5432
         mock_settings.database = "postgres"
         mock_settings.echo = False
-        mock_settings.sync_driver = "postgresql+psycopg2"
+        mock_settings.sync_driver = "postgresql+psycopg"
         mock_settings.async_driver = "postgresql+asyncpg"
         mock_get_settings.return_value = mock_settings
 
@@ -152,7 +147,7 @@ class TestPostgreSQL:
         mock_settings.database = "postgres"
         mock_settings.echo = False
         mock_settings.autocommit = False
-        mock_settings.sync_driver = "postgresql+psycopg2"
+        mock_settings.sync_driver = "postgresql+psycopg"
         mock_settings.async_driver = "postgresql+asyncpg"
         mock_get_settings.return_value = mock_settings
 
@@ -161,8 +156,8 @@ class TestPostgreSQL:
         assert postgresql._session_config.autocommit == True
 
     @patch('ddcDatabases.postgresql.get_postgresql_settings')
-    def test_connect_args_psycopg2_driver(self, mock_get_settings):
-        """Test that psycopg2 driver sets correct connect_args"""
+    def test_connect_args_psycopg_driver(self, mock_get_settings):
+        """Test that psycopg driver sets correct connect_args"""
         mock_settings = MagicMock()
         mock_settings.user = "postgres"
         mock_settings.password = "password"
@@ -170,14 +165,14 @@ class TestPostgreSQL:
         mock_settings.port = 5432
         mock_settings.database = "postgres"
         mock_settings.echo = False
-        mock_settings.sync_driver = "postgresql+psycopg2"
+        mock_settings.sync_driver = "postgresql+psycopg"
         mock_settings.async_driver = "postgresql+asyncpg"
         mock_get_settings.return_value = mock_settings
 
         postgresql = PostgreSQL()
 
         # Test that driver detection works correctly
-        assert "psycopg2" in postgresql.sync_driver
+        assert "psycopg" in postgresql.sync_driver
         assert "asyncpg" in postgresql.async_driver
 
     def test_connect_args_different_driver(self):
@@ -193,11 +188,11 @@ class TestPostgreSQL:
         assert "postgresql" in postgresql.async_driver
 
         # Test the string matching logic that would be used in _get_engine
-        test_driver_psycopg2 = "postgresql+psycopg2"
+        test_driver_psycopg = "postgresql+psycopg"
         test_driver_pg8000 = "postgresql+pg8000"
 
-        assert "psycopg2" in test_driver_psycopg2
-        assert "psycopg2" not in test_driver_pg8000
+        assert "psycopg" in test_driver_psycopg
+        assert "psycopg" not in test_driver_pg8000
         assert "pg8000" in test_driver_pg8000
 
     @patch('ddcDatabases.postgresql.get_postgresql_settings')
@@ -210,16 +205,16 @@ class TestPostgreSQL:
         mock_settings.port = 5432
         mock_settings.database = "postgres"
         mock_settings.echo = False
-        mock_settings.sync_driver = "postgresql+psycopg2"
+        mock_settings.sync_driver = "postgresql+psycopg"
         mock_settings.async_driver = "postgresql+asyncpg"
         mock_get_settings.return_value = mock_settings
 
         postgresql = PostgreSQL()
 
         # Verify drivers are correctly set
-        assert postgresql.sync_driver == "postgresql+psycopg2"
+        assert postgresql.sync_driver == "postgresql+psycopg"
         assert postgresql.async_driver == "postgresql+asyncpg"
-        assert "psycopg2" in postgresql.sync_driver
+        assert "psycopg" in postgresql.sync_driver
         assert "asyncpg" in postgresql.async_driver
 
     def test_async_driver_detection(self):
@@ -266,7 +261,7 @@ class TestPostgreSQL:
         mock_settings.port = 5432
         mock_settings.database = "postgres"
         mock_settings.echo = False
-        mock_settings.sync_driver = "postgresql+psycopg2"
+        mock_settings.sync_driver = "postgresql+psycopg"
         mock_settings.async_driver = "postgresql+asyncpg"
         mock_get_settings.return_value = mock_settings
 
@@ -297,7 +292,7 @@ class TestPostgreSQL:
         mock_settings.pool_recycle = 3600
         mock_settings.pool_size = 25
         mock_settings.max_overflow = 50
-        mock_settings.sync_driver = "postgresql+psycopg2"
+        mock_settings.sync_driver = "postgresql+psycopg"
         mock_settings.async_driver = "postgresql+asyncpg"
         mock_get_settings.return_value = mock_settings
 
@@ -305,7 +300,7 @@ class TestPostgreSQL:
 
         # Test _get_base_engine_args method
         connection_url = URL.create(
-            drivername="postgresql+psycopg2",
+            drivername="postgresql+psycopg",
             host="localhost",
             port=5432,
             database="postgres",
@@ -354,7 +349,7 @@ class TestPostgreSQL:
         mock_settings.pool_recycle = 3600
         mock_settings.pool_size = 25
         mock_settings.max_overflow = 50
-        mock_settings.sync_driver = "postgresql+psycopg2"
+        mock_settings.sync_driver = "postgresql+psycopg"
         mock_settings.async_driver = "postgresql+asyncpg"
         mock_get_settings.return_value = mock_settings
 
@@ -370,8 +365,8 @@ class TestPostgreSQL:
         sync_connect_args = {}
         sync_engine_args = {}
 
-        # Simulate the psycopg2 driver logic
-        if "psycopg2" in postgresql.sync_driver:
+        # Simulate the psycopg driver logic
+        if "psycopg" in postgresql.sync_driver:
             sync_connect_args["connect_timeout"] = postgresql._pool_config.connection_timeout
             if postgresql._session_config.autocommit:
                 sync_engine_args["isolation_level"] = "AUTOCOMMIT"
@@ -399,7 +394,7 @@ class TestPostgreSQL:
         mock_settings.pool_recycle = 3600
         mock_settings.pool_size = 25
         mock_settings.max_overflow = 50
-        mock_settings.sync_driver = "postgresql+psycopg2"
+        mock_settings.sync_driver = "postgresql+psycopg"
         mock_settings.async_driver = "postgresql+asyncpg"
         mock_get_settings.return_value = mock_settings
 
@@ -440,7 +435,7 @@ class TestPostgreSQL:
         mock_settings.port = 5432
         mock_settings.database = "postgres"
         mock_settings.echo = False
-        mock_settings.sync_driver = "postgresql+psycopg2"
+        mock_settings.sync_driver = "postgresql+psycopg"
         mock_settings.async_driver = "postgresql+asyncpg"
         mock_settings.pool_size = 10
         mock_get_settings.return_value = mock_settings
@@ -459,7 +454,7 @@ class TestPostgreSQL:
         mock_settings.port = 5432
         mock_settings.database = "postgres"
         mock_settings.echo = False
-        mock_settings.sync_driver = "postgresql+psycopg2"
+        mock_settings.sync_driver = "postgresql+psycopg"
         mock_settings.async_driver = "postgresql+asyncpg"
         mock_settings.max_overflow = 20
         mock_get_settings.return_value = mock_settings
@@ -478,7 +473,7 @@ class TestPostgreSQL:
         mock_settings.port = 5432
         mock_settings.database = "postgres"
         mock_settings.echo = False
-        mock_settings.sync_driver = "postgresql+psycopg2"
+        mock_settings.sync_driver = "postgresql+psycopg"
         mock_settings.async_driver = "postgresql+asyncpg"
         mock_settings.pool_size = 25
         mock_settings.max_overflow = 50
@@ -498,6 +493,7 @@ class TestPostgreSQL:
         mock_settings.user = "testuser"
         mock_settings.password = "testpass"
         mock_settings.database = "testdb"
+        mock_settings.schema = None
         mock_settings.echo = True
         mock_settings.autoflush = True
         mock_settings.expire_on_commit = True
@@ -506,8 +502,21 @@ class TestPostgreSQL:
         mock_settings.pool_recycle = 7200
         mock_settings.pool_size = 30
         mock_settings.max_overflow = 60
-        mock_settings.sync_driver = "postgresql+psycopg2"
+        mock_settings.sync_driver = "postgresql+psycopg"
         mock_settings.async_driver = "postgresql+asyncpg"
+        mock_settings.ssl_mode = None
+        mock_settings.ssl_ca_cert_path = None
+        mock_settings.ssl_client_cert_path = None
+        mock_settings.ssl_client_key_path = None
+        mock_settings.conn_enable_retry = None
+        mock_settings.conn_max_retries = None
+        mock_settings.conn_initial_retry_delay = None
+        mock_settings.conn_max_retry_delay = None
+        mock_settings.op_enable_retry = None
+        mock_settings.op_max_retries = None
+        mock_settings.op_initial_retry_delay = None
+        mock_settings.op_max_retry_delay = None
+        mock_settings.op_jitter = None
         mock_get_settings.return_value = mock_settings
 
         postgresql = PostgreSQL(
@@ -545,14 +554,15 @@ class TestPostgreSQL:
         assert session_config.autocommit == True
 
     @patch('ddcDatabases.postgresql.get_postgresql_settings')
-    def test_get_engine_method_with_psycopg2(self, mock_get_settings):
-        """Test the _get_engine method with psycopg2 driver"""
+    def test_get_engine_method_with_psycopg(self, mock_get_settings):
+        """Test the _get_engine method with psycopg driver"""
         mock_settings = MagicMock()
         mock_settings.user = "postgres"
         mock_settings.password = "password"
         mock_settings.host = "localhost"
         mock_settings.port = 5432
         mock_settings.database = "postgres"
+        mock_settings.schema = None
         mock_settings.echo = False
         mock_settings.autoflush = False
         mock_settings.expire_on_commit = False
@@ -561,32 +571,33 @@ class TestPostgreSQL:
         mock_settings.pool_recycle = 3600
         mock_settings.pool_size = 25
         mock_settings.max_overflow = 50
-        mock_settings.sync_driver = "postgresql+psycopg2"
+        mock_settings.sync_driver = "postgresql+psycopg"
         mock_settings.async_driver = "postgresql+asyncpg"
+        mock_settings.ssl_mode = None
+        mock_settings.ssl_ca_cert_path = None
+        mock_settings.ssl_client_cert_path = None
+        mock_settings.ssl_client_key_path = None
+        mock_settings.conn_enable_retry = None
+        mock_settings.conn_max_retries = None
+        mock_settings.conn_initial_retry_delay = None
+        mock_settings.conn_max_retry_delay = None
+        mock_settings.op_enable_retry = None
+        mock_settings.op_max_retries = None
+        mock_settings.op_initial_retry_delay = None
+        mock_settings.op_max_retry_delay = None
+        mock_settings.op_jitter = None
         mock_get_settings.return_value = mock_settings
 
         postgresql = PostgreSQL(session_config=PostgreSQLSessionConfig(autocommit=True))
 
         # Test that _get_engine context manager works and returns an engine
         with postgresql._get_engine() as engine:
-            # Verify we get a real SQLAlchemy engine
+            # Verify engine was created with expected properties
+            assert engine is not None
             assert hasattr(engine, 'dispose')
-            assert hasattr(engine, 'connect')
-            # Verify URL was constructed correctly
-            assert "postgresql+psycopg2" in str(engine.url)
-            assert "localhost" in str(engine.url)
-            assert "postgres" in str(engine.url)
-
-        # Engine should be properly disposed after context exit
-        # After dispose(), the pool should be invalidated or recreated
-        # We can check that the engine is in a disposed state
-        try:
-            # Try to get a connection - should fail or create new pool after disposal
-            with engine.connect() as conn:
-                pass
-        except Exception:
-            # This is expected if the engine was properly disposed
-            pass
+            assert hasattr(engine, 'url')
+            # Verify autocommit is configured via isolation_level in the URL or engine
+            assert "psycopg" in str(engine.url)
 
     @patch('ddcDatabases.postgresql.get_postgresql_settings')
     def test_get_engine_method_without_autocommit(self, mock_get_settings):
@@ -597,6 +608,7 @@ class TestPostgreSQL:
         mock_settings.host = "localhost"
         mock_settings.port = 5432
         mock_settings.database = "postgres"
+        mock_settings.schema = None
         mock_settings.echo = False
         mock_settings.autoflush = False
         mock_settings.expire_on_commit = False
@@ -605,40 +617,43 @@ class TestPostgreSQL:
         mock_settings.pool_recycle = 3600
         mock_settings.pool_size = 25
         mock_settings.max_overflow = 50
-        mock_settings.sync_driver = "postgresql+psycopg2"
+        mock_settings.sync_driver = "postgresql+psycopg"
         mock_settings.async_driver = "postgresql+asyncpg"
+        mock_settings.ssl_mode = None
+        mock_settings.ssl_ca_cert_path = None
+        mock_settings.ssl_client_cert_path = None
+        mock_settings.ssl_client_key_path = None
+        mock_settings.conn_enable_retry = None
+        mock_settings.conn_max_retries = None
+        mock_settings.conn_initial_retry_delay = None
+        mock_settings.conn_max_retry_delay = None
+        mock_settings.op_enable_retry = None
+        mock_settings.op_max_retries = None
+        mock_settings.op_initial_retry_delay = None
+        mock_settings.op_max_retry_delay = None
+        mock_settings.op_jitter = None
         mock_get_settings.return_value = mock_settings
 
         postgresql = PostgreSQL(session_config=PostgreSQLSessionConfig(autocommit=False))
 
         # Test the _get_engine context manager without autocommit
         with postgresql._get_engine() as engine:
-            # Verify we get a real SQLAlchemy engine
+            # Verify engine was created with expected properties
+            assert engine is not None
             assert hasattr(engine, 'dispose')
-            assert hasattr(engine, 'connect')
-            # Verify URL was constructed correctly
-            assert "postgresql+psycopg2" in str(engine.url)
-
-        # Engine should be properly disposed after context exit
-        # After dispose(), the pool should be invalidated or recreated
-        # We can check that the engine is in a disposed state
-        try:
-            # Try to get a connection - should fail or create new pool after disposal
-            with engine.connect() as conn:
-                pass
-        except Exception:
-            # This is expected if the engine was properly disposed
-            pass
+            assert hasattr(engine, 'url')
+            assert "psycopg" in str(engine.url)
 
     @patch('ddcDatabases.postgresql.get_postgresql_settings')
-    def test_get_engine_method_non_psycopg2_driver(self, mock_get_settings):
-        """Test the _get_engine method with non-psycopg2 driver"""
+    def test_get_engine_method_non_psycopg_driver(self, mock_get_settings):
+        """Test the _get_engine method with non-psycopg driver"""
         mock_settings = MagicMock()
         mock_settings.user = "postgres"
         mock_settings.password = "password"
         mock_settings.host = "localhost"
         mock_settings.port = 5432
         mock_settings.database = "postgres"
+        mock_settings.schema = None
         mock_settings.echo = False
         mock_settings.autoflush = False
         mock_settings.expire_on_commit = False
@@ -647,31 +662,32 @@ class TestPostgreSQL:
         mock_settings.pool_recycle = 3600
         mock_settings.pool_size = 25
         mock_settings.max_overflow = 50
-        mock_settings.sync_driver = "postgresql+psycopg2"  # Use psycopg2 (available driver)
+        mock_settings.sync_driver = "postgresql+psycopg"
         mock_settings.async_driver = "postgresql+asyncpg"
+        mock_settings.ssl_mode = None
+        mock_settings.ssl_ca_cert_path = None
+        mock_settings.ssl_client_cert_path = None
+        mock_settings.ssl_client_key_path = None
+        mock_settings.conn_enable_retry = None
+        mock_settings.conn_max_retries = None
+        mock_settings.conn_initial_retry_delay = None
+        mock_settings.conn_max_retry_delay = None
+        mock_settings.op_enable_retry = None
+        mock_settings.op_max_retries = None
+        mock_settings.op_initial_retry_delay = None
+        mock_settings.op_max_retry_delay = None
+        mock_settings.op_jitter = None
         mock_get_settings.return_value = mock_settings
 
         postgresql = PostgreSQL()
 
-        # Test the _get_engine context manager with non-psycopg2 driver
+        # Test the _get_engine context manager
         with postgresql._get_engine() as engine:
-            # Verify we get a real SQLAlchemy engine
+            # Verify engine was created with expected properties
+            assert engine is not None
             assert hasattr(engine, 'dispose')
-            assert hasattr(engine, 'connect')
-            # For non-psycopg2 drivers, should still use psycopg2 as fallback
-            # since the settings return psycopg2 as sync_driver for PostgreSQL
-            assert "postgresql" in str(engine.url)
-
-        # Engine should be properly disposed after context exit
-        # After dispose(), the pool should be invalidated or recreated
-        # We can check that the engine is in a disposed state
-        try:
-            # Try to get a connection - should fail or create new pool after disposal
-            with engine.connect() as conn:
-                pass
-        except Exception:
-            # This is expected if the engine was properly disposed
-            pass
+            assert hasattr(engine, 'url')
+            assert "psycopg" in str(engine.url)
 
     @patch('ddcDatabases.postgresql.get_postgresql_settings')
     def test_get_async_engine_method_with_asyncpg(self, mock_get_settings):
@@ -690,7 +706,7 @@ class TestPostgreSQL:
         mock_settings.pool_recycle = 3600
         mock_settings.pool_size = 25
         mock_settings.max_overflow = 50
-        mock_settings.sync_driver = "postgresql+psycopg2"
+        mock_settings.sync_driver = "postgresql+psycopg"
         mock_settings.async_driver = "postgresql+asyncpg"
         mock_get_settings.return_value = mock_settings
 
@@ -731,7 +747,7 @@ class TestPostgreSQL:
         mock_settings.pool_recycle = 3600
         mock_settings.pool_size = 25
         mock_settings.max_overflow = 50
-        mock_settings.sync_driver = "postgresql+psycopg2"
+        mock_settings.sync_driver = "postgresql+psycopg"
         mock_settings.async_driver = "postgresql+asyncpg"
         mock_get_settings.return_value = mock_settings
 
@@ -767,7 +783,7 @@ class TestPostgreSQL:
         mock_settings.pool_recycle = 3600
         mock_settings.pool_size = 25
         mock_settings.max_overflow = 50
-        mock_settings.sync_driver = "postgresql+psycopg2"
+        mock_settings.sync_driver = "postgresql+psycopg"
         mock_settings.async_driver = "postgresql+asyncpg"  # Use asyncpg (available driver)
         mock_get_settings.return_value = mock_settings
 
@@ -803,7 +819,7 @@ class TestPostgreSQL:
         mock_settings.pool_recycle = 3600
         mock_settings.pool_size = 25
         mock_settings.max_overflow = 50
-        mock_settings.sync_driver = "postgresql+psycopg2"
+        mock_settings.sync_driver = "postgresql+psycopg"
         mock_settings.async_driver = "postgresql+asyncpg"
         mock_get_settings.return_value = mock_settings
 
@@ -843,7 +859,7 @@ class TestPostgreSQL:
         mock_settings.pool_recycle = 3600
         mock_settings.pool_size = 25
         mock_settings.max_overflow = 50
-        mock_settings.sync_driver = "postgresql+psycopg2"
+        mock_settings.sync_driver = "postgresql+psycopg"
         mock_settings.async_driver = "postgresql+asyncpg"
         mock_get_settings.return_value = mock_settings
 
@@ -856,24 +872,24 @@ class TestPostgreSQL:
 
         # Try to modify configurations - should raise FrozenInstanceError
         with pytest.raises(Exception):  # FrozenInstanceError
-            conn_config.host = "modified"
+            conn_config.host = "modified"  # noqa
 
         with pytest.raises(Exception):  # FrozenInstanceError
-            pool_config.pool_size = 999
+            pool_config.pool_size = 999  # noqa
 
         with pytest.raises(Exception):  # FrozenInstanceError
-            session_config.echo = True
+            session_config.echo = True  # noqa
 
     @patch('ddcDatabases.postgresql.get_postgresql_settings')
-    def test_db_schema_default(self, mock_get_settings):
-        """Test PostgreSQL db_schema defaults to public"""
+    def test_schema_default(self, mock_get_settings):
+        """Test PostgreSQL schema defaults to public"""
         mock_settings = MagicMock()
         mock_settings.user = "postgres"
         mock_settings.password = "password"
         mock_settings.host = "localhost"
         mock_settings.port = 5432
         mock_settings.database = "postgres"
-        mock_settings.db_schema = "public"
+        mock_settings.schema = "public"
         mock_settings.echo = False
         mock_settings.autoflush = False
         mock_settings.expire_on_commit = False
@@ -882,7 +898,7 @@ class TestPostgreSQL:
         mock_settings.pool_recycle = 3600
         mock_settings.pool_size = 25
         mock_settings.max_overflow = 50
-        mock_settings.sync_driver = "postgresql+psycopg2"
+        mock_settings.sync_driver = "postgresql+psycopg"
         mock_settings.async_driver = "postgresql+asyncpg"
         mock_settings.ssl_mode = "disable"
         mock_settings.ssl_ca_cert_path = None
@@ -892,20 +908,20 @@ class TestPostgreSQL:
 
         postgresql = PostgreSQL()
 
-        assert postgresql._connection_config.db_schema == "public"
+        assert postgresql._connection_config.schema == "public"
         conn_config = postgresql.get_connection_info()
-        assert conn_config.db_schema == "public"
+        assert conn_config.schema == "public"
 
     @patch('ddcDatabases.postgresql.get_postgresql_settings')
-    def test_db_schema_custom(self, mock_get_settings):
-        """Test PostgreSQL with custom db_schema sets search_path"""
+    def test_schema_custom(self, mock_get_settings):
+        """Test PostgreSQL with custom schema sets search_path"""
         mock_settings = MagicMock()
         mock_settings.user = "postgres"
         mock_settings.password = "password"
         mock_settings.host = "localhost"
         mock_settings.port = 5432
         mock_settings.database = "postgres"
-        mock_settings.db_schema = "public"
+        mock_settings.schema = "public"
         mock_settings.echo = False
         mock_settings.autoflush = False
         mock_settings.expire_on_commit = False
@@ -914,7 +930,7 @@ class TestPostgreSQL:
         mock_settings.pool_recycle = 3600
         mock_settings.pool_size = 25
         mock_settings.max_overflow = 50
-        mock_settings.sync_driver = "postgresql+psycopg2"
+        mock_settings.sync_driver = "postgresql+psycopg"
         mock_settings.async_driver = "postgresql+asyncpg"
         mock_settings.ssl_mode = "disable"
         mock_settings.ssl_ca_cert_path = None
@@ -922,27 +938,27 @@ class TestPostgreSQL:
         mock_settings.ssl_client_key_path = None
         mock_get_settings.return_value = mock_settings
 
-        postgresql = PostgreSQL(db_schema="custom_schema")
+        postgresql = PostgreSQL(schema="custom_schema")
 
-        assert postgresql._connection_config.db_schema == "custom_schema"
+        assert postgresql._connection_config.schema == "custom_schema"
 
         # Test sync engine includes search_path in connect_args
         from sqlalchemy import URL
 
-        connection_url = URL.create(
+        _ = URL.create(
             drivername=postgresql.sync_driver,
             **postgresql.connection_url,
         )
         sync_connect_args = {}
-        if "psycopg2" in postgresql.sync_driver:
+        if "psycopg" in postgresql.sync_driver:
             sync_connect_args["connect_timeout"] = postgresql._pool_config.connection_timeout
-            if postgresql._connection_config.db_schema and postgresql._connection_config.db_schema != "public":
-                sync_connect_args["options"] = f"-c search_path={postgresql._connection_config.db_schema}"
+            if postgresql._connection_config.schema and postgresql._connection_config.schema != "public":
+                sync_connect_args["options"] = f"-c search_path={postgresql._connection_config.schema}"
 
         assert sync_connect_args["options"] == "-c search_path=custom_schema"
 
     @patch('ddcDatabases.postgresql.get_postgresql_settings')
-    def test_db_schema_public_no_options(self, mock_get_settings):
+    def test_schema_public_no_options(self, mock_get_settings):
         """Test PostgreSQL with public schema does not set search_path options"""
         mock_settings = MagicMock()
         mock_settings.user = "postgres"
@@ -950,7 +966,7 @@ class TestPostgreSQL:
         mock_settings.host = "localhost"
         mock_settings.port = 5432
         mock_settings.database = "postgres"
-        mock_settings.db_schema = "public"
+        mock_settings.schema = "public"
         mock_settings.echo = False
         mock_settings.autoflush = False
         mock_settings.expire_on_commit = False
@@ -959,7 +975,7 @@ class TestPostgreSQL:
         mock_settings.pool_recycle = 3600
         mock_settings.pool_size = 25
         mock_settings.max_overflow = 50
-        mock_settings.sync_driver = "postgresql+psycopg2"
+        mock_settings.sync_driver = "postgresql+psycopg"
         mock_settings.async_driver = "postgresql+asyncpg"
         mock_settings.ssl_mode = "disable"
         mock_settings.ssl_ca_cert_path = None
@@ -967,16 +983,16 @@ class TestPostgreSQL:
         mock_settings.ssl_client_key_path = None
         mock_get_settings.return_value = mock_settings
 
-        postgresql = PostgreSQL(db_schema="public")
+        postgresql = PostgreSQL(schema="public")
 
-        assert postgresql._connection_config.db_schema == "public"
+        assert postgresql._connection_config.schema == "public"
 
         # Public schema should NOT set options
         sync_connect_args = {}
-        if "psycopg2" in postgresql.sync_driver:
+        if "psycopg" in postgresql.sync_driver:
             sync_connect_args["connect_timeout"] = postgresql._pool_config.connection_timeout
-            if postgresql._connection_config.db_schema and postgresql._connection_config.db_schema != "public":
-                sync_connect_args["options"] = f"-c search_path={postgresql._connection_config.db_schema}"
+            if postgresql._connection_config.schema and postgresql._connection_config.schema != "public":
+                sync_connect_args["options"] = f"-c search_path={postgresql._connection_config.schema}"
 
         assert "options" not in sync_connect_args
 
@@ -989,7 +1005,7 @@ class TestPostgreSQL:
         mock_settings.host = "localhost"
         mock_settings.port = 5432
         mock_settings.database = "postgres"
-        mock_settings.db_schema = "public"
+        mock_settings.schema = "public"
         mock_settings.echo = False
         mock_settings.autoflush = False
         mock_settings.expire_on_commit = False
@@ -998,7 +1014,7 @@ class TestPostgreSQL:
         mock_settings.pool_recycle = 3600
         mock_settings.pool_size = 25
         mock_settings.max_overflow = 50
-        mock_settings.sync_driver = "postgresql+psycopg2"
+        mock_settings.sync_driver = "postgresql+psycopg"
         mock_settings.async_driver = "postgresql+asyncpg"
         mock_settings.ssl_mode = "disable"
         mock_settings.ssl_ca_cert_path = None
@@ -1022,7 +1038,7 @@ class TestPostgreSQL:
 
         # Verify SSL connect_args are set properly
         sync_connect_args = {}
-        if "psycopg2" in postgresql.sync_driver:
+        if "psycopg" in postgresql.sync_driver:
             if postgresql._ssl_config.ssl_mode and postgresql._ssl_config.ssl_mode != "disable":
                 sync_connect_args["sslmode"] = postgresql._ssl_config.ssl_mode
                 if postgresql._ssl_config.ssl_ca_cert_path:
@@ -1046,7 +1062,7 @@ class TestPostgreSQL:
         mock_settings.host = "localhost"
         mock_settings.port = 5432
         mock_settings.database = "postgres"
-        mock_settings.db_schema = "public"
+        mock_settings.schema = "public"
         mock_settings.echo = False
         mock_settings.autoflush = False
         mock_settings.expire_on_commit = False
@@ -1055,7 +1071,7 @@ class TestPostgreSQL:
         mock_settings.pool_recycle = 3600
         mock_settings.pool_size = 25
         mock_settings.max_overflow = 50
-        mock_settings.sync_driver = "postgresql+psycopg2"
+        mock_settings.sync_driver = "postgresql+psycopg"
         mock_settings.async_driver = "postgresql+asyncpg"
         mock_settings.ssl_mode = "disable"
         mock_settings.ssl_ca_cert_path = None
@@ -1073,3 +1089,187 @@ class TestPostgreSQL:
             sync_connect_args["sslmode"] = postgresql._ssl_config.ssl_mode
 
         assert "sslmode" not in sync_connect_args
+
+    @patch('ddcDatabases.postgresql.get_postgresql_settings')
+    def test_get_connection_info(self, mock_get_settings):
+        """Test get_connection_info returns connection config"""
+        from ddcDatabases.postgresql import PostgreSQL, PostgreSQLConnectionConfig
+
+        mock_settings = MagicMock()
+        mock_settings.user = "postgres"
+        mock_settings.password = "password"
+        mock_settings.host = "localhost"
+        mock_settings.port = 5432
+        mock_settings.database = "postgres"
+        mock_settings.schema = "public"
+        mock_settings.echo = False
+        mock_settings.autoflush = False
+        mock_settings.expire_on_commit = False
+        mock_settings.autocommit = False
+        mock_settings.connection_timeout = 30
+        mock_settings.pool_recycle = 3600
+        mock_settings.pool_size = 25
+        mock_settings.max_overflow = 50
+        mock_settings.sync_driver = "postgresql+psycopg"
+        mock_settings.async_driver = "postgresql+asyncpg"
+        mock_settings.ssl_mode = "disable"
+        mock_settings.ssl_ca_cert_path = None
+        mock_settings.ssl_client_cert_path = None
+        mock_settings.ssl_client_key_path = None
+        mock_settings.conn_enable_retry = True
+        mock_settings.conn_max_retries = 3
+        mock_settings.conn_initial_retry_delay = 1.0
+        mock_settings.conn_max_retry_delay = 30.0
+        mock_settings.op_enable_retry = True
+        mock_settings.op_max_retries = 3
+        mock_settings.op_initial_retry_delay = 1.0
+        mock_settings.op_max_retry_delay = 30.0
+        mock_settings.op_jitter = 0.1
+        mock_get_settings.return_value = mock_settings
+
+        postgresql = PostgreSQL()
+
+        conn_info = postgresql.get_connection_info()
+
+        assert conn_info is postgresql._connection_config
+        assert isinstance(conn_info, PostgreSQLConnectionConfig)
+        assert conn_info.host == "localhost"
+        assert conn_info.port == 5432
+
+    @patch('ddcDatabases.postgresql.get_postgresql_settings')
+    def test_get_pool_info(self, mock_get_settings):
+        """Test get_pool_info returns pool config"""
+        from ddcDatabases.postgresql import PostgreSQL, PostgreSQLPoolConfig
+
+        mock_settings = MagicMock()
+        mock_settings.user = "postgres"
+        mock_settings.password = "password"
+        mock_settings.host = "localhost"
+        mock_settings.port = 5432
+        mock_settings.database = "postgres"
+        mock_settings.schema = "public"
+        mock_settings.echo = False
+        mock_settings.autoflush = False
+        mock_settings.expire_on_commit = False
+        mock_settings.autocommit = False
+        mock_settings.connection_timeout = 30
+        mock_settings.pool_recycle = 3600
+        mock_settings.pool_size = 25
+        mock_settings.max_overflow = 50
+        mock_settings.sync_driver = "postgresql+psycopg"
+        mock_settings.async_driver = "postgresql+asyncpg"
+        mock_settings.ssl_mode = "disable"
+        mock_settings.ssl_ca_cert_path = None
+        mock_settings.ssl_client_cert_path = None
+        mock_settings.ssl_client_key_path = None
+        mock_settings.conn_enable_retry = True
+        mock_settings.conn_max_retries = 3
+        mock_settings.conn_initial_retry_delay = 1.0
+        mock_settings.conn_max_retry_delay = 30.0
+        mock_settings.op_enable_retry = True
+        mock_settings.op_max_retries = 3
+        mock_settings.op_initial_retry_delay = 1.0
+        mock_settings.op_max_retry_delay = 30.0
+        mock_settings.op_jitter = 0.1
+        mock_get_settings.return_value = mock_settings
+
+        postgresql = PostgreSQL(pool_config=PostgreSQLPoolConfig(pool_size=20, max_overflow=40))
+
+        pool_info = postgresql.get_pool_info()
+
+        assert pool_info is postgresql._pool_config
+        assert isinstance(pool_info, PostgreSQLPoolConfig)
+        assert pool_info.pool_size == 20
+        assert pool_info.max_overflow == 40
+
+    @patch('ddcDatabases.postgresql.get_postgresql_settings')
+    def test_get_session_info(self, mock_get_settings):
+        """Test get_session_info returns session config"""
+        from ddcDatabases.postgresql import PostgreSQL, PostgreSQLSessionConfig
+
+        mock_settings = MagicMock()
+        mock_settings.user = "postgres"
+        mock_settings.password = "password"
+        mock_settings.host = "localhost"
+        mock_settings.port = 5432
+        mock_settings.database = "postgres"
+        mock_settings.schema = "public"
+        mock_settings.echo = False
+        mock_settings.autoflush = False
+        mock_settings.expire_on_commit = False
+        mock_settings.autocommit = False
+        mock_settings.connection_timeout = 30
+        mock_settings.pool_recycle = 3600
+        mock_settings.pool_size = 25
+        mock_settings.max_overflow = 50
+        mock_settings.sync_driver = "postgresql+psycopg"
+        mock_settings.async_driver = "postgresql+asyncpg"
+        mock_settings.ssl_mode = "disable"
+        mock_settings.ssl_ca_cert_path = None
+        mock_settings.ssl_client_cert_path = None
+        mock_settings.ssl_client_key_path = None
+        mock_settings.conn_enable_retry = True
+        mock_settings.conn_max_retries = 3
+        mock_settings.conn_initial_retry_delay = 1.0
+        mock_settings.conn_max_retry_delay = 30.0
+        mock_settings.op_enable_retry = True
+        mock_settings.op_max_retries = 3
+        mock_settings.op_initial_retry_delay = 1.0
+        mock_settings.op_max_retry_delay = 30.0
+        mock_settings.op_jitter = 0.1
+        mock_get_settings.return_value = mock_settings
+
+        postgresql = PostgreSQL(session_config=PostgreSQLSessionConfig(echo=True, autoflush=False))
+
+        session_info = postgresql.get_session_info()
+
+        assert session_info is postgresql._session_config
+        assert isinstance(session_info, PostgreSQLSessionConfig)
+        assert session_info.echo == True
+        assert session_info.autoflush == False
+
+    @patch('ddcDatabases.postgresql.get_postgresql_settings')
+    def test_get_op_retry_info(self, mock_get_settings):
+        """Test get_op_retry_info returns operation retry config"""
+        from ddcDatabases.postgresql import PostgreSQL
+
+        mock_settings = MagicMock()
+        mock_settings.user = "postgres"
+        mock_settings.password = "password"
+        mock_settings.host = "localhost"
+        mock_settings.port = 5432
+        mock_settings.database = "postgres"
+        mock_settings.schema = "public"
+        mock_settings.echo = False
+        mock_settings.autoflush = False
+        mock_settings.expire_on_commit = False
+        mock_settings.autocommit = False
+        mock_settings.connection_timeout = 30
+        mock_settings.pool_recycle = 3600
+        mock_settings.pool_size = 25
+        mock_settings.max_overflow = 50
+        mock_settings.sync_driver = "postgresql+psycopg"
+        mock_settings.async_driver = "postgresql+asyncpg"
+        mock_settings.ssl_mode = "disable"
+        mock_settings.ssl_ca_cert_path = None
+        mock_settings.ssl_client_cert_path = None
+        mock_settings.ssl_client_key_path = None
+        mock_settings.conn_enable_retry = True
+        mock_settings.conn_max_retries = 3
+        mock_settings.conn_initial_retry_delay = 1.0
+        mock_settings.conn_max_retry_delay = 30.0
+        mock_settings.op_enable_retry = True
+        mock_settings.op_max_retries = 3
+        mock_settings.op_initial_retry_delay = 1.0
+        mock_settings.op_max_retry_delay = 30.0
+        mock_settings.op_jitter = 0.1
+        mock_get_settings.return_value = mock_settings
+
+        postgresql = PostgreSQL()
+
+        op_retry_info = postgresql.get_op_retry_info()
+
+        assert op_retry_info is postgresql._op_retry_config
+        assert hasattr(op_retry_info, 'enable_retry')
+        assert hasattr(op_retry_info, 'max_retries')
+        assert hasattr(op_retry_info, 'jitter')

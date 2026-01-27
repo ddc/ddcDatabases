@@ -1,4 +1,5 @@
 from ddcDatabases.core.exceptions import (
+    CustomBaseException,
     DBDeleteAllDataException,
     DBExecuteException,
     DBFetchAllException,
@@ -55,7 +56,7 @@ class TestExceptions:
             DBInsertSingleException(original_error)
 
     def test_exception_inheritance(self):
-        """Test that all custom exceptions inherit from Exception"""
+        """Test that all custom exceptions inherit from CustomBaseException and Exception"""
         exceptions = [
             DBDeleteAllDataException,
             DBExecuteException,
@@ -65,7 +66,12 @@ class TestExceptions:
             DBInsertSingleException,
         ]
 
+        # Test base exception inherits from Exception
+        assert issubclass(CustomBaseException, Exception)
+
+        # Test all custom exceptions inherit from CustomBaseException
         for exc_class in exceptions:
+            assert issubclass(exc_class, CustomBaseException)
             assert issubclass(exc_class, Exception)
 
     def test_exceptions_with_string_messages(self):

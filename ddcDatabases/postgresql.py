@@ -1,6 +1,13 @@
 from .core.base import BaseConnection
-from .core.configs import BaseConnectionConfig, BasePoolConfig, BaseRetryConfig, BaseSessionConfig, BaseSSLConfig
-from .core.retry import RetryPolicy
+from .core.configs import (
+    BaseConnectionConfig,
+    BaseOperationRetryConfig,
+    BasePoolConfig,
+    BaseRetryConfig,
+    BaseSessionConfig,
+    BaseSSLConfig,
+)
+from .core.constants import POSTGRESQL_SSL_MODES
 from .core.settings import get_postgresql_settings
 from contextlib import asynccontextmanager, contextmanager
 from dataclasses import dataclass
@@ -17,12 +24,14 @@ _logger.addHandler(logging.NullHandler())
 @dataclass(frozen=True, slots=True)
 class PostgreSQLConnectionConfig(BaseConnectionConfig):
     database: str | None = None
-    db_schema: str | None = None
+    schema: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
 class PostgreSQLSSLConfig(BaseSSLConfig):
-    pass
+    def __post_init__(self) -> None:
+        if self.ssl_mode is not None and self.ssl_mode.lower() not in POSTGRESQL_SSL_MODES:
+            raise ValueError(f"ssl_mode must be one of {sorted(POSTGRESQL_SSL_MODES)}, got '{self.ssl_mode}'")
 
 
 @dataclass(frozen=True, slots=True)
@@ -36,7 +45,12 @@ class PostgreSQLSessionConfig(BaseSessionConfig):
 
 
 @dataclass(frozen=True, slots=True)
-class PostgreSQLRetryConfig(BaseRetryConfig):
+class PostgreSQLConnRetryConfig(BaseRetryConfig):
+    pass
+
+
+@dataclass(frozen=True, slots=True)
+class PostgreSQLOpRetryConfig(BaseOperationRetryConfig):
     pass
 
 
@@ -52,10 +66,11 @@ class PostgreSQL(BaseConnection):
         user: str | None = None,
         password: str | None = None,
         database: str | None = None,
-        db_schema: str | None = None,
+        schema: str | None = None,
         pool_config: PostgreSQLPoolConfig | None = None,
         session_config: PostgreSQLSessionConfig | None = None,
-        retry_config: PostgreSQLRetryConfig | None = None,
+        conn_retry_config: PostgreSQLConnRetryConfig | None = None,
+        op_retry_config: PostgreSQLOpRetryConfig | None = None,
         ssl_config: PostgreSQLSSLConfig | None = None,
         extra_engine_args: dict | None = None,
         logger: logging.Logger | None = None,
@@ -68,7 +83,7 @@ class PostgreSQL(BaseConnection):
             user=user or _settings.user,
             password=password or _settings.password,
             database=database or _settings.database,
-            db_schema=db_schema if db_schema is not None else _settings.db_schema,
+            schema=schema if schema is not None else _settings.schema,
         )
 
         _pc = pool_config or PostgreSQLPoolConfig()
@@ -120,22 +135,29 @@ class PostgreSQL(BaseConnection):
             **self.extra_engine_args,
         }
 
-        # Create retry configuration
-        _rc = retry_config or PostgreSQLRetryConfig()
-        self._retry_config = PostgreSQLRetryConfig(
-            enable_retry=_rc.enable_retry if _rc.enable_retry is not None else _settings.enable_retry,
-            max_retries=_rc.max_retries if _rc.max_retries is not None else _settings.max_retries,
+        # Create connection retry configuration
+        _crc = conn_retry_config or PostgreSQLConnRetryConfig()
+        self._conn_retry_config = PostgreSQLConnRetryConfig(
+            enable_retry=_crc.enable_retry if _crc.enable_retry is not None else _settings.conn_enable_retry,
+            max_retries=_crc.max_retries if _crc.max_retries is not None else _settings.conn_max_retries,
             initial_retry_delay=(
-                _rc.initial_retry_delay if _rc.initial_retry_delay is not None else _settings.initial_retry_delay
+                _crc.initial_retry_delay if _crc.initial_retry_delay is not None else _settings.conn_initial_retry_delay
             ),
-            max_retry_delay=_rc.max_retry_delay if _rc.max_retry_delay is not None else _settings.max_retry_delay,
+            max_retry_delay=(
+                _crc.max_retry_delay if _crc.max_retry_delay is not None else _settings.conn_max_retry_delay
+            ),
         )
 
-        _retry_policy = RetryPolicy(
-            enable_retry=self._retry_config.enable_retry,
-            max_retries=self._retry_config.max_retries,
-            initial_delay=self._retry_config.initial_retry_delay,
-            max_delay=self._retry_config.max_retry_delay,
+        # Create operation retry configuration
+        _orc = op_retry_config or PostgreSQLOpRetryConfig()
+        self._op_retry_config = PostgreSQLOpRetryConfig(
+            enable_retry=_orc.enable_retry if _orc.enable_retry is not None else _settings.op_enable_retry,
+            max_retries=_orc.max_retries if _orc.max_retries is not None else _settings.op_max_retries,
+            initial_retry_delay=(
+                _orc.initial_retry_delay if _orc.initial_retry_delay is not None else _settings.op_initial_retry_delay
+            ),
+            max_retry_delay=_orc.max_retry_delay if _orc.max_retry_delay is not None else _settings.op_max_retry_delay,
+            jitter=_orc.jitter if _orc.jitter is not None else _settings.op_jitter,
         )
 
         self.logger = logger if logger is not None else _logger
@@ -147,7 +169,8 @@ class PostgreSQL(BaseConnection):
             expire_on_commit=self._session_config.expire_on_commit,
             sync_driver=self.sync_driver,
             async_driver=self.async_driver,
-            retry_config=_retry_policy,
+            conn_retry_config=self._conn_retry_config,
+            op_retry_config=self._op_retry_config,
             logger=self.logger,
         )
 
@@ -177,8 +200,11 @@ class PostgreSQL(BaseConnection):
     def get_session_info(self) -> PostgreSQLSessionConfig:
         return self._session_config
 
-    def get_retry_info(self) -> PostgreSQLRetryConfig:
-        return self._retry_config
+    def get_conn_retry_info(self) -> PostgreSQLConnRetryConfig:
+        return self._conn_retry_config
+
+    def get_op_retry_info(self) -> PostgreSQLOpRetryConfig:
+        return self._op_retry_config
 
     def get_ssl_info(self) -> PostgreSQLSSLConfig:
         return self._ssl_config
@@ -211,12 +237,12 @@ class PostgreSQL(BaseConnection):
         sync_connect_args = {}
         sync_engine_args = {}
 
-        if "psycopg2" in self.sync_driver:
+        if "psycopg" in self.sync_driver:
             sync_connect_args["connect_timeout"] = self._pool_config.connection_timeout
             if self._session_config.autocommit:
                 sync_engine_args["isolation_level"] = "AUTOCOMMIT"
-            if self._connection_config.db_schema and self._connection_config.db_schema != "public":
-                sync_connect_args["options"] = f"-c search_path={self._connection_config.db_schema}"
+            if self._connection_config.schema and self._connection_config.schema != "public":
+                sync_connect_args["options"] = f"-c search_path={self._connection_config.schema}"
             if self._ssl_config.ssl_mode and self._ssl_config.ssl_mode != "disable":
                 sync_connect_args["sslmode"] = self._ssl_config.ssl_mode
                 if self._ssl_config.ssl_ca_cert_path:
@@ -245,8 +271,8 @@ class PostgreSQL(BaseConnection):
             async_connect_args["command_timeout"] = self._pool_config.connection_timeout
             if self._session_config.autocommit:
                 async_engine_args["isolation_level"] = "AUTOCOMMIT"
-            if self._connection_config.db_schema and self._connection_config.db_schema != "public":
-                async_connect_args["server_settings"] = {"search_path": self._connection_config.db_schema}
+            if self._connection_config.schema and self._connection_config.schema != "public":
+                async_connect_args["server_settings"] = {"search_path": self._connection_config.schema}
             if self._ssl_config.ssl_mode and self._ssl_config.ssl_mode != "disable":
                 async_connect_args["ssl"] = self._ssl_config.ssl_mode
 

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from .configs import BaseOperationRetryConfig
 from .exceptions import (
     DBDeleteAllDataException,
     DBExecuteException,
@@ -8,12 +9,16 @@ from .exceptions import (
     DBInsertBulkException,
     DBInsertSingleException,
 )
-from .retry import RetryPolicy, retry_operation, retry_operation_async
+from .retry import retry_operation, retry_operation_async
+import logging
 import sqlalchemy as sa
 from sqlalchemy import RowMapping
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
 from typing import Any, Callable, Sequence, TypeVar
+
+_logger = logging.getLogger(__name__)
+_logger.addHandler(logging.NullHandler())
 
 # Type variable for generic model types
 T = TypeVar('T')
@@ -22,9 +27,9 @@ T = TypeVar('T')
 class DBUtils:
     __slots__ = ('session', 'retry_config')
 
-    def __init__(self, session: Session, retry_config: RetryPolicy | None = None) -> None:
+    def __init__(self, session: Session, retry_config: BaseOperationRetryConfig | None = None) -> None:
         self.session = session
-        self.retry_config = retry_config or RetryPolicy()
+        self.retry_config = retry_config or BaseOperationRetryConfig()
 
     def _execute_with_retry(self, operation: Callable[[], T], operation_name: str) -> T:
         """Execute an operation with retry logic if enabled."""
@@ -46,6 +51,7 @@ class DBUtils:
                 return list(result)
         except Exception as e:
             self.session.rollback()
+            _logger.error(f"fetchall failed: {e}")
             raise DBFetchAllException(e) from e
 
     def fetchall(self, stmt: Any, as_dict: bool = False) -> list[RowMapping] | list[dict]:
@@ -72,6 +78,7 @@ class DBUtils:
             return str(result[0]) if result else None
         except Exception as e:
             self.session.rollback()
+            _logger.error(f"fetchvalue failed: {e}")
             raise DBFetchValueException(e) from e
 
     def fetchvalue(self, stmt: Any) -> str | None:
@@ -97,6 +104,7 @@ class DBUtils:
             return stmt
         except Exception as e:
             self.session.rollback()
+            _logger.error(f"insert failed: {e}")
             raise DBInsertSingleException(e) from e
 
     def insert(self, stmt: Any) -> Any:
@@ -126,6 +134,7 @@ class DBUtils:
             self.session.commit()
         except Exception as e:
             self.session.rollback()
+            _logger.error(f"insertbulk failed: {e}")
             raise DBInsertBulkException(e) from e
 
     def insertbulk(self, model: type[T], list_data: Sequence[dict[str, Any]], batch_size: int = 1000) -> None:
@@ -151,6 +160,7 @@ class DBUtils:
             self.session.commit()
         except Exception as e:
             self.session.rollback()
+            _logger.error(f"deleteall failed: {e}")
             raise DBDeleteAllDataException(e) from e
 
     def deleteall(self, model: type[T]) -> None:
@@ -173,6 +183,7 @@ class DBUtils:
             self.session.commit()
         except Exception as e:
             self.session.rollback()
+            _logger.error(f"execute failed: {e}")
             raise DBExecuteException(e) from e
 
     def execute(self, stmt: Any) -> None:
@@ -191,9 +202,9 @@ class DBUtils:
 class DBUtilsAsync:
     __slots__ = ('session', 'retry_config')
 
-    def __init__(self, session: AsyncSession, retry_config: RetryPolicy | None = None) -> None:
+    def __init__(self, session: AsyncSession, retry_config: BaseOperationRetryConfig | None = None) -> None:
         self.session = session
-        self.retry_config = retry_config or RetryPolicy()
+        self.retry_config = retry_config or BaseOperationRetryConfig()
 
     async def _execute_with_retry(self, operation: Callable[[], Any], operation_name: str) -> Any:
         """Execute an async operation with retry logic if enabled."""
@@ -215,6 +226,7 @@ class DBUtilsAsync:
                 return list(result)
         except Exception as e:
             await self.session.rollback()
+            _logger.error(f"async fetchall failed: {e}")
             raise DBFetchAllException(e) from e
 
     async def fetchall(self, stmt: Any, as_dict: bool = False) -> list[RowMapping] | list[dict]:
@@ -241,6 +253,7 @@ class DBUtilsAsync:
             return str(result[0]) if result else None
         except Exception as e:
             await self.session.rollback()
+            _logger.error(f"async fetchvalue failed: {e}")
             raise DBFetchValueException(e) from e
 
     async def fetchvalue(self, stmt: Any) -> str | None:
@@ -266,6 +279,7 @@ class DBUtilsAsync:
             return stmt
         except Exception as e:
             await self.session.rollback()
+            _logger.error(f"async insert failed: {e}")
             raise DBInsertSingleException(e) from e
 
     async def insert(self, stmt: Any) -> Any:
@@ -301,6 +315,7 @@ class DBUtilsAsync:
             await self.session.commit()
         except Exception as e:
             await self.session.rollback()
+            _logger.error(f"async insertbulk failed: {e}")
             raise DBInsertBulkException(e) from e
 
     async def insertbulk(self, model: type[T], list_data: Sequence[dict[str, Any]], batch_size: int = 1000) -> None:
@@ -327,6 +342,7 @@ class DBUtilsAsync:
             await self.session.commit()
         except Exception as e:
             await self.session.rollback()
+            _logger.error(f"async deleteall failed: {e}")
             raise DBDeleteAllDataException(e) from e
 
     async def deleteall(self, model: type[T]) -> None:
@@ -349,6 +365,7 @@ class DBUtilsAsync:
             await self.session.commit()
         except Exception as e:
             await self.session.rollback()
+            _logger.error(f"async execute failed: {e}")
             raise DBExecuteException(e) from e
 
     async def execute(self, stmt: Any) -> None:

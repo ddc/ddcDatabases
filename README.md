@@ -24,7 +24,7 @@
     <a href="https://actions-badge.atrox.dev/ddc/ddcDatabases/goto?ref=main"><img src="https://img.shields.io/endpoint.svg?url=https%3A//actions-badge.atrox.dev/ddc/ddcDatabases/badge?ref=main&label=build&logo=none&style=plastic" alt="Build Status"/></a>
 </p>
 
-<p align="center">A Python library for database connections and ORM queries with support for multiple database engines including SQLite, PostgreSQL, MySQL, MSSQL, Oracle, and MongoDB</p>
+<p align="center">A Python library for database connections and ORM queries with support for multiple database engines including SQLite, PostgreSQL, MySQL, MariaDB, MSSQL, Oracle, and MongoDB</p>
 
 
 # Table of Contents
@@ -49,8 +49,8 @@
   - [Available Methods](#available-methods)
 - [Logging](#logging)
 - [Development](#development)
-  - [Building DEV Environment and Running Tests](#building-dev-environment-and-running-tests)
-  - [Building the wheel from Source](#building-wheel-from-source)
+  - [Create DEV Environment, Running Tests and Building Wheel](#create-dev-environment-running-tests-and-building-wheel)
+  - [Optionals](#optionals)
 - [License](#license)
 - [Support](#support)
 
@@ -78,12 +78,15 @@
 
 Database classes use structured configuration dataclasses instead of flat keyword arguments:
 
-| Class                        | Purpose                         | Fields                                                                  |
-|------------------------------|---------------------------------|-------------------------------------------------------------------------|
-| `PoolConfig`                 | Connection pool settings        | `pool_size`, `max_overflow`, `pool_recycle`, `connection_timeout`       |
-| `SessionConfig`              | SQLAlchemy session settings     | `echo`, `autoflush`, `expire_on_commit`, `autocommit`                   |
-| `RetryConfig`                | Connection-level retry settings | `enable_retry`, `max_retries`, `initial_retry_delay`, `max_retry_delay` |
-| `PersistentConnectionConfig` | Persistent connection settings  | `idle_timeout`, `health_check_interval`, `auto_reconnect`               |
+| Class                        | Purpose                         | Fields                                                                              |
+|------------------------------|---------------------------------|-------------------------------------------------------------------------------------|
+| `{DB}PoolConfig`             | Connection pool settings        | `pool_size`, `max_overflow`, `pool_recycle`, `connection_timeout`                   |
+| `{DB}SessionConfig`          | SQLAlchemy session settings     | `echo`, `autoflush`, `expire_on_commit`, `autocommit`                               |
+| `{DB}ConnRetryConfig`        | Connection-level retry settings | `enable_retry`, `max_retries`, `initial_retry_delay`, `max_retry_delay`             |
+| `{DB}OpRetryConfig`          | Operation-level retry settings  | `enable_retry`, `max_retries`, `initial_retry_delay`, `max_retry_delay`, `jitter`   |
+| `PersistentConnectionConfig` | Persistent connection settings  | `idle_timeout`, `health_check_interval`, `auto_reconnect`                           |
+
+**Note:** Replace `{DB}` with the database prefix: `PostgreSQL`, `MySQL`, `MSSQL`, `Oracle`, `MongoDB`, or `Sqlite`.
 
 **Database-specific SSL/TLS configs:**
 
@@ -108,10 +111,10 @@ Retry with exponential backoff is enabled by default at two levels:
 
 **1. Connection Level** - Retries when establishing database connections:
 ```python
-from ddcDatabases import PostgreSQL, RetryConfig
+from ddcDatabases import PostgreSQL, PostgreSQLConnRetryConfig
 
 with PostgreSQL(
-    retry_config=RetryConfig(
+    conn_retry_config=PostgreSQLConnRetryConfig(
         enable_retry=True,           # Enable/disable retry (default: True)
         max_retries=3,               # Maximum retry attempts (default: 3)
         initial_retry_delay=1.0,     # Initial delay in seconds (default: 1.0)
@@ -124,20 +127,18 @@ with PostgreSQL(
 
 **2. Operation Level** - Retries individual database operations (fetchall, insert, etc.):
 ```python
-from ddcDatabases import DBUtils, PostgreSQL
-from ddcDatabases.core.retry import RetryPolicy
+from ddcDatabases import DBUtils, PostgreSQL, PostgreSQLOpRetryConfig
 
-with PostgreSQL() as session:
-    # Custom retry policy for operations
-    retry_policy = RetryPolicy(
-        enable_retry=True,       # Enable/disable (default: True)
-        max_retries=3,           # Max attempts (default: 3)
-        initial_delay=1.0,       # Initial delay in seconds (default: 1.0)
-        max_delay=30.0,          # Max delay in seconds (default: 30.0)
-        jitter=0.1,              # Randomization factor (default: 0.1)
-    )
-    db_utils = DBUtils(session, retry_config=retry_policy)
-
+with PostgreSQL(
+    op_retry_config=PostgreSQLOpRetryConfig(
+        enable_retry=True,            # Enable/disable (default: True)
+        max_retries=3,                # Max attempts (default: 3)
+        initial_retry_delay=1.0,      # Initial delay in seconds (default: 1.0)
+        max_retry_delay=30.0,         # Max delay in seconds (default: 30.0)
+        jitter=0.1,                   # Randomization factor (default: 0.1)
+    ),
+) as session:
+    db_utils = DBUtils(session)
     # Operations will retry on connection errors
     results = db_utils.fetchall(stmt)
 ```
@@ -201,7 +202,7 @@ close_all_persistent_connections()
 **Available Persistent Connection Classes:**
 
 - `PostgreSQLPersistent` - PostgreSQL (sync/async)
-- `MySQLPersistent` - MySQL/MariaDB (sync/async)
+- `MySQLPersistent` / `MariaDBPersistent` - MySQL/MariaDB (sync/async)
 - `MSSQLPersistent` - MSSQL (sync/async)
 - `OraclePersistent` - Oracle (sync only)
 - `MongoDBPersistent` - MongoDB (sync only)
@@ -247,10 +248,10 @@ pip install "ddcDatabases[mysql,pgsql,mongodb]"
 
 - `all` - All database drivers
 - `mssql` - Microsoft SQL Server (pyodbc, aioodbc)
-- `mysql` - MySQL and MariaDB (pymysql, aiomysql)
-- `pgsql` - PostgreSQL (psycopg2-binary, asyncpg)
+- `mysql` - MySQL and MariaDB (mysqlclient, aiomysql)
+- `pgsql` - PostgreSQL (psycopg, asyncpg)
 - `oracle` - Oracle Database (oracledb)
-- `mongodb` - MongoDB (pymongo)
+- `mongodb` - MongoDB (motor)
 
 **Platform Notes:**
 
@@ -285,9 +286,7 @@ with Sqlite(filepath="data.db") as session:
 
 ```python
 import sqlalchemy as sa
-from ddcDatabases import DBUtils, MSSQL, PoolConfig, SessionConfig
-from ddcDatabases import MSSQLSSLConfig
-from your_models import Model
+from ddcDatabases import DBUtils, MSSQL, MSSQLPoolConfig, MSSQLSessionConfig, MSSQLSSLConfig
 
 with MSSQL(
     host="127.0.0.1",
@@ -296,13 +295,13 @@ with MSSQL(
     password="password",
     database="master",
     schema="dbo",
-    pool_config=PoolConfig(
+    pool_config=MSSQLPoolConfig(
         pool_size=25,
         max_overflow=50,
         pool_recycle=3600,
         connection_timeout=30,
     ),
-    session_config=SessionConfig(
+    session_config=MSSQLSessionConfig(
         echo=True,
         autoflush=True,
         expire_on_commit=True,
@@ -345,9 +344,7 @@ asyncio.run(main())
 
 ```python
 import sqlalchemy as sa
-from ddcDatabases import DBUtils, PostgreSQL, PoolConfig, SessionConfig
-from ddcDatabases import PostgreSQLSSLConfig
-from your_models import Model
+from ddcDatabases import DBUtils, PostgreSQL, PostgreSQLPoolConfig, PostgreSQLSessionConfig, PostgreSQLSSLConfig
 
 with PostgreSQL(
     host="127.0.0.1",
@@ -355,14 +352,14 @@ with PostgreSQL(
     user="postgres",
     password="postgres",
     database="postgres",
-    db_schema="public",
-    pool_config=PoolConfig(
+    schema="public",
+    pool_config=PostgreSQLPoolConfig(
         pool_size=25,
         max_overflow=50,
         pool_recycle=3600,
         connection_timeout=30,
     ),
-    session_config=SessionConfig(
+    session_config=PostgreSQLSessionConfig(
         echo=True,
         autoflush=False,
         expire_on_commit=False,
@@ -403,14 +400,19 @@ asyncio.run(main())
 
 ## MySQL/MariaDB
 
-The MySQL class is fully compatible with both MySQL and MariaDB databases.
+The MySQL class is fully compatible with both MySQL and MariaDB databases. For convenience, MariaDB aliases are also available:
+
+```python
+# Both imports are equivalent
+from ddcDatabases import MySQL, MySQLPoolConfig, MySQLSessionConfig
+from ddcDatabases import MariaDB, MariaDBPoolConfig, MariaDBSessionConfig  # Aliases
+```
 
 **Synchronous Example:**
 
 ```python
 import sqlalchemy as sa
-from ddcDatabases import DBUtils, MySQL, PoolConfig, SessionConfig
-from ddcDatabases import MySQLSSLConfig
+from ddcDatabases import DBUtils, MySQL, MySQLPoolConfig, MySQLSessionConfig, MySQLSSLConfig
 
 with MySQL(
     host="127.0.0.1",
@@ -418,13 +420,13 @@ with MySQL(
     user="root",
     password="root",
     database="dev",
-    pool_config=PoolConfig(
+    pool_config=MySQLPoolConfig(
         pool_size=25,
         max_overflow=50,
         pool_recycle=3600,
         connection_timeout=30,
     ),
-    session_config=SessionConfig(
+    session_config=MySQLSessionConfig(
         echo=True,
         autoflush=False,
         expire_on_commit=False,
@@ -468,8 +470,7 @@ asyncio.run(main())
 
 ```python
 import sqlalchemy as sa
-from ddcDatabases import DBUtils, Oracle, PoolConfig, SessionConfig
-from ddcDatabases import OracleSSLConfig
+from ddcDatabases import DBUtils, Oracle, OraclePoolConfig, OracleSessionConfig, OracleSSLConfig
 
 with Oracle(
     host="127.0.0.1",
@@ -477,13 +478,13 @@ with Oracle(
     user="system",
     password="oracle",
     servicename="xe",
-    pool_config=PoolConfig(
+    pool_config=OraclePoolConfig(
         pool_size=25,
         max_overflow=50,
         pool_recycle=3600,
         connection_timeout=30,
     ),
-    session_config=SessionConfig(
+    session_config=OracleSessionConfig(
         echo=False,
         autoflush=False,
         expire_on_commit=False,
@@ -576,29 +577,26 @@ The `DBUtils` and `DBUtilsAsync` classes provide convenient methods for common d
 ## Available Methods
 
 ```python
-from ddcDatabases import DBUtils, DBUtilsAsync
-from ddcDatabases.core.retry import RetryPolicy
+from ddcDatabases import DBUtils, DBUtilsAsync, PostgreSQL
 
-# Synchronous utilities (retry enabled by default)
-db_utils = DBUtils(session)
-results = db_utils.fetchall(stmt)           # Returns list of RowMapping objects
-results = db_utils.fetchall(stmt, as_dict=True)  # Returns list of dictionaries
-value = db_utils.fetchvalue(stmt)           # Returns single value as string
-db_utils.insert(model_instance)             # Insert into model table
-db_utils.deleteall(Model)                   # Delete all records from model
-db_utils.insertbulk(Model, data_list)       # Bulk insert from list of dictionaries
-db_utils.execute(stmt)                      # Execute any SQLAlchemy statement
-
-# With custom retry policy
-db_utils = DBUtils(session, retry_config=RetryPolicy(max_retries=5))
-
-# Disable retry for specific operations
-db_utils = DBUtils(session, retry_config=RetryPolicy(enable_retry=False))
+# Synchronous utilities
+with PostgreSQL() as session:
+    db_utils = DBUtils(session)
+    results = db_utils.fetchall(stmt)                # Returns list of RowMapping objects
+    results = db_utils.fetchall(stmt, as_dict=True)  # Returns list of dictionaries
+    value = db_utils.fetchvalue(stmt)                # Returns single value as string
+    db_utils.insert(model_instance)                  # Insert into model table
+    db_utils.deleteall(Model)                        # Delete all records from model
+    db_utils.insertbulk(Model, data_list)            # Bulk insert from list of dictionaries
+    db_utils.execute(stmt)                           # Execute any SQLAlchemy statement
 
 # Asynchronous utilities (similar interface with await)
-db_utils_async = DBUtilsAsync(session)
-results = await db_utils_async.fetchall(stmt)
+async with PostgreSQL() as session:
+    db_utils_async = DBUtilsAsync(session)
+    results = await db_utils_async.fetchall(stmt)
 ```
+
+**Note:** Retry logic is configured at the database connection level using `op_retry_config` (see [Retry Logic](#retry-logic) section).
 
 
 # Logging
@@ -631,24 +629,26 @@ logging.getLogger("ddcDatabases").addHandler(logging.StreamHandler())
 
 # Development
 
-Must have [UV](https://uv.run/docs/getting-started/installation), 
-[Black](https://black.readthedocs.io/en/stable/getting_started.html), and 
-[Ruff](https://docs.astral.sh/ruff/installation/) installed.
+Must have [UV](https://uv.run/docs/getting-started/installation),
+[Black](https://black.readthedocs.io/en/stable/getting_started.html),
+[Ruff](https://docs.astral.sh/ruff/installation/), and
+[Poe the Poet](https://poethepoet.naber.dev/installation) installed.
 
-## Building DEV Environment and Running Tests
+## Create DEV Environment, Running Tests and Building Wheel
 
 ```shell
-uv venv
 uv sync --all-extras
 poe linter
 poe test
 poe test-integration
+poe build
 ```
 
-## Building wheel from Source
+## Optionals
 
 ```shell
-poe build
+poe profile (create a cprofile_unit.prof file from unit tests)
+poe profile-integration (create a cprofile_integration.prof file from integration tests)
 ```
 
 

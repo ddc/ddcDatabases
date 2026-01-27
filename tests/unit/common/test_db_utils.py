@@ -1,4 +1,5 @@
 from contextlib import asynccontextmanager, contextmanager
+from importlib.util import find_spec
 import pytest
 import sqlalchemy as sa
 from sqlalchemy import Boolean, Column, Integer, String
@@ -9,13 +10,7 @@ from sqlalchemy.orm import declarative_base
 from typing import AsyncGenerator, Generator
 from unittest.mock import AsyncMock, MagicMock, patch
 
-try:
-    import asyncpg
-    import psycopg2
-
-    POSTGRESQL_AVAILABLE = True
-except ImportError:
-    POSTGRESQL_AVAILABLE = False
+POSTGRESQL_AVAILABLE = find_spec("asyncpg") is not None and find_spec("psycopg") is not None
 
 
 Base = declarative_base()
@@ -34,7 +29,14 @@ class ConcreteTestConnection:
 
     @staticmethod
     def create_test_connection(
-        connection_url, engine_args, autoflush, expire_on_commit, sync_driver, async_driver, retry_config=None
+        connection_url,
+        engine_args,
+        autoflush,
+        expire_on_commit,
+        sync_driver,
+        async_driver,
+        conn_retry_config=None,
+        op_retry_config=None,
     ):
         """Create a concrete test implementation of BaseConnection"""
         from ddcDatabases.core.base import BaseConnection
@@ -80,7 +82,8 @@ class ConcreteTestConnection:
             expire_on_commit=expire_on_commit,
             sync_driver=sync_driver,
             async_driver=async_driver,
-            retry_config=retry_config,
+            conn_retry_config=conn_retry_config,
+            op_retry_config=op_retry_config,
         )
 
 
@@ -107,7 +110,7 @@ class TestBaseConnection:
             engine_args=engine_args,
             autoflush=True,
             expire_on_commit=False,
-            sync_driver="postgresql+psycopg2",
+            sync_driver="postgresql+psycopg",
             async_driver="postgresql+asyncpg",
         )
 
@@ -115,13 +118,14 @@ class TestBaseConnection:
         assert conn.engine_args == engine_args
         assert conn.autoflush == True
         assert conn.expire_on_commit == False
-        assert conn.sync_driver == "postgresql+psycopg2"
+        assert conn.sync_driver == "postgresql+psycopg"
         assert conn.async_driver == "postgresql+asyncpg"
         assert conn.is_connected == False
         assert conn.session is None
 
     @pytest.mark.skipif(not POSTGRESQL_AVAILABLE, reason="PostgreSQL drivers not available")
-    def test_get_engine(self):
+    @patch('sqlalchemy.engine.create_engine')
+    def test_get_engine(self, mock_create_engine):
         """Test _get_engine context manager"""
         connection_url = {
             "host": "localhost",
@@ -129,19 +133,23 @@ class TestBaseConnection:
         }
         engine_args = {"echo": True}
 
+        mock_engine = MagicMock()
+        mock_create_engine.return_value = mock_engine
+
         conn = ConcreteTestConnection.create_test_connection(
             connection_url=connection_url,
             engine_args=engine_args,
             autoflush=True,
             expire_on_commit=False,
-            sync_driver="postgresql+psycopg2",
+            sync_driver="postgresql+psycopg",
             async_driver="postgresql+asyncpg",
         )
 
         with conn._get_engine() as engine:
-            # Our concrete implementation creates real engines
-            assert engine is not None
-            assert hasattr(engine, 'dispose')  # Should be a real SQLAlchemy engine
+            assert engine is mock_engine
+            mock_create_engine.assert_called_once()
+
+        mock_engine.dispose.assert_called_once()
 
     def test_test_connection_sync_non_oracle(self):
         """Test connection test for non-Oracle database"""
@@ -636,7 +644,7 @@ class TestBaseConnectionContextManagers:
 
     def test_sync_context_manager(self):
         """Test sync context manager __enter__ and __exit__ methods"""
-        from ddcDatabases.core.retry import RetryPolicy as RetryConfig
+        from ddcDatabases.core.configs import BaseRetryConfig
 
         connection_url = {"host": "localhost", "database": "test"}
         engine_args = {"echo": False}
@@ -646,25 +654,36 @@ class TestBaseConnectionContextManagers:
             engine_args=engine_args,
             autoflush=True,
             expire_on_commit=False,
-            sync_driver="postgresql+psycopg2",
+            sync_driver="postgresql+psycopg",
             async_driver=None,
-            retry_config=RetryConfig(enable_retry=False),
+            conn_retry_config=BaseRetryConfig(enable_retry=False),
         )
 
-        # Test the context manager functionality
-        # Note: Our concrete implementation uses real engines, so we'll test the actual behavior
-        try:
+        mock_session = MagicMock()
+        mock_engine = MagicMock()
+
+        with (
+            patch.object(conn, '_get_engine') as mock_get_engine,
+            patch('ddcDatabases.core.base.sessionmaker') as mock_sessionmaker,
+            patch.object(conn, '_test_connection_sync') as mock_test_conn,
+        ):
+            mock_get_engine.return_value.__enter__.return_value = mock_engine
+            mock_get_engine.return_value.__exit__.return_value = None
+
+            mock_session_maker = MagicMock()
+            mock_session_maker.begin.return_value.__enter__.return_value = mock_session
+            mock_session_maker.begin.return_value.__exit__.return_value = None
+            mock_sessionmaker.return_value = mock_session_maker
+
             with conn as session:
-                assert session is not None
+                assert session is mock_session
                 assert conn.is_connected == True
-                # Session should be a real SQLAlchemy session
-                assert hasattr(session, 'execute')
+                mock_test_conn.assert_called_once_with(mock_session)
 
             # After exiting context, connection should be cleaned up
             assert conn.is_connected == False
-        except Exception:
-            # It's ok if the connection fails (no real database), we're testing the structure
-            pass
+            mock_session.close.assert_called_once()
+            mock_engine.dispose.assert_called_once()
 
     @pytest.mark.asyncio
     async def test_async_context_manager(self):
@@ -710,27 +729,29 @@ class TestBaseConnectionContextManagers:
             mock_engine.dispose.assert_called_once()
 
     @pytest.mark.skipif(not POSTGRESQL_AVAILABLE, reason="PostgreSQL drivers not available")
-    def test_get_engine_context_manager(self):
+    @patch('sqlalchemy.engine.create_engine')
+    def test_get_engine_context_manager(self, mock_create_engine):
         """Test _get_engine context manager - Lines 86-102"""
         connection_url = {"host": "localhost", "database": "test"}
         engine_args = {"echo": True, "pool_size": 5}
+
+        mock_engine = MagicMock()
+        mock_create_engine.return_value = mock_engine
 
         conn = ConcreteTestConnection.create_test_connection(
             connection_url=connection_url,
             engine_args=engine_args,
             autoflush=True,
             expire_on_commit=False,
-            sync_driver="postgresql+psycopg2",
+            sync_driver="postgresql+psycopg",
             async_driver=None,
         )
 
-        # Test the actual _get_engine method with real engine creation
         with conn._get_engine() as engine:
-            # Our concrete implementation creates real engines
-            assert engine is not None
-            # Check that the engine has the expected configuration
-            assert hasattr(engine, 'dispose')  # Engine should have dispose method
-            assert hasattr(engine, 'url')  # Should have URL attribute
+            assert engine is mock_engine
+            mock_create_engine.assert_called_once()
+
+        mock_engine.dispose.assert_called_once()
 
     @pytest.mark.asyncio
     @pytest.mark.skipif(not POSTGRESQL_AVAILABLE, reason="PostgreSQL drivers not available")
@@ -753,7 +774,7 @@ class TestBaseConnectionContextManagers:
             # Our concrete implementation creates real engines
             assert engine is not None
             # Check that the engine has the expected configuration
-            assert hasattr(engine, 'dispose')  # Engine should have dispose method
+            assert hasattr(engine, 'dispose')  # Engine should have disposed method
             assert hasattr(engine, 'url')  # Should have URL attribute
 
     def test_test_connection_sync_method(self):
@@ -765,7 +786,7 @@ class TestBaseConnectionContextManagers:
             engine_args={},
             autoflush=True,
             expire_on_commit=False,
-            sync_driver="postgresql+psycopg2",
+            sync_driver="postgresql+psycopg",
             async_driver=None,
         )
 

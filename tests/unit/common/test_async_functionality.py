@@ -1,5 +1,6 @@
 import asyncio
 from contextlib import asynccontextmanager, contextmanager
+from importlib.util import find_spec
 import pytest
 import sqlalchemy as sa
 from sqlalchemy import Boolean, Column, Integer, String
@@ -9,13 +10,7 @@ from sqlalchemy.orm import declarative_base
 from typing import AsyncGenerator, Generator
 from unittest.mock import AsyncMock, MagicMock, patch
 
-try:
-    import asyncpg
-    import psycopg2
-
-    POSTGRESQL_AVAILABLE = True
-except ImportError:
-    POSTGRESQL_AVAILABLE = False
+POSTGRESQL_AVAILABLE = find_spec("asyncpg") is not None and find_spec("psycopg") is not None
 
 
 Base = declarative_base()
@@ -101,7 +96,7 @@ class TestAsyncBaseConnection:
             engine_args=engine_args,
             autoflush=True,
             expire_on_commit=False,
-            sync_driver="postgresql+psycopg2",
+            sync_driver="postgresql+psycopg",
             async_driver="postgresql+asyncpg",
         )
 
@@ -139,7 +134,7 @@ class TestAsyncBaseConnection:
             engine_args=engine_args,
             autoflush=True,
             expire_on_commit=False,
-            sync_driver="postgresql+psycopg2",
+            sync_driver="postgresql+psycopg",
             async_driver="postgresql+asyncpg",
         )
 
@@ -170,7 +165,7 @@ class TestAsyncBaseConnection:
             engine_args=engine_args,
             autoflush=True,
             expire_on_commit=False,
-            sync_driver="postgresql+psycopg2",
+            sync_driver="postgresql+psycopg",
             async_driver="postgresql+asyncpg",
         )
 
@@ -178,7 +173,7 @@ class TestAsyncBaseConnection:
         async with conn._get_async_engine() as engine:
             # Our concrete implementation creates real engines
             assert engine is not None
-            assert hasattr(engine, 'dispose')  # Engine should have dispose method
+            assert hasattr(engine, 'dispose')  # Engine should have disposed method
             assert hasattr(engine, 'url')  # Should have URL attribute
 
 
@@ -504,7 +499,7 @@ class TestAsyncCompatibility:
         """Test that async methods have correct signatures"""
         import inspect
 
-        db_utils = self.DBUtilsAsync(None)
+        db_utils = self.DBUtilsAsync(MagicMock())
 
         # Check that all main methods are coroutines
         assert inspect.iscoroutinefunction(db_utils.fetchall)

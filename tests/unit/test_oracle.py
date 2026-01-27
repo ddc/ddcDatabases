@@ -7,6 +7,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 class TestOracle:
     """Test Oracle database connection class"""
 
+    # noinspection PyMethodMayBeStatic
     def _create_mock_settings(self, **overrides):
         """Create mock settings with all required fields"""
         mock_settings = MagicMock()
@@ -293,3 +294,80 @@ class TestOracle:
         assert oracle._ssl_config.ssl_enabled == False
         assert oracle._ssl_config.ssl_wallet_path is None
         assert "wallet_location" not in oracle.engine_args["connect_args"]
+
+    @patch('ddcDatabases.oracle.get_oracle_settings')
+    def test_get_connection_info(self, mock_get_settings):
+        """Test get_connection_info returns connection config"""
+        mock_get_settings.return_value = self._create_mock_settings()
+        oracle = Oracle()
+
+        conn_info = oracle.get_connection_info()
+
+        assert conn_info is oracle._connection_config
+        assert isinstance(conn_info, OracleConnectionConfig)
+        assert conn_info.host == "localhost"
+        assert conn_info.port == 1521
+
+    @patch('ddcDatabases.oracle.get_oracle_settings')
+    def test_get_pool_info(self, mock_get_settings):
+        """Test get_pool_info returns pool config"""
+        mock_get_settings.return_value = self._create_mock_settings()
+        oracle = Oracle(pool_config=OraclePoolConfig(pool_size=20, max_overflow=40))
+
+        pool_info = oracle.get_pool_info()
+
+        assert pool_info is oracle._pool_config
+        assert isinstance(pool_info, OraclePoolConfig)
+        assert pool_info.pool_size == 20
+        assert pool_info.max_overflow == 40
+
+    @patch('ddcDatabases.oracle.get_oracle_settings')
+    def test_get_session_info(self, mock_get_settings):
+        """Test get_session_info returns session config"""
+        mock_get_settings.return_value = self._create_mock_settings()
+        oracle = Oracle(session_config=OracleSessionConfig(echo=True, autoflush=False))
+
+        session_info = oracle.get_session_info()
+
+        assert session_info is oracle._session_config
+        assert isinstance(session_info, OracleSessionConfig)
+        assert session_info.echo == True
+        assert session_info.autoflush == False
+
+    @patch('ddcDatabases.oracle.get_oracle_settings')
+    def test_get_conn_retry_info(self, mock_get_settings):
+        """Test get_conn_retry_info returns connection retry config"""
+        mock_get_settings.return_value = self._create_mock_settings()
+        oracle = Oracle()
+
+        conn_retry_info = oracle.get_conn_retry_info()
+
+        assert conn_retry_info is oracle._conn_retry_config
+        assert hasattr(conn_retry_info, 'enable_retry')
+        assert hasattr(conn_retry_info, 'max_retries')
+
+    @patch('ddcDatabases.oracle.get_oracle_settings')
+    def test_get_op_retry_info(self, mock_get_settings):
+        """Test get_op_retry_info returns operation retry config"""
+        mock_get_settings.return_value = self._create_mock_settings()
+        oracle = Oracle()
+
+        op_retry_info = oracle.get_op_retry_info()
+
+        assert op_retry_info is oracle._op_retry_config
+        assert hasattr(op_retry_info, 'enable_retry')
+        assert hasattr(op_retry_info, 'max_retries')
+        assert hasattr(op_retry_info, 'jitter')
+
+    @patch('ddcDatabases.oracle.get_oracle_settings')
+    def test_get_ssl_info(self, mock_get_settings):
+        """Test get_ssl_info returns SSL config"""
+        mock_get_settings.return_value = self._create_mock_settings()
+        oracle = Oracle(ssl_config=OracleSSLConfig(ssl_enabled=True, ssl_wallet_path="/path/to/wallet"))
+
+        ssl_info = oracle.get_ssl_info()
+
+        assert ssl_info is oracle._ssl_config
+        assert isinstance(ssl_info, OracleSSLConfig)
+        assert ssl_info.ssl_enabled == True
+        assert ssl_info.ssl_wallet_path == "/path/to/wallet"
