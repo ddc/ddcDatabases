@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "ddcDatabases"
-version = "3.0.6"
+version = "3.0.7"
 description = "Simplified database ORM connections with support for multiple database engines"
 license = {text = "MIT"}
 readme = "README.md"
@@ -45,11 +45,11 @@ Homepage = "https://pypi.org/project/ddcDatabases"
 Repository = "https://github.com/ddc/ddcDatabases"
 
 [project.optional-dependencies]
-mongodb = ["pymongo>=4.16.0"]
+mongodb = ["motor>=3.7.1"]
 mssql = ["pyodbc>=5.3.0", "aioodbc>=0.5.0"]
-mysql = ["pymysql>=1.1.2", "aiomysql>=0.3.2"]
+mysql = ["mysqlclient>=2.2.7", "aiomysql>=0.3.2"]
 oracle = ["oracledb>=3.4.1"]
-pgsql = ["psycopg2-binary>=2.9.11", "asyncpg>=0.31.0"]
+pgsql = ["psycopg[binary]>=3.3.2", "asyncpg>=0.31.0"]
 all = [
     "ddcDatabases[mongodb]",
     "ddcDatabases[mssql]",
@@ -59,7 +59,6 @@ all = [
 ]
 test = [
     "poethepoet>=0.40.0",
-    "pytest>=9.0.2",
     "pytest-asyncio>=1.3.0",
     "pytest-cov>=7.0.0",
 ]
@@ -79,6 +78,8 @@ packages = ["ddcDatabases"]
 build = "uv build --wheel"
 updatedev.shell = "uv lock && uv sync --all-extras"
 linter.shell = "uv run ruff check --fix --select I . && uv run black ."
+profile = "uv run python -m cProfile -o cprofile_unit.prof -m pytest tests/unit --no-cov"
+profile-integration = "uv run python -m cProfile -o cprofile_integration.prof -m pytest tests/integration --no-cov"
 test = "uv run pytest tests/unit"
 test-integration = "uv run pytest tests/integration --no-cov"
 

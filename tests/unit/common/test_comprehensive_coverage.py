@@ -181,43 +181,58 @@ class TestModuleImports:
             "close_all_persistent_connections",
             "DBUtils",
             "DBUtilsAsync",
+            # MariaDB aliases
+            "MariaDB",
+            "MariaDBConnectionConfig",
+            "MariaDBConnRetryConfig",
+            "MariaDBOpRetryConfig",
+            "MariaDBPersistent",
+            "MariaDBPoolConfig",
+            "MariaDBSessionConfig",
+            "MariaDBSSLConfig",
             "MongoDB",
             "MongoDBConnectionConfig",
+            "MongoDBConnRetryConfig",
+            "MongoDBOpRetryConfig",
             "MongoDBPersistent",
             "MongoDBQueryConfig",
-            "MongoDBRetryConfig",
             "MongoDBTLSConfig",
             "MSSQL",
             "MSSQLConnectionConfig",
+            "MSSQLConnRetryConfig",
+            "MSSQLOpRetryConfig",
             "MSSQLPersistent",
             "MSSQLPoolConfig",
-            "MSSQLRetryConfig",
             "MSSQLSessionConfig",
             "MSSQLSSLConfig",
             "MySQL",
             "MySQLConnectionConfig",
+            "MySQLConnRetryConfig",
+            "MySQLOpRetryConfig",
             "MySQLPersistent",
             "MySQLPoolConfig",
-            "MySQLRetryConfig",
             "MySQLSessionConfig",
             "MySQLSSLConfig",
             "Oracle",
             "OracleConnectionConfig",
+            "OracleConnRetryConfig",
+            "OracleOpRetryConfig",
             "OraclePersistent",
             "OraclePoolConfig",
-            "OracleRetryConfig",
             "OracleSessionConfig",
             "OracleSSLConfig",
             "PersistentConnectionConfig",
             "PostgreSQL",
             "PostgreSQLConnectionConfig",
+            "PostgreSQLConnRetryConfig",
+            "PostgreSQLOpRetryConfig",
             "PostgreSQLPersistent",
             "PostgreSQLPoolConfig",
-            "PostgreSQLRetryConfig",
             "PostgreSQLSessionConfig",
             "PostgreSQLSSLConfig",
             "Sqlite",
-            "SqliteRetryConfig",
+            "SqliteConnRetryConfig",
+            "SqliteOpRetryConfig",
             "SqliteSessionConfig",
         }
 
@@ -250,3 +265,34 @@ class TestModuleImports:
         from ddcDatabases import MongoDB
 
         assert MongoDB is not None
+
+    def test_mariadb_aliases(self):
+        """Test MariaDB aliases point to MySQL classes"""
+        from ddcDatabases import (
+            MariaDB,
+            MariaDBConnectionConfig,
+            MariaDBConnRetryConfig,
+            MariaDBOpRetryConfig,
+            MariaDBPersistent,
+            MariaDBPoolConfig,
+            MariaDBSessionConfig,
+            MariaDBSSLConfig,
+            MySQL,
+            MySQLConnectionConfig,
+            MySQLConnRetryConfig,
+            MySQLOpRetryConfig,
+            MySQLPersistent,
+            MySQLPoolConfig,
+            MySQLSessionConfig,
+            MySQLSSLConfig,
+        )
+
+        # Verify all MariaDB aliases point to their MySQL equivalents
+        assert MariaDB is MySQL
+        assert MariaDBConnectionConfig is MySQLConnectionConfig
+        assert MariaDBConnRetryConfig is MySQLConnRetryConfig
+        assert MariaDBOpRetryConfig is MySQLOpRetryConfig
+        assert MariaDBPersistent is MySQLPersistent
+        assert MariaDBPoolConfig is MySQLPoolConfig
+        assert MariaDBSessionConfig is MySQLSessionConfig
+        assert MariaDBSSLConfig is MySQLSSLConfig

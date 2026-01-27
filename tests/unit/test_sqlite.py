@@ -34,10 +34,15 @@ class TestSQLite:
         mock_settings = MagicMock()
         mock_settings.file_path = "sqlite.db"
         mock_settings.echo = False
-        mock_settings.enable_retry = False
-        mock_settings.max_retries = 1
-        mock_settings.initial_retry_delay = 1.0
-        mock_settings.max_retry_delay = 30.0
+        mock_settings.conn_enable_retry = False
+        mock_settings.conn_max_retries = 1
+        mock_settings.conn_initial_retry_delay = 1.0
+        mock_settings.conn_max_retry_delay = 30.0
+        mock_settings.op_enable_retry = False
+        mock_settings.op_max_retries = 1
+        mock_settings.op_initial_retry_delay = 0.5
+        mock_settings.op_max_retry_delay = 10.0
+        mock_settings.op_jitter = 0.1
         mock_get_settings.return_value = mock_settings
 
         sqlite = self.Sqlite()
@@ -52,10 +57,15 @@ class TestSQLite:
         mock_settings = MagicMock()
         mock_settings.file_path = "default.db"
         mock_settings.echo = False
-        mock_settings.enable_retry = False
-        mock_settings.max_retries = 1
-        mock_settings.initial_retry_delay = 1.0
-        mock_settings.max_retry_delay = 30.0
+        mock_settings.conn_enable_retry = False
+        mock_settings.conn_max_retries = 1
+        mock_settings.conn_initial_retry_delay = 1.0
+        mock_settings.conn_max_retry_delay = 30.0
+        mock_settings.op_enable_retry = False
+        mock_settings.op_max_retries = 1
+        mock_settings.op_initial_retry_delay = 0.5
+        mock_settings.op_max_retry_delay = 10.0
+        mock_settings.op_jitter = 0.1
         mock_get_settings.return_value = mock_settings
 
         sqlite = self.Sqlite(

@@ -2,7 +2,6 @@ from ddcDatabases.mongodb import (
     MongoDB,
     MongoDBConnectionConfig,
     MongoDBQueryConfig,
-    MongoDBRetryConfig,
     MongoDBTLSConfig,
 )
 import pytest
@@ -59,17 +58,23 @@ class TestMongoDB:
         mock_settings.database = overrides.get('database', 'admin')
         mock_settings.batch_size = overrides.get('batch_size', 2865)
         mock_settings.limit = overrides.get('limit', 0)
-        mock_settings.sync_driver = overrides.get('sync_driver', 'mongodb')
+        mock_settings.driver = overrides.get('driver', 'mongodb')
         # TLS settings
         mock_settings.tls_enabled = overrides.get('tls_enabled', False)
         mock_settings.tls_ca_cert_path = overrides.get('tls_ca_cert_path', None)
         mock_settings.tls_cert_key_path = overrides.get('tls_cert_key_path', None)
         mock_settings.tls_allow_invalid_certificates = overrides.get('tls_allow_invalid_certificates', False)
-        # Retry settings
-        mock_settings.enable_retry = overrides.get('enable_retry', False)
-        mock_settings.max_retries = overrides.get('max_retries', 0)
-        mock_settings.initial_retry_delay = overrides.get('initial_retry_delay', 0.0)
-        mock_settings.max_retry_delay = overrides.get('max_retry_delay', 0.0)
+        # Connection retry settings
+        mock_settings.conn_enable_retry = overrides.get('conn_enable_retry', False)
+        mock_settings.conn_max_retries = overrides.get('conn_max_retries', 0)
+        mock_settings.conn_initial_retry_delay = overrides.get('conn_initial_retry_delay', 0.0)
+        mock_settings.conn_max_retry_delay = overrides.get('conn_max_retry_delay', 0.0)
+        # Operation retry settings
+        mock_settings.op_enable_retry = overrides.get('op_enable_retry', False)
+        mock_settings.op_max_retries = overrides.get('op_max_retries', 0)
+        mock_settings.op_initial_retry_delay = overrides.get('op_initial_retry_delay', 0.0)
+        mock_settings.op_max_retry_delay = overrides.get('op_max_retry_delay', 0.0)
+        mock_settings.op_jitter = overrides.get('op_jitter', 0.1)
         return mock_settings
 
     def _setup_mock_client_and_collection(self, mock_mongo_client):
@@ -178,7 +183,7 @@ class TestMongoDB:
             mongodb_self.database = None or mock_settings.database
             mongodb_self.is_connected = False
             mongodb_self.client = None
-            mongodb_self.sync_driver = mock_settings.sync_driver
+            mongodb_self.driver = mock_settings.driver
             mongodb_self.batch_size = None or mock_settings.batch_size
             mongodb_self.limit = None or mock_settings.limit
 
@@ -203,7 +208,7 @@ class TestMongoDB:
             mongodb_self.database = None or mock_settings.database
             mongodb_self.is_connected = False
             mongodb_self.client = None
-            mongodb_self.sync_driver = mock_settings.sync_driver
+            mongodb_self.driver = mock_settings.driver
             mongodb_self.batch_size = None or mock_settings.batch_size
             mongodb_self.limit = None or mock_settings.limit
 
@@ -231,7 +236,7 @@ class TestMongoDB:
             mongodb_self.is_connected = False
             mongodb_self.client = None
             mongodb_self.cursor_ref = None
-            mongodb_self.sync_driver = mock_settings.sync_driver
+            mongodb_self.driver = mock_settings.driver
             mongodb_self.batch_size = mock_settings.batch_size
             mongodb_self.limit = mock_settings.limit
             mongodb_self.logger = MagicMock()
@@ -270,7 +275,7 @@ class TestMongoDB:
             mongodb_self.is_connected = False
             mongodb_self.client = None
             mongodb_self.cursor_ref = None
-            mongodb_self.sync_driver = mock_settings.sync_driver
+            mongodb_self.driver = mock_settings.driver
             mongodb_self.batch_size = mock_settings.batch_size
             mongodb_self.limit = mock_settings.limit
 
@@ -308,7 +313,7 @@ class TestMongoDB:
             mongodb_self.is_connected = False
             mongodb_self.client = None
             mongodb_self.cursor_ref = None
-            mongodb_self.sync_driver = mock_settings.sync_driver
+            mongodb_self.driver = mock_settings.driver
             mongodb_self.batch_size = mock_settings.batch_size
             mongodb_self.limit = mock_settings.limit
 
@@ -351,7 +356,7 @@ class TestMongoDB:
             mongodb_self.is_connected = False
             mongodb_self.client = None
             mongodb_self.cursor_ref = None
-            mongodb_self.sync_driver = mock_settings.sync_driver
+            mongodb_self.driver = mock_settings.driver
             mongodb_self.batch_size = mock_settings.batch_size
             mongodb_self.limit = mock_settings.limit
 
@@ -683,14 +688,14 @@ class TestMongoDB:
     def test_connection_url_format(self):
         """Test connection URL format logic - Line 41"""
         # Test the connection URL format directly without complex mocking
-        sync_driver = "mongodb"
+        driver = "mongodb"
         user = "testuser"
         password = "testpass"
         host = "testhost"
         database = "testdb"
 
         # This is the exact format used in line 41 of mongodb.py
-        connection_url = f"{sync_driver}://{user}:{password}@{host}/{database}"
+        connection_url = f"{driver}://{user}:{password}@{host}/{database}"
         expected_url = "mongodb://testuser:testpass@testhost/testdb"
 
         assert connection_url == expected_url
@@ -703,7 +708,7 @@ class TestMongoDB:
             mongodb = MongoDB(collection="test_collection", query_config=MongoDBQueryConfig(query={"test": "value"}))
 
             # Test connection URL creation (line 41)
-            url = f"{mongodb.sync_driver}://{mongodb._connection_config.user}:{mongodb._connection_config.password}@{mongodb._connection_config.host}/{mongodb._connection_config.database}"
+            url = f"{mongodb.driver}://{mongodb._connection_config.user}:{mongodb._connection_config.password}@{mongodb._connection_config.host}/{mongodb._connection_config.database}"
             assert url == "mongodb://admin:admin@localhost/admin"  # Mock settings password is 'admin'
 
             # Test client assignment would happen (line 42)
@@ -844,9 +849,11 @@ class TestMongoDB:
         mock_client.admin.command.side_effect = PyMongoError("Connection failed")
 
         with patch('ddcDatabases.mongodb.MongoClient', return_value=mock_client):
+            from ddcDatabases.mongodb import MongoDBConnRetryConfig
+
             mongodb = MongoDB(
                 collection="test_collection",
-                retry_config=MongoDBRetryConfig(enable_retry=False),
+                conn_retry_config=MongoDBConnRetryConfig(enable_retry=False),
             )
 
             with pytest.raises(SystemExit) as exc_info:
@@ -919,14 +926,14 @@ class TestMongoDB:
         )
 
         # Verify the connection URL format with TLS params
-        base_url = f"{mongodb.sync_driver}://{mongodb._connection_config.user}:{mongodb._connection_config.password}@{mongodb._connection_config.host}/{mongodb._connection_config.database}"
+        base_url = f"{mongodb.driver}://{mongodb._connection_config.user}:{mongodb._connection_config.password}@{mongodb._connection_config.host}/{mongodb._connection_config.database}"
         expected_url = (
             base_url
             + "?tls=true&tlsCAFile=/path/to/ca.pem&tlsCertificateKeyFile=/path/to/cert.pem&tlsAllowInvalidCertificates=true"
         )
 
         # Build the URL the same way __enter__ does
-        _connection_url = f"{mongodb.sync_driver}://{mongodb._connection_config.user}:{mongodb._connection_config.password}@{mongodb._connection_config.host}/{mongodb._connection_config.database}"
+        _connection_url = f"{mongodb.driver}://{mongodb._connection_config.user}:{mongodb._connection_config.password}@{mongodb._connection_config.host}/{mongodb._connection_config.database}"
         if mongodb._tls_config.tls_enabled:
             _connection_url += "?tls=true"
             if mongodb._tls_config.tls_ca_cert_path:
@@ -937,3 +944,310 @@ class TestMongoDB:
                 _connection_url += "&tlsAllowInvalidCertificates=true"
 
         assert _connection_url == expected_url
+
+    @patch('ddcDatabases.mongodb.get_mongodb_settings')
+    def test_get_connection_info(self, mock_get_settings):
+        """Test get_connection_info returns connection config"""
+        mock_get_settings.return_value = self._create_mock_settings()
+        mongodb = MongoDB(collection="test_collection")
+
+        conn_info = mongodb.get_connection_info()
+
+        assert conn_info is mongodb._connection_config
+        assert isinstance(conn_info, MongoDBConnectionConfig)
+        assert conn_info.host == "localhost"
+        assert conn_info.collection == "test_collection"
+
+    @patch('ddcDatabases.mongodb.get_mongodb_settings')
+    def test_get_query_info(self, mock_get_settings):
+        """Test get_query_info returns query config"""
+        mock_get_settings.return_value = self._create_mock_settings()
+        mongodb = MongoDB(
+            collection="test_collection",
+            query_config=MongoDBQueryConfig(query={"status": "active"}, batch_size=500),
+        )
+
+        query_info = mongodb.get_query_info()
+
+        assert query_info is mongodb._query_config
+        assert isinstance(query_info, MongoDBQueryConfig)
+        assert query_info.query == {"status": "active"}
+        assert query_info.batch_size == 500
+
+    @patch('ddcDatabases.mongodb.get_mongodb_settings')
+    def test_get_op_retry_info(self, mock_get_settings):
+        """Test get_op_retry_info returns operation retry config"""
+        mock_get_settings.return_value = self._create_mock_settings()
+        mongodb = MongoDB(collection="test_collection")
+
+        op_retry_info = mongodb.get_op_retry_info()
+
+        assert op_retry_info is mongodb._op_retry_config
+        # Check that it has the expected attributes from BaseOperationRetryConfig
+        assert hasattr(op_retry_info, 'enable_retry')
+        assert hasattr(op_retry_info, 'max_retries')
+        assert hasattr(op_retry_info, 'initial_retry_delay')
+        assert hasattr(op_retry_info, 'max_retry_delay')
+        assert hasattr(op_retry_info, 'jitter')
+
+    @patch('ddcDatabases.mongodb.get_mongodb_settings')
+    def test_get_tls_info(self, mock_get_settings):
+        """Test get_tls_info returns TLS config"""
+        mock_get_settings.return_value = self._create_mock_settings()
+        mongodb = MongoDB(
+            collection="test_collection",
+            tls_config=MongoDBTLSConfig(tls_enabled=True, tls_ca_cert_path="/path/to/ca.pem"),
+        )
+
+        tls_info = mongodb.get_tls_info()
+
+        assert tls_info is mongodb._tls_config
+        assert isinstance(tls_info, MongoDBTLSConfig)
+        assert tls_info.tls_enabled == True
+        assert tls_info.tls_ca_cert_path == "/path/to/ca.pem"
+
+    @patch('ddcDatabases.mongodb.get_mongodb_settings')
+    def test_build_connection_url_with_tls(self, mock_get_settings):
+        """Test _build_connection_url with TLS options"""
+        mock_get_settings.return_value = self._create_mock_settings()
+        mongodb = MongoDB(
+            collection="test_collection",
+            tls_config=MongoDBTLSConfig(
+                tls_enabled=True,
+                tls_ca_cert_path="/path/to/ca.pem",
+                tls_cert_key_path="/path/to/cert.pem",
+                tls_allow_invalid_certificates=True,
+            ),
+        )
+
+        url = mongodb._build_connection_url()
+
+        assert "?tls=true" in url
+        assert "&tlsCAFile=/path/to/ca.pem" in url
+        assert "&tlsCertificateKeyFile=/path/to/cert.pem" in url
+        assert "&tlsAllowInvalidCertificates=true" in url
+
+    @patch('ddcDatabases.mongodb.get_mongodb_settings')
+    def test_build_connection_url_without_tls(self, mock_get_settings):
+        """Test _build_connection_url without TLS"""
+        mock_get_settings.return_value = self._create_mock_settings()
+        mongodb = MongoDB(collection="test_collection")
+
+        url = mongodb._build_connection_url()
+
+        assert "?tls=true" not in url
+        assert "mongodb://admin:admin@localhost/admin" == url
+
+    @patch('ddcDatabases.mongodb.get_mongodb_settings')
+    def test_test_connection_success(self, mock_get_settings):
+        """Test _test_connection logs success message"""
+        mock_get_settings.return_value = self._create_mock_settings()
+        mongodb = MongoDB(collection="test_collection")
+
+        mock_client = MagicMock()
+        mock_client.admin.command.return_value = {"ok": 1}
+        mongodb.client = mock_client
+        mongodb.logger = MagicMock()
+
+        mongodb._test_connection()
+
+        mock_client.admin.command.assert_called_once_with("ping")
+        mongodb.logger.info.assert_called_once()
+        assert "Connected to" in str(mongodb.logger.info.call_args)
+
+    @pytest.mark.asyncio
+    @patch('ddcDatabases.mongodb.get_mongodb_settings')
+    async def test_async_aenter_success(self, mock_get_settings):
+        """Test async __aenter__ method structure and _create_cursor_async"""
+        mock_get_settings.return_value = self._create_mock_settings()
+
+        mongodb = MongoDB(collection="test_collection")
+
+        # Manually set up the async client state as if connection succeeded
+        mock_client = MagicMock()
+        mock_db = MagicMock()
+        mock_collection = MagicMock()
+        mock_cursor = MagicMock()
+
+        mock_client.__getitem__ = MagicMock(return_value=mock_db)
+        mock_db.__getitem__ = MagicMock(return_value=mock_collection)
+        mock_collection.find.return_value = mock_cursor
+        mock_cursor.batch_size.return_value = mock_cursor
+
+        mongodb.async_client = mock_client
+        mongodb.is_connected = True
+
+        # Test _create_cursor_async directly
+        cursor = mongodb._create_cursor_async("test_collection", {"status": "active"})
+
+        assert cursor is mock_cursor
+        mock_collection.find.assert_called_once()
+
+    @pytest.mark.asyncio
+    @patch('ddcDatabases.mongodb.get_mongodb_settings')
+    async def test_async_aexit_cleanup(self, mock_get_settings):
+        """Test async __aexit__ cleans up resources"""
+        mock_get_settings.return_value = self._create_mock_settings()
+
+        mongodb = MongoDB(collection="test_collection")
+
+        mock_cursor = MagicMock()
+
+        async def mock_close():
+            pass
+
+        mock_cursor.close = mock_close
+        mock_client = MagicMock()
+
+        mongodb.async_cursor_ref = mock_cursor
+        mongodb.async_client = mock_client
+        mongodb.is_connected = True
+
+        await mongodb.__aexit__(None, None, None)
+
+        assert mongodb.async_cursor_ref is None
+        assert mongodb.is_connected == False
+        mock_client.close.assert_called_once()
+
+    @pytest.mark.asyncio
+    @patch('ddcDatabases.mongodb.get_mongodb_settings')
+    async def test_async_aexit_without_cursor(self, mock_get_settings):
+        """Test async __aexit__ when cursor is None"""
+        mock_get_settings.return_value = self._create_mock_settings()
+
+        mongodb = MongoDB(collection="test_collection")
+        mock_client = MagicMock()
+
+        mongodb.async_cursor_ref = None
+        mongodb.async_client = mock_client
+        mongodb.is_connected = True
+
+        await mongodb.__aexit__(None, None, None)
+
+        assert mongodb.is_connected == False
+        mock_client.close.assert_called_once()
+
+    @pytest.mark.asyncio
+    @patch('ddcDatabases.mongodb.get_mongodb_settings')
+    async def test_async_test_connection_success(self, mock_get_settings):
+        """Test _test_connection_async logs success message"""
+        mock_get_settings.return_value = self._create_mock_settings()
+        mongodb = MongoDB(collection="test_collection")
+
+        mock_client = MagicMock()
+
+        async def mock_command(cmd):
+            return {"ok": 1}
+
+        mock_client.admin.command = mock_command
+        mongodb.async_client = mock_client
+        mongodb.logger = MagicMock()
+
+        await mongodb._test_connection_async()
+
+        mongodb.logger.info.assert_called_once()
+        assert "Async connected to" in str(mongodb.logger.info.call_args)
+
+    @pytest.mark.asyncio
+    @patch('ddcDatabases.mongodb.get_mongodb_settings')
+    async def test_async_test_connection_failure(self, mock_get_settings):
+        """Test _test_connection_async raises ConnectionError on failure"""
+        from pymongo.errors import PyMongoError
+
+        mock_get_settings.return_value = self._create_mock_settings()
+        mongodb = MongoDB(collection="test_collection")
+
+        mock_client = MagicMock()
+
+        async def mock_command(cmd):
+            raise PyMongoError("ping failed")
+
+        mock_client.admin.command = mock_command
+        mongodb.async_client = mock_client
+
+        with pytest.raises(ConnectionError, match="Async connection to MongoDB failed"):
+            await mongodb._test_connection_async()
+
+    @patch('ddcDatabases.mongodb.get_mongodb_settings')
+    def test_create_cursor_async(self, mock_get_settings):
+        """Test _create_cursor_async method"""
+        mock_get_settings.return_value = self._create_mock_settings(batch_size=100, limit=10)
+        mongodb = MongoDB(
+            collection="test_collection",
+            query_config=MongoDBQueryConfig(batch_size=100, limit=10),
+        )
+
+        mock_cursor = MagicMock()
+        mock_cursor.sort.return_value = mock_cursor
+        mock_cursor.batch_size.return_value = mock_cursor
+
+        mock_collection = MagicMock()
+        mock_collection.find.return_value = mock_cursor
+
+        mock_db = MagicMock()
+        mock_db.__getitem__ = MagicMock(return_value=mock_collection)
+
+        mock_client = MagicMock()
+        mock_client.__getitem__ = MagicMock(return_value=mock_db)
+        mongodb.async_client = mock_client
+
+        cursor = mongodb._create_cursor_async("test_collection", {"status": "active"})
+
+        mock_collection.find.assert_called_once()
+        mock_cursor.batch_size.assert_called_once_with(100)
+        assert cursor is mock_cursor
+
+    @patch('ddcDatabases.mongodb.get_mongodb_settings')
+    def test_create_cursor_async_with_sorting(self, mock_get_settings):
+        """Test _create_cursor_async with sorting"""
+        from pymongo import DESCENDING
+
+        mock_get_settings.return_value = self._create_mock_settings(batch_size=100, limit=10)
+        mongodb = MongoDB(collection="test_collection")
+
+        mock_cursor = MagicMock()
+        mock_cursor.sort.return_value = mock_cursor
+        mock_cursor.batch_size.return_value = mock_cursor
+
+        mock_collection = MagicMock()
+        mock_collection.find.return_value = mock_cursor
+
+        mock_db = MagicMock()
+        mock_db.__getitem__ = MagicMock(return_value=mock_collection)
+
+        mock_client = MagicMock()
+        mock_client.__getitem__ = MagicMock(return_value=mock_db)
+        mongodb.async_client = mock_client
+
+        cursor = mongodb._create_cursor_async("test_collection", {}, "created_at", "desc")
+
+        mock_cursor.sort.assert_called_once_with("created_at", DESCENDING)
+
+    @pytest.mark.asyncio
+    @patch('ddcDatabases.mongodb.get_mongodb_settings')
+    @patch('ddcDatabases.mongodb.AsyncIOMotorClient')
+    async def test_async_aenter_connection_error(self, mock_async_client, mock_get_settings):
+        """Test async __aenter__ handles connection error"""
+        from ddcDatabases.mongodb import MongoDBConnRetryConfig
+        from pymongo.errors import PyMongoError
+
+        mock_get_settings.return_value = self._create_mock_settings()
+
+        mock_client = MagicMock()
+
+        async def mock_command(cmd):
+            raise PyMongoError("Connection failed")
+
+        mock_client.admin.command = mock_command
+        mock_async_client.return_value = mock_client
+
+        mongodb = MongoDB(
+            collection="test_collection",
+            conn_retry_config=MongoDBConnRetryConfig(enable_retry=False),
+        )
+
+        with pytest.raises(SystemExit) as exc_info:
+            async with mongodb:
+                pass
+
+        assert exc_info.value.code == 1

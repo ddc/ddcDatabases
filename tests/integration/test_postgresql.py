@@ -102,8 +102,8 @@ class TestPostgreSQLIntegration:
             stmt = sa.delete(IntegrationModel).where(IntegrationModel.name == "test_async")
             await db_utils.execute(stmt)
 
-    def test_db_schema_support(self, postgres_container):
-        """Test PostgreSQL db_schema parameter."""
+    def test_schema_support(self, postgres_container):
+        """Test PostgreSQL schema parameter."""
         from ddcDatabases import PostgreSQL
 
         port = postgres_container.get_exposed_port(5432)
@@ -115,7 +115,7 @@ class TestPostgreSQLIntegration:
             user=postgres_container.username,
             password=postgres_container.password,
             database=postgres_container.dbname,
-            db_schema="public",
+            schema="public",
         ) as session:
             result = session.execute(sa.text("SELECT current_schema()"))
             schema = result.scalar()

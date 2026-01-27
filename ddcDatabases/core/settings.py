@@ -1,42 +1,12 @@
+from .constants import SettingsMessages as Msg
 from dotenv import load_dotenv
 from functools import lru_cache
-from pydantic import Field, field_validator
+from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from typing import Callable, TypeVar
 
 # Type variable for generic settings factory
 T = TypeVar('T', bound=BaseSettings)
-
-# Constants
-ECHO_DESCRIPTION = "Enable SQLAlchemy query logging"
-AUTOFLUSH_DESCRIPTION = "Enable autoflush"
-EXPIRE_ON_COMMIT_DESCRIPTION = "Enable expire on commit"
-AUTOCOMMIT_DESCRIPTION = "Enable autocommit"
-CONNECTION_TIMEOUT_DESCRIPTION = "Connection timeout in seconds"
-POOL_RECYCLE_DESCRIPTION = "Pool recycle in seconds"
-POOL_SIZE_DESCRIPTION = "Database connection pool size"
-MAX_OVERFLOW_DESCRIPTION = "Maximum overflow connections for the pool"
-HOST_DESCRIPTION = "Database host"
-PORT_DESCRIPTION = "Database port"
-USERNAME_DESCRIPTION = "Database username"
-PASSWORD_DESCRIPTION = "Database password"
-NAME_DESCRIPTION = "Database name"
-DB_SCHEMA_DESCRIPTION = "Database schema"
-ASYNC_DATABASE_DRIVER_DESCRIPTION = "Async database driver"
-SYNC_DATABASE_DRIVER_DESCRIPTION = "Sync database driver"
-
-# SSL settings descriptions
-SSL_ENABLED_DESCRIPTION = "Enable SSL/TLS connections"
-SSL_MODE_DESCRIPTION = "SSL mode for database connections"
-SSL_CA_CERT_PATH_DESCRIPTION = "Path to SSL CA certificate file"
-SSL_CLIENT_CERT_PATH_DESCRIPTION = "Path to SSL client certificate file"
-SSL_CLIENT_KEY_PATH_DESCRIPTION = "Path to SSL client key file"
-# Retry settings descriptions
-ENABLE_RETRY_DESCRIPTION = "Enable automatic retry on connection errors"
-MAX_RETRIES_DESCRIPTION = "Maximum number of retry attempts"
-INITIAL_RETRY_DELAY_DESCRIPTION = "Initial delay between retries in seconds"
-MAX_RETRY_DELAY_DESCRIPTION = "Maximum delay between retries in seconds"
-DISCONNECT_IDLE_TIMEOUT_DESCRIPTION = "Disconnect idle timeout in seconds for persistent connections"
 
 # Lazy loading flag for dotenv - thread-safe singleton pattern
 _dotenv_loaded = False
@@ -70,14 +40,21 @@ class _BaseDBSettings(BaseSettings):
 class SQLiteSettings(_BaseDBSettings):
     """SQLite database settings with environment variable fallback."""
 
-    file_path: str = Field(default="sqlite.db", description="Path to SQLite database file")
-    echo: bool = Field(default=False, description=ECHO_DESCRIPTION)
+    file_path: str = Field(default="sqlite.db", description=Msg.SQLITE_FILE_PATH_DESCRIPTION)
+    echo: bool = Field(default=False, description=Msg.ECHO_DESCRIPTION)
 
-    # Retry settings (minimal for file-based database)
-    enable_retry: bool = Field(default=False, description=ENABLE_RETRY_DESCRIPTION)
-    max_retries: int = Field(default=1, description=MAX_RETRIES_DESCRIPTION)
-    initial_retry_delay: float = Field(default=1.0, description=INITIAL_RETRY_DELAY_DESCRIPTION)
-    max_retry_delay: float = Field(default=30.0, description=MAX_RETRY_DELAY_DESCRIPTION)
+    # Connection Retry settings (minimal for file-based database)
+    conn_enable_retry: bool = Field(default=False, description=Msg.ENABLE_RETRY_DESCRIPTION)
+    conn_max_retries: int = Field(default=1, description=Msg.MAX_RETRIES_DESCRIPTION)
+    conn_initial_retry_delay: float = Field(default=1.0, description=Msg.INITIAL_RETRY_DELAY_DESCRIPTION)
+    conn_max_retry_delay: float = Field(default=30.0, description=Msg.MAX_RETRY_DELAY_DESCRIPTION)
+
+    # Operation Retry settings
+    op_enable_retry: bool = Field(default=False, description=Msg.ENABLE_RETRY_DESCRIPTION)
+    op_max_retries: int = Field(default=1, description=Msg.MAX_RETRIES_DESCRIPTION)
+    op_initial_retry_delay: float = Field(default=0.5, description=Msg.INITIAL_RETRY_DELAY_DESCRIPTION)
+    op_max_retry_delay: float = Field(default=10.0, description=Msg.MAX_RETRY_DELAY_DESCRIPTION)
+    op_jitter: float = Field(default=0.1, description=Msg.JITTER_DESCRIPTION)
 
     model_config = SettingsConfigDict(env_prefix="SQLITE_")
 
@@ -85,45 +62,43 @@ class SQLiteSettings(_BaseDBSettings):
 class PostgreSQLSettings(_BaseDBSettings):
     """PostgreSQL database settings with environment variable fallback."""
 
-    host: str = Field(default="localhost", description=HOST_DESCRIPTION)
-    port: int = Field(default=5432, description=PORT_DESCRIPTION)
-    user: str = Field(default="postgres", description=USERNAME_DESCRIPTION)
-    password: str = Field(default="postgres", description=PASSWORD_DESCRIPTION)
-    database: str = Field(default="postgres", description=NAME_DESCRIPTION)
-    db_schema: str | None = Field(default="public", description=DB_SCHEMA_DESCRIPTION)
+    host: str = Field(default="localhost", description=Msg.HOST_DESCRIPTION)
+    port: int = Field(default=5432, description=Msg.PORT_DESCRIPTION)
+    user: str = Field(default="postgres", description=Msg.USERNAME_DESCRIPTION)
+    password: str = Field(default="postgres", description=Msg.PASSWORD_DESCRIPTION)
+    database: str = Field(default="postgres", description=Msg.NAME_DESCRIPTION)
+    schema: str | None = Field(default="public", description=Msg.SCHEMA_DESCRIPTION)
 
-    echo: bool = Field(default=False, description=ECHO_DESCRIPTION)
-    autoflush: bool = Field(default=False, description=AUTOFLUSH_DESCRIPTION)
-    expire_on_commit: bool = Field(default=False, description=EXPIRE_ON_COMMIT_DESCRIPTION)
-    autocommit: bool = Field(default=False, description=AUTOCOMMIT_DESCRIPTION)
-    connection_timeout: int = Field(default=30, description=CONNECTION_TIMEOUT_DESCRIPTION)
-    pool_recycle: int = Field(default=3600, description=POOL_RECYCLE_DESCRIPTION)
-    pool_size: int = Field(default=25, description=POOL_SIZE_DESCRIPTION)
-    max_overflow: int = Field(default=50, description=MAX_OVERFLOW_DESCRIPTION)
-    async_driver: str = Field(default="postgresql+asyncpg", description=ASYNC_DATABASE_DRIVER_DESCRIPTION)
-    sync_driver: str = Field(default="postgresql+psycopg2", description=SYNC_DATABASE_DRIVER_DESCRIPTION)
+    echo: bool = Field(default=False, description=Msg.ECHO_DESCRIPTION)
+    autoflush: bool = Field(default=False, description=Msg.AUTOFLUSH_DESCRIPTION)
+    expire_on_commit: bool = Field(default=False, description=Msg.EXPIRE_ON_COMMIT_DESCRIPTION)
+    autocommit: bool = Field(default=False, description=Msg.AUTOCOMMIT_DESCRIPTION)
+    connection_timeout: int = Field(default=30, description=Msg.CONNECTION_TIMEOUT_DESCRIPTION)
+    pool_recycle: int = Field(default=3600, description=Msg.POOL_RECYCLE_DESCRIPTION)
+    pool_size: int = Field(default=25, description=Msg.POOL_SIZE_DESCRIPTION)
+    max_overflow: int = Field(default=50, description=Msg.MAX_OVERFLOW_DESCRIPTION)
+    async_driver: str = Field(default="postgresql+asyncpg", description=Msg.ASYNC_DATABASE_DRIVER_DESCRIPTION)
+    sync_driver: str = Field(default="postgresql+psycopg", description=Msg.SYNC_DATABASE_DRIVER_DESCRIPTION)
 
     # SSL settings
-    ssl_mode: str = Field(default="disable", description=SSL_MODE_DESCRIPTION)
-    ssl_ca_cert_path: str | None = Field(default=None, description=SSL_CA_CERT_PATH_DESCRIPTION)
-    ssl_client_cert_path: str | None = Field(default=None, description=SSL_CLIENT_CERT_PATH_DESCRIPTION)
-    ssl_client_key_path: str | None = Field(default=None, description=SSL_CLIENT_KEY_PATH_DESCRIPTION)
+    ssl_mode: str = Field(default="disable", description=Msg.SSL_MODE_DESCRIPTION)
+    ssl_ca_cert_path: str | None = Field(default=None, description=Msg.SSL_CA_CERT_PATH_DESCRIPTION)
+    ssl_client_cert_path: str | None = Field(default=None, description=Msg.SSL_CLIENT_CERT_PATH_DESCRIPTION)
+    ssl_client_key_path: str | None = Field(default=None, description=Msg.SSL_CLIENT_KEY_PATH_DESCRIPTION)
 
-    # Retry settings
-    enable_retry: bool = Field(default=True, description=ENABLE_RETRY_DESCRIPTION)
-    max_retries: int = Field(default=3, description=MAX_RETRIES_DESCRIPTION)
-    initial_retry_delay: float = Field(default=1.0, description=INITIAL_RETRY_DELAY_DESCRIPTION)
-    max_retry_delay: float = Field(default=30.0, description=MAX_RETRY_DELAY_DESCRIPTION)
-    disconnect_idle_timeout: int = Field(default=300, description=DISCONNECT_IDLE_TIMEOUT_DESCRIPTION)
+    # Connection Retry settings
+    conn_enable_retry: bool = Field(default=True, description=Msg.ENABLE_RETRY_DESCRIPTION)
+    conn_max_retries: int = Field(default=3, description=Msg.MAX_RETRIES_DESCRIPTION)
+    conn_initial_retry_delay: float = Field(default=1.0, description=Msg.INITIAL_RETRY_DELAY_DESCRIPTION)
+    conn_max_retry_delay: float = Field(default=30.0, description=Msg.MAX_RETRY_DELAY_DESCRIPTION)
+    conn_disconnect_idle_timeout: int = Field(default=300, description=Msg.DISCONNECT_IDLE_TIMEOUT_DESCRIPTION)
 
-    @field_validator("ssl_mode")
-    @classmethod
-    def validate_ssl_mode(cls, v: str) -> str:
-        v = v.lower()
-        valid_modes = ("disable", "allow", "prefer", "require", "verify-ca", "verify-full")
-        if v not in valid_modes:
-            raise ValueError(f"ssl_mode must be one of {valid_modes}, got '{v}'")
-        return v
+    # Operation Retry settings
+    op_enable_retry: bool = Field(default=True, description=Msg.ENABLE_RETRY_DESCRIPTION)
+    op_max_retries: int = Field(default=3, description=Msg.MAX_RETRIES_DESCRIPTION)
+    op_initial_retry_delay: float = Field(default=0.5, description=Msg.INITIAL_RETRY_DELAY_DESCRIPTION)
+    op_max_retry_delay: float = Field(default=10.0, description=Msg.MAX_RETRY_DELAY_DESCRIPTION)
+    op_jitter: float = Field(default=0.1, description=Msg.JITTER_DESCRIPTION)
 
     model_config = SettingsConfigDict(env_prefix="POSTGRESQL_")
 
@@ -131,36 +106,43 @@ class PostgreSQLSettings(_BaseDBSettings):
 class MSSQLSettings(_BaseDBSettings):
     """Microsoft SQL Server settings with environment variable fallback."""
 
-    host: str = Field(default="localhost", description=HOST_DESCRIPTION)
-    port: int = Field(default=1433, description=PORT_DESCRIPTION)
-    user: str = Field(default="sa", description=USERNAME_DESCRIPTION)
-    password: str = Field(default="sa", description=PASSWORD_DESCRIPTION)
-    db_schema: str = Field(default="dbo", description=DB_SCHEMA_DESCRIPTION)
-    database: str = Field(default="master", description=NAME_DESCRIPTION)
+    host: str = Field(default="localhost", description=Msg.HOST_DESCRIPTION)
+    port: int = Field(default=1433, description=Msg.PORT_DESCRIPTION)
+    user: str = Field(default="sa", description=Msg.USERNAME_DESCRIPTION)
+    password: str = Field(default="sa", description=Msg.PASSWORD_DESCRIPTION)
+    database: str = Field(default="master", description=Msg.NAME_DESCRIPTION)
+    schema: str = Field(default="dbo", description=Msg.SCHEMA_DESCRIPTION)
 
-    echo: bool = Field(default=False, description=ECHO_DESCRIPTION)
-    autoflush: bool = Field(default=False, description=AUTOFLUSH_DESCRIPTION)
-    expire_on_commit: bool = Field(default=False, description=EXPIRE_ON_COMMIT_DESCRIPTION)
-    autocommit: bool = Field(default=False, description=AUTOCOMMIT_DESCRIPTION)
-    connection_timeout: int = Field(default=30, description=CONNECTION_TIMEOUT_DESCRIPTION)
-    pool_recycle: int = Field(default=3600, description=POOL_RECYCLE_DESCRIPTION)
-    pool_size: int = Field(default=25, description="Connection pool size")
-    max_overflow: int = Field(default=50, description="Max overflow connections")
-    odbcdriver_version: int = Field(default=18, description="ODBC driver version")
-    async_driver: str = Field(default="mssql+aioodbc", description=ASYNC_DATABASE_DRIVER_DESCRIPTION)
-    sync_driver: str = Field(default="mssql+pyodbc", description=SYNC_DATABASE_DRIVER_DESCRIPTION)
+    echo: bool = Field(default=False, description=Msg.ECHO_DESCRIPTION)
+    autoflush: bool = Field(default=False, description=Msg.AUTOFLUSH_DESCRIPTION)
+    expire_on_commit: bool = Field(default=False, description=Msg.EXPIRE_ON_COMMIT_DESCRIPTION)
+    autocommit: bool = Field(default=False, description=Msg.AUTOCOMMIT_DESCRIPTION)
+    connection_timeout: int = Field(default=30, description=Msg.CONNECTION_TIMEOUT_DESCRIPTION)
+    pool_recycle: int = Field(default=3600, description=Msg.POOL_RECYCLE_DESCRIPTION)
+    pool_size: int = Field(default=25, description=Msg.POOL_SIZE_DESCRIPTION)
+    max_overflow: int = Field(default=50, description=Msg.MAX_OVERFLOW_DESCRIPTION)
+    odbcdriver_version: int = Field(default=18, description=Msg.ODBC_DRIVER_VERSION_DESCRIPTION)
+    async_driver: str = Field(default="mssql+aioodbc", description=Msg.ASYNC_DATABASE_DRIVER_DESCRIPTION)
+    sync_driver: str = Field(default="mssql+pyodbc", description=Msg.SYNC_DATABASE_DRIVER_DESCRIPTION)
 
     # SSL settings
-    ssl_encrypt: bool = Field(default=False, description="Enable connection encryption")
-    ssl_trust_server_certificate: bool = Field(default=True, description="Trust server certificate without validation")
-    ssl_ca_cert_path: str | None = Field(default=None, description=SSL_CA_CERT_PATH_DESCRIPTION)
+    ssl_encrypt: bool = Field(default=False, description=Msg.SSL_ENCRYPT_DESCRIPTION)
+    ssl_trust_server_certificate: bool = Field(default=True, description=Msg.SSL_TRUST_SERVER_CERTIFICATE_DESCRIPTION)
+    ssl_ca_cert_path: str | None = Field(default=None, description=Msg.SSL_CA_CERT_PATH_DESCRIPTION)
 
-    # Retry settings
-    enable_retry: bool = Field(default=True, description=ENABLE_RETRY_DESCRIPTION)
-    max_retries: int = Field(default=3, description=MAX_RETRIES_DESCRIPTION)
-    initial_retry_delay: float = Field(default=1.0, description=INITIAL_RETRY_DELAY_DESCRIPTION)
-    max_retry_delay: float = Field(default=30.0, description=MAX_RETRY_DELAY_DESCRIPTION)
-    disconnect_idle_timeout: int = Field(default=300, description=DISCONNECT_IDLE_TIMEOUT_DESCRIPTION)
+    # Connection Retry settings
+    conn_enable_retry: bool = Field(default=True, description=Msg.ENABLE_RETRY_DESCRIPTION)
+    conn_max_retries: int = Field(default=3, description=Msg.MAX_RETRIES_DESCRIPTION)
+    conn_initial_retry_delay: float = Field(default=1.0, description=Msg.INITIAL_RETRY_DELAY_DESCRIPTION)
+    conn_max_retry_delay: float = Field(default=30.0, description=Msg.MAX_RETRY_DELAY_DESCRIPTION)
+    conn_disconnect_idle_timeout: int = Field(default=300, description=Msg.DISCONNECT_IDLE_TIMEOUT_DESCRIPTION)
+
+    # Operation Retry settings
+    op_enable_retry: bool = Field(default=True, description=Msg.ENABLE_RETRY_DESCRIPTION)
+    op_max_retries: int = Field(default=3, description=Msg.MAX_RETRIES_DESCRIPTION)
+    op_initial_retry_delay: float = Field(default=0.5, description=Msg.INITIAL_RETRY_DELAY_DESCRIPTION)
+    op_max_retry_delay: float = Field(default=10.0, description=Msg.MAX_RETRY_DELAY_DESCRIPTION)
+    op_jitter: float = Field(default=0.1, description=Msg.JITTER_DESCRIPTION)
 
     model_config = SettingsConfigDict(env_prefix="MSSQL_")
 
@@ -168,44 +150,42 @@ class MSSQLSettings(_BaseDBSettings):
 class MySQLSettings(_BaseDBSettings):
     """MySQL database settings with environment variable fallback."""
 
-    host: str = Field(default="localhost", description=HOST_DESCRIPTION)
-    port: int = Field(default=3306, description=PORT_DESCRIPTION)
-    user: str = Field(default="root", description=USERNAME_DESCRIPTION)
-    password: str = Field(default="root", description=PASSWORD_DESCRIPTION)
-    database: str = Field(default="dev", description=NAME_DESCRIPTION)
+    host: str = Field(default="localhost", description=Msg.HOST_DESCRIPTION)
+    port: int = Field(default=3306, description=Msg.PORT_DESCRIPTION)
+    user: str = Field(default="root", description=Msg.USERNAME_DESCRIPTION)
+    password: str = Field(default="root", description=Msg.PASSWORD_DESCRIPTION)
+    database: str = Field(default="dev", description=Msg.NAME_DESCRIPTION)
 
-    echo: bool = Field(default=False, description=ECHO_DESCRIPTION)
-    autoflush: bool = Field(default=False, description=AUTOFLUSH_DESCRIPTION)
-    expire_on_commit: bool = Field(default=False, description=EXPIRE_ON_COMMIT_DESCRIPTION)
-    autocommit: bool = Field(default=True, description=AUTOCOMMIT_DESCRIPTION)
-    connection_timeout: int = Field(default=30, description=CONNECTION_TIMEOUT_DESCRIPTION)
-    pool_recycle: int = Field(default=3600, description=POOL_RECYCLE_DESCRIPTION)
-    pool_size: int = Field(default=10, description=POOL_SIZE_DESCRIPTION)
-    max_overflow: int = Field(default=20, description=MAX_OVERFLOW_DESCRIPTION)
-    async_driver: str = Field(default="mysql+aiomysql", description=ASYNC_DATABASE_DRIVER_DESCRIPTION)
-    sync_driver: str = Field(default="mysql+pymysql", description=SYNC_DATABASE_DRIVER_DESCRIPTION)
+    echo: bool = Field(default=False, description=Msg.ECHO_DESCRIPTION)
+    autoflush: bool = Field(default=False, description=Msg.AUTOFLUSH_DESCRIPTION)
+    expire_on_commit: bool = Field(default=False, description=Msg.EXPIRE_ON_COMMIT_DESCRIPTION)
+    autocommit: bool = Field(default=True, description=Msg.AUTOCOMMIT_DESCRIPTION)
+    connection_timeout: int = Field(default=30, description=Msg.CONNECTION_TIMEOUT_DESCRIPTION)
+    pool_recycle: int = Field(default=3600, description=Msg.POOL_RECYCLE_DESCRIPTION)
+    pool_size: int = Field(default=10, description=Msg.POOL_SIZE_DESCRIPTION)
+    max_overflow: int = Field(default=20, description=Msg.MAX_OVERFLOW_DESCRIPTION)
+    async_driver: str = Field(default="mysql+aiomysql", description=Msg.ASYNC_DATABASE_DRIVER_DESCRIPTION)
+    sync_driver: str = Field(default="mysql+mysqldb", description=Msg.SYNC_DATABASE_DRIVER_DESCRIPTION)
 
     # SSL settings
-    ssl_mode: str = Field(default="DISABLED", description=SSL_MODE_DESCRIPTION)
-    ssl_ca_cert_path: str | None = Field(default=None, description=SSL_CA_CERT_PATH_DESCRIPTION)
-    ssl_client_cert_path: str | None = Field(default=None, description=SSL_CLIENT_CERT_PATH_DESCRIPTION)
-    ssl_client_key_path: str | None = Field(default=None, description=SSL_CLIENT_KEY_PATH_DESCRIPTION)
+    ssl_mode: str = Field(default="DISABLED", description=Msg.SSL_MODE_DESCRIPTION)
+    ssl_ca_cert_path: str | None = Field(default=None, description=Msg.SSL_CA_CERT_PATH_DESCRIPTION)
+    ssl_client_cert_path: str | None = Field(default=None, description=Msg.SSL_CLIENT_CERT_PATH_DESCRIPTION)
+    ssl_client_key_path: str | None = Field(default=None, description=Msg.SSL_CLIENT_KEY_PATH_DESCRIPTION)
 
-    # Retry settings
-    enable_retry: bool = Field(default=True, description=ENABLE_RETRY_DESCRIPTION)
-    max_retries: int = Field(default=3, description=MAX_RETRIES_DESCRIPTION)
-    initial_retry_delay: float = Field(default=1.0, description=INITIAL_RETRY_DELAY_DESCRIPTION)
-    max_retry_delay: float = Field(default=30.0, description=MAX_RETRY_DELAY_DESCRIPTION)
-    disconnect_idle_timeout: int = Field(default=300, description=DISCONNECT_IDLE_TIMEOUT_DESCRIPTION)
+    # Connection Retry settings
+    conn_enable_retry: bool = Field(default=True, description=Msg.ENABLE_RETRY_DESCRIPTION)
+    conn_max_retries: int = Field(default=3, description=Msg.MAX_RETRIES_DESCRIPTION)
+    conn_initial_retry_delay: float = Field(default=1.0, description=Msg.INITIAL_RETRY_DELAY_DESCRIPTION)
+    conn_max_retry_delay: float = Field(default=30.0, description=Msg.MAX_RETRY_DELAY_DESCRIPTION)
+    conn_disconnect_idle_timeout: int = Field(default=300, description=Msg.DISCONNECT_IDLE_TIMEOUT_DESCRIPTION)
 
-    @field_validator("ssl_mode")
-    @classmethod
-    def validate_ssl_mode(cls, v: str) -> str:
-        v = v.upper()
-        valid_modes = ("DISABLED", "PREFERRED", "REQUIRED", "VERIFY_CA", "VERIFY_IDENTITY")
-        if v not in valid_modes:
-            raise ValueError(f"ssl_mode must be one of {valid_modes}, got '{v}'")
-        return v
+    # Operation Retry settings
+    op_enable_retry: bool = Field(default=True, description=Msg.ENABLE_RETRY_DESCRIPTION)
+    op_max_retries: int = Field(default=3, description=Msg.MAX_RETRIES_DESCRIPTION)
+    op_initial_retry_delay: float = Field(default=0.5, description=Msg.INITIAL_RETRY_DELAY_DESCRIPTION)
+    op_max_retry_delay: float = Field(default=10.0, description=Msg.MAX_RETRY_DELAY_DESCRIPTION)
+    op_jitter: float = Field(default=0.1, description=Msg.JITTER_DESCRIPTION)
 
     model_config = SettingsConfigDict(env_prefix="MYSQL_")
 
@@ -213,28 +193,37 @@ class MySQLSettings(_BaseDBSettings):
 class MongoDBSettings(_BaseDBSettings):
     """MongoDB settings with environment variable fallback."""
 
-    host: str = Field(default="localhost", description=HOST_DESCRIPTION)
-    port: int = Field(default=27017, description=PORT_DESCRIPTION)
-    user: str = Field(default="admin", description=USERNAME_DESCRIPTION)
-    password: str = Field(default="admin", description=PASSWORD_DESCRIPTION)
-    database: str = Field(default="admin", description=NAME_DESCRIPTION)
+    host: str = Field(default="localhost", description=Msg.HOST_DESCRIPTION)
+    port: int = Field(default=27017, description=Msg.PORT_DESCRIPTION)
+    user: str = Field(default="admin", description=Msg.USERNAME_DESCRIPTION)
+    password: str = Field(default="admin", description=Msg.PASSWORD_DESCRIPTION)
+    database: str = Field(default="admin", description=Msg.NAME_DESCRIPTION)
 
-    batch_size: int = Field(default=2865, description="Batch size for operations")
-    limit: int = Field(default=0, description="Query result limit (0 = no limit)")
-    sync_driver: str = Field(default="mongodb", description="MongoDB driver")
+    batch_size: int = Field(default=2865, description=Msg.BATCH_SIZE_DESCRIPTION)
+    limit: int = Field(default=0, description=Msg.QUERY_LIMIT_DESCRIPTION)
+    driver: str = Field(default="mongodb", description=Msg.MONGODB_DRIVER_DESCRIPTION)
 
     # TLS settings
-    tls_enabled: bool = Field(default=False, description="Enable TLS connections")
-    tls_ca_cert_path: str | None = Field(default=None, description="Path to TLS CA certificate file")
-    tls_cert_key_path: str | None = Field(default=None, description="Path to TLS client certificate/key file")
-    tls_allow_invalid_certificates: bool = Field(default=False, description="Allow invalid TLS certificates")
+    tls_enabled: bool = Field(default=False, description=Msg.TLS_ENABLED_DESCRIPTION)
+    tls_ca_cert_path: str | None = Field(default=None, description=Msg.TLS_CA_CERT_PATH_DESCRIPTION)
+    tls_cert_key_path: str | None = Field(default=None, description=Msg.TLS_CERT_KEY_PATH_DESCRIPTION)
+    tls_allow_invalid_certificates: bool = Field(
+        default=False, description=Msg.TLS_ALLOW_INVALID_CERTIFICATES_DESCRIPTION
+    )
 
-    # Retry settings
-    enable_retry: bool = Field(default=True, description=ENABLE_RETRY_DESCRIPTION)
-    max_retries: int = Field(default=3, description=MAX_RETRIES_DESCRIPTION)
-    initial_retry_delay: float = Field(default=1.0, description=INITIAL_RETRY_DELAY_DESCRIPTION)
-    max_retry_delay: float = Field(default=30.0, description=MAX_RETRY_DELAY_DESCRIPTION)
-    disconnect_idle_timeout: int = Field(default=300, description=DISCONNECT_IDLE_TIMEOUT_DESCRIPTION)
+    # Connection Retry settings
+    conn_enable_retry: bool = Field(default=True, description=Msg.ENABLE_RETRY_DESCRIPTION)
+    conn_max_retries: int = Field(default=3, description=Msg.MAX_RETRIES_DESCRIPTION)
+    conn_initial_retry_delay: float = Field(default=1.0, description=Msg.INITIAL_RETRY_DELAY_DESCRIPTION)
+    conn_max_retry_delay: float = Field(default=30.0, description=Msg.MAX_RETRY_DELAY_DESCRIPTION)
+    conn_disconnect_idle_timeout: int = Field(default=300, description=Msg.DISCONNECT_IDLE_TIMEOUT_DESCRIPTION)
+
+    # Operation Retry settings
+    op_enable_retry: bool = Field(default=True, description=Msg.ENABLE_RETRY_DESCRIPTION)
+    op_max_retries: int = Field(default=3, description=Msg.MAX_RETRIES_DESCRIPTION)
+    op_initial_retry_delay: float = Field(default=0.5, description=Msg.INITIAL_RETRY_DELAY_DESCRIPTION)
+    op_max_retry_delay: float = Field(default=10.0, description=Msg.MAX_RETRY_DELAY_DESCRIPTION)
+    op_jitter: float = Field(default=0.1, description=Msg.JITTER_DESCRIPTION)
 
     model_config = SettingsConfigDict(env_prefix="MONGODB_")
 
@@ -242,32 +231,39 @@ class MongoDBSettings(_BaseDBSettings):
 class OracleSettings(_BaseDBSettings):
     """Oracle database settings with environment variable fallback."""
 
-    host: str = Field(default="localhost", description=HOST_DESCRIPTION)
-    port: int = Field(default=1521, description=PORT_DESCRIPTION)
-    user: str = Field(default="system", description=USERNAME_DESCRIPTION)
-    password: str = Field(default="oracle", description=PASSWORD_DESCRIPTION)
-    servicename: str = Field(default="xe", description="Oracle service name")
+    host: str = Field(default="localhost", description=Msg.HOST_DESCRIPTION)
+    port: int = Field(default=1521, description=Msg.PORT_DESCRIPTION)
+    user: str = Field(default="system", description=Msg.USERNAME_DESCRIPTION)
+    password: str = Field(default="oracle", description=Msg.PASSWORD_DESCRIPTION)
+    servicename: str = Field(default="xe", description=Msg.SERVICE_NAME_DESCRIPTION)
 
-    echo: bool = Field(default=False, description=ECHO_DESCRIPTION)
-    autoflush: bool = Field(default=False, description=AUTOFLUSH_DESCRIPTION)
-    expire_on_commit: bool = Field(default=False, description=EXPIRE_ON_COMMIT_DESCRIPTION)
-    autocommit: bool = Field(default=True, description=AUTOCOMMIT_DESCRIPTION)
-    connection_timeout: int = Field(default=30, description=CONNECTION_TIMEOUT_DESCRIPTION)
-    pool_recycle: int = Field(default=3600, description=POOL_RECYCLE_DESCRIPTION)
-    pool_size: int = Field(default=10, description=POOL_SIZE_DESCRIPTION)
-    max_overflow: int = Field(default=20, description=MAX_OVERFLOW_DESCRIPTION)
-    sync_driver: str = Field(default="oracle+oracledb", description="Oracle database driver")
+    echo: bool = Field(default=False, description=Msg.ECHO_DESCRIPTION)
+    autoflush: bool = Field(default=False, description=Msg.AUTOFLUSH_DESCRIPTION)
+    expire_on_commit: bool = Field(default=False, description=Msg.EXPIRE_ON_COMMIT_DESCRIPTION)
+    autocommit: bool = Field(default=True, description=Msg.AUTOCOMMIT_DESCRIPTION)
+    connection_timeout: int = Field(default=30, description=Msg.CONNECTION_TIMEOUT_DESCRIPTION)
+    pool_recycle: int = Field(default=3600, description=Msg.POOL_RECYCLE_DESCRIPTION)
+    pool_size: int = Field(default=10, description=Msg.POOL_SIZE_DESCRIPTION)
+    max_overflow: int = Field(default=20, description=Msg.MAX_OVERFLOW_DESCRIPTION)
+    sync_driver: str = Field(default="oracle+oracledb", description=Msg.ORACLE_DRIVER_DESCRIPTION)
 
     # SSL settings
-    ssl_enabled: bool = Field(default=False, description=SSL_ENABLED_DESCRIPTION)
-    ssl_wallet_path: str | None = Field(default=None, description="Path to Oracle SSL wallet directory")
+    ssl_enabled: bool = Field(default=False, description=Msg.SSL_ENABLED_DESCRIPTION)
+    ssl_wallet_path: str | None = Field(default=None, description=Msg.SSL_WALLET_PATH_DESCRIPTION)
 
-    # Retry settings
-    enable_retry: bool = Field(default=True, description=ENABLE_RETRY_DESCRIPTION)
-    max_retries: int = Field(default=3, description=MAX_RETRIES_DESCRIPTION)
-    initial_retry_delay: float = Field(default=1.0, description=INITIAL_RETRY_DELAY_DESCRIPTION)
-    max_retry_delay: float = Field(default=30.0, description=MAX_RETRY_DELAY_DESCRIPTION)
-    disconnect_idle_timeout: int = Field(default=300, description=DISCONNECT_IDLE_TIMEOUT_DESCRIPTION)
+    # Connection Retry settings
+    conn_enable_retry: bool = Field(default=True, description=Msg.ENABLE_RETRY_DESCRIPTION)
+    conn_max_retries: int = Field(default=3, description=Msg.MAX_RETRIES_DESCRIPTION)
+    conn_initial_retry_delay: float = Field(default=1.0, description=Msg.INITIAL_RETRY_DELAY_DESCRIPTION)
+    conn_max_retry_delay: float = Field(default=30.0, description=Msg.MAX_RETRY_DELAY_DESCRIPTION)
+    conn_disconnect_idle_timeout: int = Field(default=300, description=Msg.DISCONNECT_IDLE_TIMEOUT_DESCRIPTION)
+
+    # Operation Retry settings
+    op_enable_retry: bool = Field(default=True, description=Msg.ENABLE_RETRY_DESCRIPTION)
+    op_max_retries: int = Field(default=3, description=Msg.MAX_RETRIES_DESCRIPTION)
+    op_initial_retry_delay: float = Field(default=0.5, description=Msg.INITIAL_RETRY_DELAY_DESCRIPTION)
+    op_max_retry_delay: float = Field(default=10.0, description=Msg.MAX_RETRY_DELAY_DESCRIPTION)
+    op_jitter: float = Field(default=0.1, description=Msg.JITTER_DESCRIPTION)
 
     model_config = SettingsConfigDict(env_prefix="ORACLE_")
 

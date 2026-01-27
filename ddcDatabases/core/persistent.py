@@ -8,7 +8,8 @@ on failure and idle timeout for resource management.
 
 from __future__ import annotations
 
-from .retry import RetryPolicy, retry_operation, retry_operation_async
+from .configs import BaseRetryConfig
+from .retry import retry_operation, retry_operation_async
 from .settings import (
     get_mongodb_settings,
     get_mssql_settings,
@@ -131,12 +132,12 @@ class BasePersistentConnection(IdleCheckerMixin, ABC, Generic[SessionT]):
         self,
         connection_key: str,
         config: PersistentConnectionConfig | None = None,
-        retry_config: RetryPolicy | None = None,
+        retry_config: BaseRetryConfig | None = None,
         logger: logging.Logger | None = None,
     ) -> None:
         self._connection_key = connection_key
         self._config = config or PersistentConnectionConfig()
-        self._retry_config = retry_config or RetryPolicy()
+        self._retry_config = retry_config or BaseRetryConfig()
         self._engine: Engine | AsyncEngine | None = None
         self._session: SessionT | None = None
         self._last_used = time.time()
@@ -211,7 +212,7 @@ class PersistentSQLAlchemyConnection(BasePersistentConnection[Session]):
         autoflush: bool = False,
         expire_on_commit: bool = False,
         config: PersistentConnectionConfig | None = None,
-        retry_config: RetryPolicy | None = None,
+        retry_config: BaseRetryConfig | None = None,
         logger: logging.Logger | None = None,
     ) -> None:
         super().__init__(connection_key, config, retry_config, logger)
@@ -333,7 +334,7 @@ class PersistentSQLAlchemyAsyncConnection(BasePersistentConnection[AsyncSession]
         autoflush: bool = False,
         expire_on_commit: bool = False,
         config: PersistentConnectionConfig | None = None,
-        retry_config: RetryPolicy | None = None,
+        retry_config: BaseRetryConfig | None = None,
         logger: logging.Logger | None = None,
     ) -> None:
         super().__init__(connection_key, config, retry_config, logger)
@@ -484,14 +485,14 @@ class PersistentMongoDBConnection(IdleCheckerMixin):
         connection_url: str,
         database: str,
         config: PersistentConnectionConfig | None = None,
-        retry_config: RetryPolicy | None = None,
+        retry_config: BaseRetryConfig | None = None,
         logger: logging.Logger | None = None,
     ) -> None:
         self._connection_key = connection_key
         self._connection_url = connection_url
         self._database = database
         self._config = config or PersistentConnectionConfig()
-        self._retry_config = retry_config or RetryPolicy()
+        self._retry_config = retry_config or BaseRetryConfig()
         self._client = None
         self._db = None
         self._last_used = time.time()
@@ -620,7 +621,7 @@ class PostgreSQLPersistent:
         database: str | None = None,
         async_mode: bool = False,
         config: PersistentConnectionConfig | None = None,
-        retry_config: RetryPolicy | None = None,
+        retry_config: BaseRetryConfig | None = None,
         **engine_kwargs: Any,
     ) -> PersistentSQLAlchemyConnection | PersistentSQLAlchemyAsyncConnection:
         """Create or return existing persistent PostgreSQL connection."""
@@ -704,7 +705,7 @@ class MySQLPersistent:
         database: str | None = None,
         async_mode: bool = False,
         config: PersistentConnectionConfig | None = None,
-        retry_config: RetryPolicy | None = None,
+        retry_config: BaseRetryConfig | None = None,
         **engine_kwargs: Any,
     ) -> PersistentSQLAlchemyConnection | PersistentSQLAlchemyAsyncConnection:
         """Create or return existing persistent MySQL connection."""
@@ -788,7 +789,7 @@ class MSSQLPersistent:
         database: str | None = None,
         async_mode: bool = False,
         config: PersistentConnectionConfig | None = None,
-        retry_config: RetryPolicy | None = None,
+        retry_config: BaseRetryConfig | None = None,
         **engine_kwargs: Any,
     ) -> PersistentSQLAlchemyConnection | PersistentSQLAlchemyAsyncConnection:
         """Create or return existing persistent MSSQL connection."""
@@ -867,7 +868,7 @@ class OraclePersistent:
         password: str | None = None,
         servicename: str | None = None,
         config: PersistentConnectionConfig | None = None,
-        retry_config: RetryPolicy | None = None,
+        retry_config: BaseRetryConfig | None = None,
         **engine_kwargs: Any,
     ) -> PersistentSQLAlchemyConnection:
         """Create or return existing persistent Oracle connection."""
@@ -924,7 +925,7 @@ class MongoDBPersistent:
         password: str | None = None,
         database: str | None = None,
         config: PersistentConnectionConfig | None = None,
-        retry_config: RetryPolicy | None = None,
+        retry_config: BaseRetryConfig | None = None,
     ) -> PersistentMongoDBConnection:
         """Create or return existing persistent MongoDB connection."""
         _settings = get_mongodb_settings()

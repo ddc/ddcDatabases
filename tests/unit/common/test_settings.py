@@ -118,10 +118,10 @@ class TestPostgreSQLSettings:
         assert settings.user == "postgres"
         assert settings.password == "postgres"
         assert settings.database == "postgres"
-        assert settings.db_schema == "public"
+        assert settings.schema == "public"
         assert settings.echo == False
         assert settings.async_driver == "postgresql+asyncpg"
-        assert settings.sync_driver == "postgresql+psycopg2"
+        assert settings.sync_driver == "postgresql+psycopg"
         assert settings.ssl_mode == "disable"
         assert settings.ssl_ca_cert_path is None
         assert settings.ssl_client_cert_path is None
@@ -138,13 +138,6 @@ class TestPostgreSQLSettings:
         settings = PostgreSQLSettings()
         assert settings.ssl_mode == "disable"
 
-    def test_validate_ssl_mode_invalid(self):
-        """Test validate_ssl_mode rejects invalid modes"""
-        import pytest
-
-        with pytest.raises(Exception):
-            PostgreSQLSettings(ssl_mode="invalid_mode")
-
     def test_env_override(self):
         """Test environment variable overrides"""
         with patch.dict(
@@ -156,7 +149,7 @@ class TestPostgreSQLSettings:
                 'POSTGRESQL_PASSWORD': 'testpass',
                 'POSTGRESQL_DATABASE': 'testdb',
                 'POSTGRESQL_ECHO': 'true',
-                'POSTGRESQL_DB_SCHEMA': 'custom_schema',
+                'POSTGRESQL_SCHEMA': 'custom_schema',
                 'POSTGRESQL_SSL_MODE': 'require',
             },
         ):
@@ -167,7 +160,7 @@ class TestPostgreSQLSettings:
             assert settings.password == 'testpass'
             assert settings.database == 'testdb'
             assert settings.echo == True
-            assert settings.db_schema == 'custom_schema'
+            assert settings.schema == 'custom_schema'
             assert settings.ssl_mode == 'require'
 
 
@@ -182,7 +175,7 @@ class TestMSSQLSettings:
         assert settings.port == 1433
         assert settings.user == "sa"
         assert settings.password == "sa"
-        assert settings.db_schema == "dbo"
+        assert settings.schema == "dbo"
         assert settings.database == "master"
         assert settings.echo == False
         assert settings.pool_size == 25
@@ -209,7 +202,7 @@ class TestMySQLSettings:
         assert settings.database == "dev"
         assert settings.echo == False
         assert settings.async_driver == "mysql+aiomysql"
-        assert settings.sync_driver == "mysql+pymysql"
+        assert settings.sync_driver == "mysql+mysqldb"
         assert settings.ssl_mode == "DISABLED"
         assert settings.ssl_ca_cert_path is None
         assert settings.ssl_client_cert_path is None
@@ -226,13 +219,6 @@ class TestMySQLSettings:
         settings = MySQLSettings()
         assert settings.ssl_mode == "DISABLED"
 
-    def test_validate_ssl_mode_invalid(self):
-        """Test validate_ssl_mode rejects invalid modes"""
-        import pytest
-
-        with pytest.raises(Exception):
-            MySQLSettings(ssl_mode="invalid_mode")
-
 
 class TestMongoDBSettings:
     """Test MongoDB settings"""
@@ -248,7 +234,7 @@ class TestMongoDBSettings:
         assert settings.database == "admin"
         assert settings.batch_size == 2865
         assert settings.limit == 0
-        assert settings.sync_driver == "mongodb"
+        assert settings.driver == "mongodb"
         assert settings.tls_enabled == False
         assert settings.tls_ca_cert_path is None
         assert settings.tls_cert_key_path is None

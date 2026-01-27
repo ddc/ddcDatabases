@@ -11,7 +11,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 try:
     import asyncpg
-    import psycopg2
+    import psycopg
 
     POSTGRESQL_AVAILABLE = True
 except ImportError:
@@ -101,7 +101,7 @@ class TestAsyncBaseConnection:
             engine_args=engine_args,
             autoflush=True,
             expire_on_commit=False,
-            sync_driver="postgresql+psycopg2",
+            sync_driver="postgresql+psycopg",
             async_driver="postgresql+asyncpg",
         )
 
@@ -139,7 +139,7 @@ class TestAsyncBaseConnection:
             engine_args=engine_args,
             autoflush=True,
             expire_on_commit=False,
-            sync_driver="postgresql+psycopg2",
+            sync_driver="postgresql+psycopg",
             async_driver="postgresql+asyncpg",
         )
 
@@ -170,7 +170,7 @@ class TestAsyncBaseConnection:
             engine_args=engine_args,
             autoflush=True,
             expire_on_commit=False,
-            sync_driver="postgresql+psycopg2",
+            sync_driver="postgresql+psycopg",
             async_driver="postgresql+asyncpg",
         )
 

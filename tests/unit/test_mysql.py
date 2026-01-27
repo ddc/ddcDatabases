@@ -16,7 +16,7 @@ class TestMySQL:
             "port": 3306,
             "database": "test",
             "echo": False,
-            "sync_driver": "mysql+pymysql",
+            "sync_driver": "mysql+mysqldb",
             "async_driver": "mysql+aiomysql",
             "autoflush": True,
             "expire_on_commit": True,
@@ -29,10 +29,17 @@ class TestMySQL:
             "ssl_ca_cert_path": None,
             "ssl_client_cert_path": None,
             "ssl_client_key_path": None,
-            "enable_retry": True,
-            "max_retries": 3,
-            "initial_retry_delay": 1.0,
-            "max_retry_delay": 30.0,
+            # Connection retry settings
+            "conn_enable_retry": True,
+            "conn_max_retries": 3,
+            "conn_initial_retry_delay": 1.0,
+            "conn_max_retry_delay": 30.0,
+            # Operation retry settings
+            "op_enable_retry": True,
+            "op_max_retries": 3,
+            "op_initial_retry_delay": 1.0,
+            "op_max_retry_delay": 30.0,
+            "op_jitter": 0.1,
         }
         defaults.update(overrides)
         for key, value in defaults.items():
@@ -54,7 +61,7 @@ class TestMySQL:
         mock_settings.port = 3306
         mock_settings.database = "dev"
         mock_settings.echo = False
-        mock_settings.sync_driver = "mysql+pymysql"
+        mock_settings.sync_driver = "mysql+mysqldb"
         mock_settings.async_driver = "mysql+aiomysql"
 
         # Create a completely custom init that uses mock settings
@@ -107,9 +114,9 @@ class TestMySQL:
 
         mysql = MySQL()
 
-        assert mysql.connection_url["host"] == "localhost"
+        assert mysql.connection_url["host"] == "127.0.0.1"  # localhost is normalized to 127.0.0.1
         assert mysql.connection_url["port"] == 3306
-        assert mysql.sync_driver == "mysql+pymysql"
+        assert mysql.sync_driver == "mysql+mysqldb"
 
     @patch('ddcDatabases.mysql.get_mysql_settings')
     def test_extra_engine_args(self, mock_get_settings):
@@ -207,3 +214,80 @@ class TestMySQL:
 
         assert mysql._ssl_config.ssl_mode == "DISABLED"
         assert "ssl" not in mysql.engine_args["connect_args"]
+
+    @patch('ddcDatabases.mysql.get_mysql_settings')
+    def test_get_connection_info(self, mock_get_settings):
+        """Test get_connection_info returns connection config"""
+        mock_get_settings.return_value = self._create_mock_settings()
+        mysql = MySQL()
+
+        conn_info = mysql.get_connection_info()
+
+        assert conn_info is mysql._connection_config
+        assert isinstance(conn_info, MySQLConnectionConfig)
+        assert conn_info.host == "127.0.0.1"  # localhost normalized to 127.0.0.1
+        assert conn_info.port == 3306
+
+    @patch('ddcDatabases.mysql.get_mysql_settings')
+    def test_get_pool_info(self, mock_get_settings):
+        """Test get_pool_info returns pool config"""
+        mock_get_settings.return_value = self._create_mock_settings()
+        mysql = MySQL(pool_config=MySQLPoolConfig(pool_size=20, max_overflow=40))
+
+        pool_info = mysql.get_pool_info()
+
+        assert pool_info is mysql._pool_config
+        assert isinstance(pool_info, MySQLPoolConfig)
+        assert pool_info.pool_size == 20
+        assert pool_info.max_overflow == 40
+
+    @patch('ddcDatabases.mysql.get_mysql_settings')
+    def test_get_session_info(self, mock_get_settings):
+        """Test get_session_info returns session config"""
+        mock_get_settings.return_value = self._create_mock_settings()
+        mysql = MySQL(session_config=MySQLSessionConfig(echo=True, autoflush=False))
+
+        session_info = mysql.get_session_info()
+
+        assert session_info is mysql._session_config
+        assert isinstance(session_info, MySQLSessionConfig)
+        assert session_info.echo == True
+        assert session_info.autoflush == False
+
+    @patch('ddcDatabases.mysql.get_mysql_settings')
+    def test_get_conn_retry_info(self, mock_get_settings):
+        """Test get_conn_retry_info returns connection retry config"""
+        mock_get_settings.return_value = self._create_mock_settings()
+        mysql = MySQL()
+
+        conn_retry_info = mysql.get_conn_retry_info()
+
+        assert conn_retry_info is mysql._conn_retry_config
+        assert hasattr(conn_retry_info, 'enable_retry')
+        assert hasattr(conn_retry_info, 'max_retries')
+
+    @patch('ddcDatabases.mysql.get_mysql_settings')
+    def test_get_op_retry_info(self, mock_get_settings):
+        """Test get_op_retry_info returns operation retry config"""
+        mock_get_settings.return_value = self._create_mock_settings()
+        mysql = MySQL()
+
+        op_retry_info = mysql.get_op_retry_info()
+
+        assert op_retry_info is mysql._op_retry_config
+        assert hasattr(op_retry_info, 'enable_retry')
+        assert hasattr(op_retry_info, 'max_retries')
+        assert hasattr(op_retry_info, 'jitter')
+
+    @patch('ddcDatabases.mysql.get_mysql_settings')
+    def test_get_ssl_info(self, mock_get_settings):
+        """Test get_ssl_info returns SSL config"""
+        mock_get_settings.return_value = self._create_mock_settings()
+        mysql = MySQL(ssl_config=MySQLSSLConfig(ssl_mode="REQUIRED", ssl_ca_cert_path="/path/to/ca.pem"))
+
+        ssl_info = mysql.get_ssl_info()
+
+        assert ssl_info is mysql._ssl_config
+        assert isinstance(ssl_info, MySQLSSLConfig)
+        assert ssl_info.ssl_mode == "REQUIRED"
+        assert ssl_info.ssl_ca_cert_path == "/path/to/ca.pem"

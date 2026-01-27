@@ -11,7 +11,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 try:
     import asyncpg
-    import psycopg2
+    import psycopg
 
     POSTGRESQL_AVAILABLE = True
 except ImportError:
@@ -34,7 +34,14 @@ class ConcreteTestConnection:
 
     @staticmethod
     def create_test_connection(
-        connection_url, engine_args, autoflush, expire_on_commit, sync_driver, async_driver, retry_config=None
+        connection_url,
+        engine_args,
+        autoflush,
+        expire_on_commit,
+        sync_driver,
+        async_driver,
+        conn_retry_config=None,
+        op_retry_config=None,
     ):
         """Create a concrete test implementation of BaseConnection"""
         from ddcDatabases.core.base import BaseConnection
@@ -80,7 +87,8 @@ class ConcreteTestConnection:
             expire_on_commit=expire_on_commit,
             sync_driver=sync_driver,
             async_driver=async_driver,
-            retry_config=retry_config,
+            conn_retry_config=conn_retry_config,
+            op_retry_config=op_retry_config,
         )
 
 
@@ -107,7 +115,7 @@ class TestBaseConnection:
             engine_args=engine_args,
             autoflush=True,
             expire_on_commit=False,
-            sync_driver="postgresql+psycopg2",
+            sync_driver="postgresql+psycopg",
             async_driver="postgresql+asyncpg",
         )
 
@@ -115,7 +123,7 @@ class TestBaseConnection:
         assert conn.engine_args == engine_args
         assert conn.autoflush == True
         assert conn.expire_on_commit == False
-        assert conn.sync_driver == "postgresql+psycopg2"
+        assert conn.sync_driver == "postgresql+psycopg"
         assert conn.async_driver == "postgresql+asyncpg"
         assert conn.is_connected == False
         assert conn.session is None
@@ -134,7 +142,7 @@ class TestBaseConnection:
             engine_args=engine_args,
             autoflush=True,
             expire_on_commit=False,
-            sync_driver="postgresql+psycopg2",
+            sync_driver="postgresql+psycopg",
             async_driver="postgresql+asyncpg",
         )
 
@@ -636,7 +644,7 @@ class TestBaseConnectionContextManagers:
 
     def test_sync_context_manager(self):
         """Test sync context manager __enter__ and __exit__ methods"""
-        from ddcDatabases.core.retry import RetryPolicy as RetryConfig
+        from ddcDatabases.core.configs import BaseRetryConfig
 
         connection_url = {"host": "localhost", "database": "test"}
         engine_args = {"echo": False}
@@ -646,9 +654,9 @@ class TestBaseConnectionContextManagers:
             engine_args=engine_args,
             autoflush=True,
             expire_on_commit=False,
-            sync_driver="postgresql+psycopg2",
+            sync_driver="postgresql+psycopg",
             async_driver=None,
-            retry_config=RetryConfig(enable_retry=False),
+            conn_retry_config=BaseRetryConfig(enable_retry=False),
         )
 
         # Test the context manager functionality
@@ -720,7 +728,7 @@ class TestBaseConnectionContextManagers:
             engine_args=engine_args,
             autoflush=True,
             expire_on_commit=False,
-            sync_driver="postgresql+psycopg2",
+            sync_driver="postgresql+psycopg",
             async_driver=None,
         )
 
@@ -765,7 +773,7 @@ class TestBaseConnectionContextManagers:
             engine_args={},
             autoflush=True,
             expire_on_commit=False,
-            sync_driver="postgresql+psycopg2",
+            sync_driver="postgresql+psycopg",
             async_driver=None,
         )
 

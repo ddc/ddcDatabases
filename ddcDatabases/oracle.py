@@ -1,6 +1,11 @@
 from .core.base import BaseConnection
-from .core.configs import BaseConnectionConfig, BasePoolConfig, BaseRetryConfig, BaseSessionConfig
-from .core.retry import RetryPolicy
+from .core.configs import (
+    BaseConnectionConfig,
+    BaseOperationRetryConfig,
+    BasePoolConfig,
+    BaseRetryConfig,
+    BaseSessionConfig,
+)
 from .core.settings import get_oracle_settings
 from contextlib import asynccontextmanager, contextmanager
 from dataclasses import dataclass
@@ -35,7 +40,12 @@ class OracleSessionConfig(BaseSessionConfig):
 
 
 @dataclass(frozen=True, slots=True)
-class OracleRetryConfig(BaseRetryConfig):
+class OracleConnRetryConfig(BaseRetryConfig):
+    pass
+
+
+@dataclass(frozen=True, slots=True)
+class OracleOpRetryConfig(BaseOperationRetryConfig):
     pass
 
 
@@ -53,7 +63,8 @@ class Oracle(BaseConnection):
         servicename: str | None = None,
         pool_config: OraclePoolConfig | None = None,
         session_config: OracleSessionConfig | None = None,
-        retry_config: OracleRetryConfig | None = None,
+        conn_retry_config: OracleConnRetryConfig | None = None,
+        op_retry_config: OracleOpRetryConfig | None = None,
         ssl_config: OracleSSLConfig | None = None,
         extra_engine_args: dict | None = None,
         logger: logging.Logger | None = None,
@@ -118,22 +129,29 @@ class Oracle(BaseConnection):
             **self.extra_engine_args,
         }
 
-        # Create retry configuration
-        _rc = retry_config or OracleRetryConfig()
-        self._retry_config = OracleRetryConfig(
-            enable_retry=_rc.enable_retry if _rc.enable_retry is not None else _settings.enable_retry,
-            max_retries=_rc.max_retries if _rc.max_retries is not None else _settings.max_retries,
+        # Create connection retry configuration
+        _crc = conn_retry_config or OracleConnRetryConfig()
+        self._conn_retry_config = OracleConnRetryConfig(
+            enable_retry=_crc.enable_retry if _crc.enable_retry is not None else _settings.conn_enable_retry,
+            max_retries=_crc.max_retries if _crc.max_retries is not None else _settings.conn_max_retries,
             initial_retry_delay=(
-                _rc.initial_retry_delay if _rc.initial_retry_delay is not None else _settings.initial_retry_delay
+                _crc.initial_retry_delay if _crc.initial_retry_delay is not None else _settings.conn_initial_retry_delay
             ),
-            max_retry_delay=_rc.max_retry_delay if _rc.max_retry_delay is not None else _settings.max_retry_delay,
+            max_retry_delay=(
+                _crc.max_retry_delay if _crc.max_retry_delay is not None else _settings.conn_max_retry_delay
+            ),
         )
 
-        _retry_policy = RetryPolicy(
-            enable_retry=self._retry_config.enable_retry,
-            max_retries=self._retry_config.max_retries,
-            initial_delay=self._retry_config.initial_retry_delay,
-            max_delay=self._retry_config.max_retry_delay,
+        # Create operation retry configuration
+        _orc = op_retry_config or OracleOpRetryConfig()
+        self._op_retry_config = OracleOpRetryConfig(
+            enable_retry=_orc.enable_retry if _orc.enable_retry is not None else _settings.op_enable_retry,
+            max_retries=_orc.max_retries if _orc.max_retries is not None else _settings.op_max_retries,
+            initial_retry_delay=(
+                _orc.initial_retry_delay if _orc.initial_retry_delay is not None else _settings.op_initial_retry_delay
+            ),
+            max_retry_delay=_orc.max_retry_delay if _orc.max_retry_delay is not None else _settings.op_max_retry_delay,
+            jitter=_orc.jitter if _orc.jitter is not None else _settings.op_jitter,
         )
 
         self.logger = logger if logger is not None else _logger
@@ -145,7 +163,8 @@ class Oracle(BaseConnection):
             expire_on_commit=self._session_config.expire_on_commit,
             sync_driver=self.sync_driver,
             async_driver=None,
-            retry_config=_retry_policy,
+            conn_retry_config=self._conn_retry_config,
+            op_retry_config=self._op_retry_config,
             logger=self.logger,
         )
 
@@ -175,8 +194,11 @@ class Oracle(BaseConnection):
     def get_session_info(self) -> OracleSessionConfig:
         return self._session_config
 
-    def get_retry_info(self) -> OracleRetryConfig:
-        return self._retry_config
+    def get_conn_retry_info(self) -> OracleConnRetryConfig:
+        return self._conn_retry_config
+
+    def get_op_retry_info(self) -> OracleOpRetryConfig:
+        return self._op_retry_config
 
     def get_ssl_info(self) -> OracleSSLConfig:
         return self._ssl_config
