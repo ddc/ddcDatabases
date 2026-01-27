@@ -1,7 +1,8 @@
 """Tests for persistent connection functionality."""
 
-import asyncio
 from ddcDatabases.core.configs import BaseRetryConfig as RetryConfig
+
+# noinspection PyProtectedMember
 from ddcDatabases.core.persistent import (
     MongoDBPersistent,
     MSSQLPersistent,
@@ -18,7 +19,6 @@ from ddcDatabases.core.persistent import (
 )
 import pytest
 from sqlalchemy.exc import SQLAlchemyError
-import threading
 import time
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -55,7 +55,7 @@ class TestPersistentConnectionConfig:
         """Test that config is frozen (immutable)."""
         config = PersistentConnectionConfig()
         with pytest.raises(AttributeError):
-            config.idle_timeout = 1000
+            config.idle_timeout = 1000  # noqa
 
 
 class TestPersistentSQLAlchemyConnection:
@@ -213,7 +213,7 @@ class TestPersistentMongoDBConnection:
             config=config,
         )
 
-        db = conn.connect()
+        _ = conn.connect()
 
         assert conn.is_connected
         mock_client.admin.command.assert_called_with("ping")
@@ -254,17 +254,19 @@ class TestPersistentMongoDBConnection:
             config=config,
         )
 
-        with conn as db:
+        with conn as _:
             assert conn.is_connected
 
 
 class TestPersistentClasses:
     """Test persistent connection classes with singleton pattern."""
 
+    # noinspection PyMethodMayBeStatic
     def setup_method(self):
         """Clear persistent connections before each test."""
         close_all_persistent_connections()
 
+    # noinspection PyMethodMayBeStatic
     def teardown_method(self):
         """Clean up after each test."""
         close_all_persistent_connections()
@@ -404,10 +406,12 @@ class TestPersistentClasses:
 class TestCloseAllPersistentConnections:
     """Test close_all_persistent_connections function."""
 
+    # noinspection PyMethodMayBeStatic
     def setup_method(self):
         """Clear persistent connections before each test."""
         close_all_persistent_connections()
 
+    # noinspection PyMethodMayBeStatic
     def teardown_method(self):
         """Clean up after each test."""
         close_all_persistent_connections()
@@ -664,7 +668,7 @@ class TestPersistentMongoDBConnectionAdvanced:
         conn._is_connected = True
 
         # This should detect ping failure and reconnect
-        db = conn.connect()
+        _ = conn.connect()
 
         assert conn.is_connected
         # Should have called ping at least twice (one fail, one success)

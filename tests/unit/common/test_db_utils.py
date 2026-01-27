@@ -1,4 +1,5 @@
 from contextlib import asynccontextmanager, contextmanager
+from importlib.util import find_spec
 import pytest
 import sqlalchemy as sa
 from sqlalchemy import Boolean, Column, Integer, String
@@ -9,13 +10,7 @@ from sqlalchemy.orm import declarative_base
 from typing import AsyncGenerator, Generator
 from unittest.mock import AsyncMock, MagicMock, patch
 
-try:
-    import asyncpg
-    import psycopg
-
-    POSTGRESQL_AVAILABLE = True
-except ImportError:
-    POSTGRESQL_AVAILABLE = False
+POSTGRESQL_AVAILABLE = find_spec("asyncpg") is not None and find_spec("psycopg") is not None
 
 
 Base = declarative_base()
@@ -129,13 +124,17 @@ class TestBaseConnection:
         assert conn.session is None
 
     @pytest.mark.skipif(not POSTGRESQL_AVAILABLE, reason="PostgreSQL drivers not available")
-    def test_get_engine(self):
+    @patch('sqlalchemy.engine.create_engine')
+    def test_get_engine(self, mock_create_engine):
         """Test _get_engine context manager"""
         connection_url = {
             "host": "localhost",
             "database": "test",
         }
         engine_args = {"echo": True}
+
+        mock_engine = MagicMock()
+        mock_create_engine.return_value = mock_engine
 
         conn = ConcreteTestConnection.create_test_connection(
             connection_url=connection_url,
@@ -147,9 +146,10 @@ class TestBaseConnection:
         )
 
         with conn._get_engine() as engine:
-            # Our concrete implementation creates real engines
-            assert engine is not None
-            assert hasattr(engine, 'dispose')  # Should be a real SQLAlchemy engine
+            assert engine is mock_engine
+            mock_create_engine.assert_called_once()
+
+        mock_engine.dispose.assert_called_once()
 
     def test_test_connection_sync_non_oracle(self):
         """Test connection test for non-Oracle database"""
@@ -729,10 +729,14 @@ class TestBaseConnectionContextManagers:
             mock_engine.dispose.assert_called_once()
 
     @pytest.mark.skipif(not POSTGRESQL_AVAILABLE, reason="PostgreSQL drivers not available")
-    def test_get_engine_context_manager(self):
+    @patch('sqlalchemy.engine.create_engine')
+    def test_get_engine_context_manager(self, mock_create_engine):
         """Test _get_engine context manager - Lines 86-102"""
         connection_url = {"host": "localhost", "database": "test"}
         engine_args = {"echo": True, "pool_size": 5}
+
+        mock_engine = MagicMock()
+        mock_create_engine.return_value = mock_engine
 
         conn = ConcreteTestConnection.create_test_connection(
             connection_url=connection_url,
@@ -743,13 +747,11 @@ class TestBaseConnectionContextManagers:
             async_driver=None,
         )
 
-        # Test the actual _get_engine method with real engine creation
         with conn._get_engine() as engine:
-            # Our concrete implementation creates real engines
-            assert engine is not None
-            # Check that the engine has the expected configuration
-            assert hasattr(engine, 'dispose')  # Engine should have dispose method
-            assert hasattr(engine, 'url')  # Should have URL attribute
+            assert engine is mock_engine
+            mock_create_engine.assert_called_once()
+
+        mock_engine.dispose.assert_called_once()
 
     @pytest.mark.asyncio
     @pytest.mark.skipif(not POSTGRESQL_AVAILABLE, reason="PostgreSQL drivers not available")
@@ -772,7 +774,7 @@ class TestBaseConnectionContextManagers:
             # Our concrete implementation creates real engines
             assert engine is not None
             # Check that the engine has the expected configuration
-            assert hasattr(engine, 'dispose')  # Engine should have dispose method
+            assert hasattr(engine, 'dispose')  # Engine should have disposed method
             assert hasattr(engine, 'url')  # Should have URL attribute
 
     def test_test_connection_sync_method(self):

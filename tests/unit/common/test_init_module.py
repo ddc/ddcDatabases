@@ -296,3 +296,61 @@ class TestInitModule:
 
         # Should be the fallback version
         assert _version == (0, 0, 0)
+
+    def test_main_imports(self):
+        """Test main module imports work correctly"""
+        from ddcDatabases import (
+            MSSQL,
+            DBUtils,
+            DBUtilsAsync,
+            MySQL,
+            Oracle,
+            PostgreSQL,
+            Sqlite,
+        )
+
+        # Test that all main classes can be imported
+        assert DBUtils is not None
+        assert DBUtilsAsync is not None
+        assert MSSQL is not None
+        assert MySQL is not None
+        assert Oracle is not None
+        assert PostgreSQL is not None
+        assert Sqlite is not None
+
+    def test_mongodb_import_accessibility(self):
+        """Test MongoDB import specifically"""
+        from ddcDatabases import MongoDB
+
+        assert MongoDB is not None
+
+    def test_mariadb_aliases(self):
+        """Test MariaDB aliases point to MySQL classes"""
+        from ddcDatabases import (
+            MariaDB,
+            MariaDBConnectionConfig,
+            MariaDBConnRetryConfig,
+            MariaDBOpRetryConfig,
+            MariaDBPersistent,
+            MariaDBPoolConfig,
+            MariaDBSessionConfig,
+            MariaDBSSLConfig,
+            MySQL,
+            MySQLConnectionConfig,
+            MySQLConnRetryConfig,
+            MySQLOpRetryConfig,
+            MySQLPersistent,
+            MySQLPoolConfig,
+            MySQLSessionConfig,
+            MySQLSSLConfig,
+        )
+
+        # Verify all MariaDB aliases point to their MySQL equivalents
+        assert MariaDB is MySQL
+        assert MariaDBConnectionConfig is MySQLConnectionConfig
+        assert MariaDBConnRetryConfig is MySQLConnRetryConfig
+        assert MariaDBOpRetryConfig is MySQLOpRetryConfig
+        assert MariaDBPersistent is MySQLPersistent
+        assert MariaDBPoolConfig is MySQLPoolConfig
+        assert MariaDBSessionConfig is MySQLSessionConfig
+        assert MariaDBSSLConfig is MySQLSSLConfig

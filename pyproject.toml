@@ -77,7 +77,7 @@ packages = ["ddcDatabases"]
 [tool.poe.tasks]
 build = "uv build --wheel"
 updatedev.shell = "uv lock && uv sync --all-extras"
-linter.shell = "uv run ruff check --fix --select I . && uv run black ."
+linter.shell = "uv run ruff check --fix . && uv run black ."
 profile = "uv run python -m cProfile -o cprofile_unit.prof -m pytest tests/unit --no-cov"
 profile-integration = "uv run python -m cProfile -o cprofile_integration.prof -m pytest tests/integration --no-cov"
 test = "uv run pytest tests/unit"
@@ -124,7 +124,7 @@ skip-string-normalization = true
 line-length = 120
 
 [tool.ruff.lint]
-select = ["I"]
+select = ["I", "F401"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["ddcDatabases"]

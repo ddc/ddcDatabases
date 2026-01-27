@@ -12,6 +12,8 @@ class Base(DeclarativeBase):
 
 
 class ModelTest(Base):
+    """Test model for SQLite operations."""
+
     __tablename__ = "model_test"
     id: Mapped[int] = mapped_column(primary_key=True, unique=True, autoincrement=True)
     name: Mapped[str] = mapped_column(nullable=True, server_default="Test")
@@ -84,6 +86,7 @@ class TestSQLite:
 
         with self.Sqlite(filepath=db_path) as session:
             # Create table
+            # noinspection PyUnresolvedReferences
             ModelTest.__table__.create(session.bind, checkfirst=True)
 
             db_utils = self.DBUtils(session)
@@ -140,6 +143,7 @@ class TestSQLite:
             db_path = tmp.name
 
         with self.Sqlite(filepath=db_path) as session:
+            # noinspection PyUnresolvedReferences
             ModelTest.__table__.create(session.bind, checkfirst=True)
             db_utils = self.DBUtils(session)
 
@@ -209,6 +213,7 @@ class TestSQLiteRealOperations:
             db_path = tmp.name
 
         with self.Sqlite(filepath=db_path) as session:
+            # noinspection PyUnresolvedReferences
             ModelTest.__table__.create(session.bind, checkfirst=True)
 
             # Insert test data
@@ -232,6 +237,7 @@ class TestSQLiteRealOperations:
             db_path = tmp.name
 
         with self.Sqlite(filepath=db_path) as session:
+            # noinspection PyUnresolvedReferences
             ModelTest.__table__.create(session.bind, checkfirst=True)
 
             # Insert test data
@@ -251,6 +257,7 @@ class TestSQLiteRealOperations:
             db_path = tmp.name
 
         with self.Sqlite(filepath=db_path) as session:
+            # noinspection PyUnresolvedReferences
             ModelTest.__table__.create(session.bind, checkfirst=True)
 
             db_utils = self.DBUtils(session)
@@ -307,6 +314,7 @@ class TestSQLiteRealOperations:
 
         # Test that it works with real database
         with sqlite as session:
+            # noinspection PyUnresolvedReferences
             ModelTest.__table__.create(session.bind, checkfirst=True)
 
             # Insert and verify

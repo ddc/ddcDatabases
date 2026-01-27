@@ -6,6 +6,7 @@ from unittest.mock import MagicMock, patch
 class TestMySQL:
     """Test MySQL database connection class"""
 
+    # noinspection PyMethodMayBeStatic
     def _create_mock_settings(self, **overrides):
         """Create mock settings with all required fields"""
         mock_settings = MagicMock()

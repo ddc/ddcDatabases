@@ -17,6 +17,7 @@ def setup_mongodb_test_env():
 
     # Store original state
     original_disabled_level = logging.root.manager.disable
+    # noinspection PyProtectedMember
     logger = ddcDatabases.mongodb._logger
     original_handlers = logger.handlers[:]
     original_level = logger.level
@@ -48,6 +49,7 @@ class TestMongoDB:
         """Import dependencies when needed"""
         pass
 
+    # noinspection PyMethodMayBeStatic
     def _create_mock_settings(self, **overrides):
         """Create mock settings with default values and optional overrides"""
         mock_settings = MagicMock()
@@ -77,6 +79,7 @@ class TestMongoDB:
         mock_settings.op_jitter = overrides.get('op_jitter', 0.1)
         return mock_settings
 
+    # noinspection PyMethodMayBeStatic
     def _setup_mock_client_and_collection(self, mock_mongo_client):
         """Setup mock client, database, and collection for cursor tests"""
         mock_client = MagicMock()
@@ -112,7 +115,10 @@ class TestMongoDB:
     def test_init_with_parameters(self, mock_get_settings):
         """Test MongoDB initialization with override parameters"""
         mock_settings = self._create_mock_settings(
-            host="defaulthost", user="defaultuser", password="defaultpass", database="defaultdb"
+            host="defaulthost",
+            user="defaultuser",
+            password="defaultpass",
+            database="defaultdb",
         )
         mock_get_settings.return_value = mock_settings
 
@@ -329,7 +335,8 @@ class TestMongoDB:
 
             with patch.object(MongoDB, '__enter__', patched_enter):
                 mongodb = MongoDB(
-                    collection="test_collection", query_config=MongoDBQueryConfig(query={"test": "value"})
+                    collection="test_collection",
+                    query_config=MongoDBQueryConfig(query={"test": "value"}),
                 )
 
                 # Call __enter__ which should handle the exception
@@ -389,7 +396,7 @@ class TestMongoDB:
 
     @patch('ddcDatabases.mongodb.get_mongodb_settings')
     @patch('ddcDatabases.mongodb.MongoClient')
-    def test_enter_method_client_close_condition(self, mock_mongo_client, mock_get_settings):
+    def test_enter_method_client_close_condition(self, _mock_mongo_client, mock_get_settings):
         """Test __enter__ method client.close() condition - Line 47"""
         mock_settings = self._create_mock_settings()
         mock_get_settings.return_value = mock_settings
@@ -775,8 +782,8 @@ class TestMongoDB:
             with pytest.raises(ConnectionError, match="Connection to MongoDB failed"):
                 mongodb._test_connection()
 
-    def test_create_cursor_with_ascending_sort(self):
-        """Test _create_cursor with ascending sort order."""
+    def test_create_cursor_ascending_sort_with_limit(self):
+        """Test _create_cursor with ascending sort order and custom limit."""
         mock_settings = self._create_mock_settings(batch_size=100, limit=10)
 
         with patch('ddcDatabases.mongodb.get_mongodb_settings', return_value=mock_settings):
@@ -800,7 +807,7 @@ class TestMongoDB:
             # Test with ascending sort
             from pymongo import ASCENDING
 
-            cursor = mongodb._create_cursor("test_collection", {}, "name", "asc")
+            _ = mongodb._create_cursor("test_collection", {}, "name", "asc")
 
             mock_cursor.sort.assert_called_once()
             # Verify ascending direction was used
@@ -832,7 +839,7 @@ class TestMongoDB:
             # Test with sort column but no sort order - should default to ascending
             from pymongo import ASCENDING
 
-            cursor = mongodb._create_cursor("test_collection", {}, "name", None)
+            _ = mongodb._create_cursor("test_collection", {}, "name", None)
 
             mock_cursor.sort.assert_called_once()
             call_args = mock_cursor.sort.call_args
@@ -1159,7 +1166,7 @@ class TestMongoDB:
 
         mock_client = MagicMock()
 
-        async def mock_command(cmd):
+        async def mock_command(_cmd):
             raise PyMongoError("ping failed")
 
         mock_client.admin.command = mock_command
@@ -1219,7 +1226,7 @@ class TestMongoDB:
         mock_client.__getitem__ = MagicMock(return_value=mock_db)
         mongodb.async_client = mock_client
 
-        cursor = mongodb._create_cursor_async("test_collection", {}, "created_at", "desc")
+        _ = mongodb._create_cursor_async("test_collection", {}, "created_at", "desc")
 
         mock_cursor.sort.assert_called_once_with("created_at", DESCENDING)
 
@@ -1235,7 +1242,7 @@ class TestMongoDB:
 
         mock_client = MagicMock()
 
-        async def mock_command(cmd):
+        async def mock_command(_cmd):
             raise PyMongoError("Connection failed")
 
         mock_client.admin.command = mock_command

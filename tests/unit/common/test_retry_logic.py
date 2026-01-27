@@ -1,8 +1,9 @@
 """Tests for retry logic functionality."""
 
-import asyncio
 from ddcDatabases.core.configs import BaseOperationRetryConfig, BaseRetryConfig
 from ddcDatabases.core.constants import CONNECTION_ERROR_KEYWORDS
+
+# noinspection PyProtectedMember
 from ddcDatabases.core.retry import (
     _calculate_retry_delay,
     _handle_retry_exception,
@@ -11,7 +12,6 @@ from ddcDatabases.core.retry import (
     retry_operation_async,
 )
 import pytest
-import time
 from unittest.mock import MagicMock, patch
 
 
@@ -74,7 +74,7 @@ class TestRetryConfig:
         """Test that config is frozen (immutable)."""
         config = BaseRetryConfig()
         with pytest.raises(AttributeError):
-            config.max_retries = 10
+            config.max_retries = 10  # noqa
 
 
 class TestConnectionErrorKeywords:
@@ -114,7 +114,7 @@ class TestIsConnectionError:
     def test_connection_error_by_type_name(self):
         """Test detection by exception type name."""
 
-        class ConnectionError(Exception):
+        class TestConnectionError(Exception):  # Named to avoid shadowing built-in
             pass
 
         class NetworkError(Exception):
@@ -123,7 +123,7 @@ class TestIsConnectionError:
         class TimeoutException(Exception):
             pass
 
-        assert _is_connection_error(ConnectionError("test"))
+        assert _is_connection_error(TestConnectionError("test"))
         assert _is_connection_error(NetworkError("test"))
         assert _is_connection_error(TimeoutException("test"))
 
@@ -435,7 +435,7 @@ class TestRetryOperationAsync:
 
         for falsy_value in [0, False, None, '', [], {}]:
 
-            async def operation(val=falsy_value):
+            async def operation(val=falsy_value):  # noqa
                 return val
 
             result = await retry_operation_async(operation, config, "test_op")

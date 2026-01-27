@@ -52,7 +52,7 @@ jobs:
       - name: Run tests with coverage
         uses: nick-fields/retry@v3
         with:
-          timeout_minutes: 3
+          timeout_minutes: 2
           max_attempts: 3
           command: uv run pytest tests/unit
           shell: bash
@@ -100,7 +100,7 @@ jobs:
       - name: Run integration tests
         uses: nick-fields/retry@v3
         with:
-          timeout_minutes: 5
+          timeout_minutes: 3
           max_attempts: 3
           command: uv run pytest tests/integration --no-cov
           shell: bash

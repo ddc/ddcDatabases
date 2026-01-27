@@ -1,13 +1,12 @@
 from ddcDatabases.mssql import MSSQL, MSSQLConnectionConfig, MSSQLPoolConfig, MSSQLSessionConfig, MSSQLSSLConfig
 import pytest
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import Session
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock, patch
 
 
 class TestMSSQL:
     """Test MSSQL database connection class"""
 
+    # noinspection PyMethodMayBeStatic
     def _create_mock_settings(self, **overrides):
         """Create mock settings with all required fields"""
         mock_settings = MagicMock()
