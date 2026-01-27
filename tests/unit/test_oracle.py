@@ -21,17 +21,24 @@ class TestOracle:
             "sync_driver": "oracle+oracledb",
             "autoflush": False,
             "expire_on_commit": False,
-            "autocommit": True,
+            "autocommit": False,
             "connection_timeout": 30,
             "pool_recycle": 3600,
             "pool_size": 10,
             "max_overflow": 20,
             "ssl_enabled": False,
             "ssl_wallet_path": None,
-            "enable_retry": True,
-            "max_retries": 3,
-            "initial_retry_delay": 1.0,
-            "max_retry_delay": 30.0,
+            # Connection retry settings
+            "conn_enable_retry": True,
+            "conn_max_retries": 3,
+            "conn_initial_retry_delay": 1.0,
+            "conn_max_retry_delay": 30.0,
+            # Operation retry settings
+            "op_enable_retry": True,
+            "op_max_retries": 3,
+            "op_initial_retry_delay": 0.5,
+            "op_max_retry_delay": 10.0,
+            "op_jitter": 0.1,
         }
         defaults.update(overrides)
         for key, value in defaults.items():
@@ -220,7 +227,7 @@ class TestOracle:
 
         assert oracle._session_config.autoflush == False
         assert oracle._session_config.expire_on_commit == False
-        assert oracle._session_config.autocommit == True
+        assert oracle._session_config.autocommit == False
         assert oracle._pool_config.connection_timeout == 30
 
     @patch('ddcDatabases.oracle.get_oracle_settings')

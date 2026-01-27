@@ -240,7 +240,7 @@ class OracleSettings(_BaseDBSettings):
     echo: bool = Field(default=False, description=Msg.ECHO_DESCRIPTION)
     autoflush: bool = Field(default=False, description=Msg.AUTOFLUSH_DESCRIPTION)
     expire_on_commit: bool = Field(default=False, description=Msg.EXPIRE_ON_COMMIT_DESCRIPTION)
-    autocommit: bool = Field(default=True, description=Msg.AUTOCOMMIT_DESCRIPTION)
+    autocommit: bool = Field(default=False, description=Msg.AUTOCOMMIT_DESCRIPTION)
     connection_timeout: int = Field(default=30, description=Msg.CONNECTION_TIMEOUT_DESCRIPTION)
     pool_recycle: int = Field(default=3600, description=Msg.POOL_RECYCLE_DESCRIPTION)
     pool_size: int = Field(default=10, description=Msg.POOL_SIZE_DESCRIPTION)

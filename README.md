@@ -68,8 +68,17 @@
 ## Default Session Settings
 
 - `autoflush = False`
-- `expire_on_commit = False` 
+- `expire_on_commit = False`
 - `echo = False`
+
+**Autocommit Defaults by Database:**
+
+| Database   | Default | Convention                       |
+|------------|---------|----------------------------------|
+| PostgreSQL | `False` | Uses transactions by default     |
+| MSSQL      | `False` | Uses transactions by default     |
+| MySQL      | `True`  | Autocommit ON is MySQL's default |
+| Oracle     | `False` | Requires explicit COMMIT         |
 
 **Note:** All constructor parameters are optional and fall back to [.env](./ddcDatabases/.env.example) file variables.
 
