@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "ddcDatabases"
-version = "3.0.7"
+version = "3.0.8"
 description = "Simplified database ORM connections with support for multiple database engines"
 license = {text = "MIT"}
 readme = "README.md"
@@ -36,7 +36,7 @@ classifiers = [
 ]
 requires-python = ">=3.12"
 dependencies = [
-    "pydantic-settings>=2.12.0",
+    "pydantic-settings>=2.11.0",
     "sqlalchemy[asyncio]>=2.0.46"
 ]
 
@@ -48,7 +48,7 @@ Repository = "https://github.com/ddc/ddcDatabases"
 mongodb = ["motor>=3.7.1"]
 mssql = ["pyodbc>=5.3.0", "aioodbc>=0.5.0"]
 mysql = ["mysqlclient>=2.2.7", "aiomysql>=0.3.2"]
-oracle = ["oracledb>=3.4.1"]
+oracle = ["oracledb>=3.4.2"]
 pgsql = ["psycopg[binary]>=3.3.2", "asyncpg>=0.31.0"]
 all = [
     "ddcDatabases[mongodb]",
@@ -124,9 +124,20 @@ skip-string-normalization = true
 line-length = 120
 
 [tool.ruff.lint]
+# I - Import sorting and organization
+# F401 - Detect and remove unused imports
 select = ["I", "F401"]
 
 [tool.ruff.lint.isort]
-known-first-party = ["ddcDatabases"]
-force-sort-within-sections = true
+known-first-party = ["pythonLogs"]
+force-sort-within-sections = false
+from-first = false
 no-sections = true
+
+[tool.ruff.lint.per-file-ignores]
+# S101 Use of `assert` detected
+# S105 Possible hardcoded password assigned to variable
+# S106 Possible hardcoded password assigned to argument
+# S311 Standard pseudo-random generators are not suitable for cryptographic purposes
+# SLF001 Private member accessed
+"tests/**/*.py" = ["S101", "S105", "S106", "S311", "SLF001"]

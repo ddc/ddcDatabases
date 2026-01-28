@@ -1,5 +1,7 @@
 """Tests for persistent connection functionality."""
 
+import pytest
+import time
 from ddcDatabases.core.configs import BaseRetryConfig as RetryConfig
 
 # noinspection PyProtectedMember
@@ -17,9 +19,7 @@ from ddcDatabases.core.persistent import (
     _registry_lock,
     close_all_persistent_connections,
 )
-import pytest
 from sqlalchemy.exc import SQLAlchemyError
-import time
 from unittest.mock import AsyncMock, MagicMock, patch
 
 # Test-optimized configuration with short health check interval to speed up tests

@@ -1,5 +1,6 @@
 """Tests for retry logic functionality."""
 
+import pytest
 from ddcDatabases.core.configs import BaseOperationRetryConfig, BaseRetryConfig
 from ddcDatabases.core.constants import CONNECTION_ERROR_KEYWORDS
 
@@ -11,7 +12,6 @@ from ddcDatabases.core.retry import (
     retry_operation,
     retry_operation_async,
 )
-import pytest
 from unittest.mock import MagicMock, patch
 
 

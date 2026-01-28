@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-from .configs import BaseRetryConfig
-from .constants import CONNECTION_ERROR_KEYWORDS
 import asyncio
 import logging
 import random
 import time
+from .configs import BaseRetryConfig
+from .constants import CONNECTION_ERROR_KEYWORDS
 from typing import Awaitable, Callable, TypeVar
 
 # Type variable for generic return types

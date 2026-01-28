@@ -1,3 +1,4 @@
+import logging
 from .core.base import BaseConnection
 from .core.configs import (
     BaseConnectionConfig,
@@ -11,7 +12,6 @@ from .core.constants import POSTGRESQL_SSL_MODES
 from .core.settings import get_postgresql_settings
 from contextlib import asynccontextmanager, contextmanager
 from dataclasses import dataclass
-import logging
 from sqlalchemy import URL
 from sqlalchemy.engine import Engine, create_engine
 from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
