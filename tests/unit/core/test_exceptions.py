@@ -1,3 +1,4 @@
+import pytest
 from ddcDatabases.core.exceptions import (
     CustomBaseException,
     DBDeleteAllDataException,
@@ -7,7 +8,6 @@ from ddcDatabases.core.exceptions import (
     DBInsertBulkException,
     DBInsertSingleException,
 )
-import pytest
 
 
 class TestExceptions:

@@ -275,3 +275,46 @@ get_mssql_settings = _create_cached_settings_factory(MSSQLSettings)
 get_mysql_settings = _create_cached_settings_factory(MySQLSettings)
 get_mongodb_settings = _create_cached_settings_factory(MongoDBSettings)
 get_oracle_settings = _create_cached_settings_factory(OracleSettings)
+
+
+def _clear_settings_cache(getter_func: Callable[[], T], reload_env: bool = True) -> None:
+    """Clear the cache for a settings getter function.
+
+    Args:
+        getter_func: The cached getter function to clear
+        reload_env: If True, also reset dotenv loaded flag to reload on next access
+    """
+    global _dotenv_loaded
+    getter_func.cache_clear()  # type: ignore[attr-defined]
+    if reload_env:
+        _dotenv_loaded = False
+
+
+def clear_sqlite_settings_cache(reload_env: bool = True) -> None:
+    """Clear SQLite settings cache. Next call to get_sqlite_settings() will create fresh instance."""
+    _clear_settings_cache(get_sqlite_settings, reload_env)
+
+
+def clear_postgresql_settings_cache(reload_env: bool = True) -> None:
+    """Clear PostgreSQL settings cache. Next call to get_postgresql_settings() will create fresh instance."""
+    _clear_settings_cache(get_postgresql_settings, reload_env)
+
+
+def clear_mssql_settings_cache(reload_env: bool = True) -> None:
+    """Clear MSSQL settings cache. Next call to get_mssql_settings() will create fresh instance."""
+    _clear_settings_cache(get_mssql_settings, reload_env)
+
+
+def clear_mysql_settings_cache(reload_env: bool = True) -> None:
+    """Clear MySQL settings cache. Next call to get_mysql_settings() will create fresh instance."""
+    _clear_settings_cache(get_mysql_settings, reload_env)
+
+
+def clear_mongodb_settings_cache(reload_env: bool = True) -> None:
+    """Clear MongoDB settings cache. Next call to get_mongodb_settings() will create fresh instance."""
+    _clear_settings_cache(get_mongodb_settings, reload_env)
+
+
+def clear_oracle_settings_cache(reload_env: bool = True) -> None:
+    """Clear Oracle settings cache. Next call to get_oracle_settings() will create fresh instance."""
+    _clear_settings_cache(get_oracle_settings, reload_env)

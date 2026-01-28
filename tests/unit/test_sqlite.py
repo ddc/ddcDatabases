@@ -1,9 +1,9 @@
-from ddcDatabases.sqlite import SqliteSessionConfig
 import pytest
 import sqlalchemy as sa
+import tempfile
+from ddcDatabases.sqlite import SqliteSessionConfig
 from sqlalchemy import Boolean
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
-import tempfile
 from unittest.mock import MagicMock, patch
 
 

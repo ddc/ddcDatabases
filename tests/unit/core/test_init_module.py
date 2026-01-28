@@ -1,4 +1,3 @@
-import sys
 from unittest.mock import patch
 
 
@@ -14,22 +13,6 @@ class TestInitModule:
         # Should have at least one NullHandler
         null_handlers = [h for h in handlers if isinstance(h, logging.NullHandler)]
         assert len(null_handlers) >= 1, "NullHandler not found in logger handlers"
-
-    def test_version_parsing_success(self):
-        """Test successful version parsing from metadata"""
-        # Test the version parsing logic directly
-        version_str = "2.0.1"
-        _version = tuple(int(x) for x in version_str.split("."))
-
-        # Version should be parsed correctly
-        assert _version == (2, 0, 1)
-
-        # Test current module version exists and is valid
-        import ddcDatabases
-
-        assert isinstance(ddcDatabases.__version__, tuple)
-        assert len(ddcDatabases.__version__) == 3
-        assert all(isinstance(x, int) for x in ddcDatabases.__version__)
 
     def test_version_parsing_module_not_found(self):
         """Test version parsing fallback when module is not found"""
@@ -83,29 +66,6 @@ class TestInitModule:
             # Note: This might not work as expected due to module caching,
             # but it demonstrates the intended test case
 
-    def test_version_info_namedtuple_structure(self):
-        """Test VersionInfo NamedTuple structure and values"""
-        import ddcDatabases
-
-        # Test __version_info__ structure (VersionInfo is cleaned up after import)
-        version_info = ddcDatabases.__version_info__
-        assert hasattr(version_info, 'major')
-        assert hasattr(version_info, 'minor')
-        assert hasattr(version_info, 'micro')
-        assert hasattr(version_info, 'releaselevel')
-        assert hasattr(version_info, 'serial')
-
-        # Test __req_python_version__ structure
-        req_version = ddcDatabases.__req_python_version__
-        assert hasattr(req_version, 'major')
-        assert hasattr(req_version, 'minor')
-        assert hasattr(req_version, 'micro')
-        assert hasattr(req_version, 'releaselevel')
-        assert hasattr(req_version, 'serial')
-
-        # Test that releaselevel is properly typed
-        assert version_info.releaselevel in ["alpha", "beta", "candidate", "final"]
-
     def test_constants_accessibility(self):
         """Test that all module constants are accessible"""
         import ddcDatabases
@@ -117,97 +77,32 @@ class TestInitModule:
             '__license__',
             '__copyright__',
             '__version__',
-            '__version_info__',
-            '__req_python_version__',
         ]
 
         for const in constants:
             assert hasattr(ddcDatabases, const), f"Constant {const} not accessible"
 
-    def test_cleaned_up_imports(self):
-        """Test that temporary imports are cleaned up"""
-        import ddcDatabases
-
-        # These should be deleted after import
-        cleanup_items = [
-            'logging',
-            'NamedTuple',
-            'Literal',
-            'VersionInfo',
-            'version',
-            '_version',
-            '_req_python_version',
-        ]
-
-        for item in cleanup_items:
-            assert not hasattr(ddcDatabases, item), f"Item {item} should have been cleaned up"
-
     def test_all_exports_defined(self):
-        """Test that __all__ contains expected database classes"""
+        """Test that __all__ contains valid exports and core classes are always present"""
         import ddcDatabases
 
-        # Test that __all__ contains the expected database classes and new exports (alphabetically sorted)
-        expected_classes = {
-            "close_all_persistent_connections",
+        # Core exports that should always be present (no optional dependencies)
+        core_exports = {
             "DBUtils",
             "DBUtilsAsync",
-            # MariaDB aliases
-            "MariaDB",
-            "MariaDBConnectionConfig",
-            "MariaDBConnRetryConfig",
-            "MariaDBOpRetryConfig",
-            "MariaDBPersistent",
-            "MariaDBPoolConfig",
-            "MariaDBSessionConfig",
-            "MariaDBSSLConfig",
-            "MongoDB",
-            "MongoDBConnectionConfig",
-            "MongoDBConnRetryConfig",
-            "MongoDBOpRetryConfig",
-            "MongoDBPersistent",
-            "MongoDBQueryConfig",
-            "MongoDBTLSConfig",
-            "MSSQL",
-            "MSSQLConnectionConfig",
-            "MSSQLConnRetryConfig",
-            "MSSQLOpRetryConfig",
-            "MSSQLPersistent",
-            "MSSQLPoolConfig",
-            "MSSQLSessionConfig",
-            "MSSQLSSLConfig",
-            "MySQL",
-            "MySQLConnectionConfig",
-            "MySQLConnRetryConfig",
-            "MySQLOpRetryConfig",
-            "MySQLPersistent",
-            "MySQLPoolConfig",
-            "MySQLSessionConfig",
-            "MySQLSSLConfig",
-            "Oracle",
-            "OracleConnectionConfig",
-            "OracleConnRetryConfig",
-            "OracleOpRetryConfig",
-            "OraclePersistent",
-            "OraclePoolConfig",
-            "OracleSessionConfig",
-            "OracleSSLConfig",
             "PersistentConnectionConfig",
-            "PostgreSQL",
-            "PostgreSQLConnectionConfig",
-            "PostgreSQLConnRetryConfig",
-            "PostgreSQLOpRetryConfig",
-            "PostgreSQLPersistent",
-            "PostgreSQLPoolConfig",
-            "PostgreSQLSessionConfig",
-            "PostgreSQLSSLConfig",
-            "Sqlite",
-            "SqliteConnRetryConfig",
-            "SqliteOpRetryConfig",
-            "SqliteSessionConfig",
+            "close_all_persistent_connections",
         }
 
-        # Verify __all__ contains expected classes
-        assert set(ddcDatabases.__all__) == expected_classes
+        # Verify core exports are always present
+        assert core_exports.issubset(set(ddcDatabases.__all__)), "Core exports missing from __all__"
+
+        # Verify all items in __all__ are actually accessible
+        for name in ddcDatabases.__all__:
+            assert hasattr(ddcDatabases, name), f"{name} in __all__ but not accessible"
+
+        # Verify __all__ is a tuple (converted at end of __init__.py)
+        assert isinstance(ddcDatabases.__all__, tuple), "__all__ should be a tuple"
 
     def test_version_string_parsing_edge_cases(self):
         """Test version string parsing with various formats"""
@@ -220,18 +115,6 @@ class TestInitModule:
         for version_str, expected_tuple in test_cases:
             result = tuple(int(x) for x in version_str.split("."))
             assert result == expected_tuple
-
-    def test_required_python_version_constants(self):
-        """Test required Python version constants"""
-        import ddcDatabases
-
-        # Test that required Python version is set correctly
-        req_version = ddcDatabases.__req_python_version__
-        assert req_version.major == 3
-        assert req_version.minor == 12
-        assert req_version.micro == 0
-        assert req_version.releaselevel == "final"
-        assert req_version.serial == 0
 
     def test_metadata_string_values(self):
         """Test metadata string values are correct"""
@@ -250,37 +133,6 @@ class TestInitModule:
         assert len(ddcDatabases.__email__) > 0
         assert len(ddcDatabases.__license__) > 0
         assert len(ddcDatabases.__copyright__) > 0
-
-    def test_version_exception_path_actual(self):
-        """Test that covers the ModuleNotFoundError exception path in __init__.py"""
-
-        # Save original state
-        original_modules = dict(sys.modules)
-
-        try:
-            # Remove ddcDatabases from sys.modules if it exists
-            modules_to_remove = [name for name in list(sys.modules.keys()) if name.startswith('ddcDatabases')]
-            for module_name in modules_to_remove:
-                if module_name in sys.modules:
-                    del sys.modules[module_name]
-
-            # Patch importlib.metadata.version to raise ModuleNotFoundError
-            with patch('importlib.metadata.version') as mock_version:
-                mock_version.side_effect = ModuleNotFoundError("No module named 'ddcDatabases'")
-
-                # Now import ddcDatabases which should trigger the exception path
-                import ddcDatabases
-
-                # The version should be the fallback (0, 0, 0)
-                assert ddcDatabases.__version__ == (0, 0, 0)
-                assert ddcDatabases.__version_info__.major == 0
-                assert ddcDatabases.__version_info__.minor == 0
-                assert ddcDatabases.__version_info__.micro == 0
-
-        finally:
-            # Restore original sys.modules state
-            sys.modules.clear()
-            sys.modules.update(original_modules)
 
     def test_force_module_not_found_error_direct(self):
         """Force the ModuleNotFoundError by testing the logic directly"""

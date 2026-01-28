@@ -1,3 +1,5 @@
+import os
+import pytest
 from ddcDatabases.core.settings import (
     MongoDBSettings,
     MSSQLSettings,
@@ -12,8 +14,6 @@ from ddcDatabases.core.settings import (
     get_postgresql_settings,
     get_sqlite_settings,
 )
-import os
-import pytest
 from unittest.mock import patch
 
 
@@ -188,6 +188,31 @@ class TestMSSQLSettings:
         assert settings.ssl_trust_server_certificate == True
         assert settings.ssl_ca_cert_path is None
 
+    def test_env_override(self):
+        """Test environment variable overrides"""
+        with patch.dict(
+            os.environ,
+            {
+                'MSSQL_HOST': 'mssql-host',
+                'MSSQL_PORT': '1434',
+                'MSSQL_USER': 'testuser',
+                'MSSQL_PASSWORD': 'testpass',
+                'MSSQL_DATABASE': 'testdb',
+                'MSSQL_SCHEMA': 'custom_schema',
+                'MSSQL_ECHO': 'true',
+                'MSSQL_SSL_ENCRYPT': 'true',
+            },
+        ):
+            settings = MSSQLSettings()
+            assert settings.host == 'mssql-host'
+            assert settings.port == 1434
+            assert settings.user == 'testuser'
+            assert settings.password == 'testpass'
+            assert settings.database == 'testdb'
+            assert settings.schema == 'custom_schema'
+            assert settings.echo is True
+            assert settings.ssl_encrypt is True
+
 
 class TestMySQLSettings:
     """Test MySQL settings"""
@@ -220,6 +245,29 @@ class TestMySQLSettings:
         settings = MySQLSettings()
         assert settings.ssl_mode == "DISABLED"
 
+    def test_env_override(self):
+        """Test environment variable overrides"""
+        with patch.dict(
+            os.environ,
+            {
+                'MYSQL_HOST': 'mysql-host',
+                'MYSQL_PORT': '3307',
+                'MYSQL_USER': 'testuser',
+                'MYSQL_PASSWORD': 'testpass',
+                'MYSQL_DATABASE': 'testdb',
+                'MYSQL_ECHO': 'true',
+                'MYSQL_SSL_MODE': 'REQUIRED',
+            },
+        ):
+            settings = MySQLSettings()
+            assert settings.host == 'mysql-host'
+            assert settings.port == 3307
+            assert settings.user == 'testuser'
+            assert settings.password == 'testpass'
+            assert settings.database == 'testdb'
+            assert settings.echo is True
+            assert settings.ssl_mode == 'REQUIRED'
+
 
 class TestMongoDBSettings:
     """Test MongoDB settings"""
@@ -241,6 +289,29 @@ class TestMongoDBSettings:
         assert settings.tls_cert_key_path is None
         assert settings.tls_allow_invalid_certificates == False
 
+    def test_env_override(self):
+        """Test environment variable overrides"""
+        with patch.dict(
+            os.environ,
+            {
+                'MONGODB_HOST': 'mongo-host',
+                'MONGODB_PORT': '27018',
+                'MONGODB_USER': 'testuser',
+                'MONGODB_PASSWORD': 'testpass',
+                'MONGODB_DATABASE': 'testdb',
+                'MONGODB_BATCH_SIZE': '1000',
+                'MONGODB_TLS_ENABLED': 'true',
+            },
+        ):
+            settings = MongoDBSettings()
+            assert settings.host == 'mongo-host'
+            assert settings.port == 27018
+            assert settings.user == 'testuser'
+            assert settings.password == 'testpass'
+            assert settings.database == 'testdb'
+            assert settings.batch_size == 1000
+            assert settings.tls_enabled is True
+
 
 class TestOracleSettings:
     """Test Oracle settings"""
@@ -258,6 +329,29 @@ class TestOracleSettings:
         assert settings.sync_driver == "oracle+oracledb"
         assert settings.ssl_enabled == False
         assert settings.ssl_wallet_path is None
+
+    def test_env_override(self):
+        """Test environment variable overrides"""
+        with patch.dict(
+            os.environ,
+            {
+                'ORACLE_HOST': 'oracle-host',
+                'ORACLE_PORT': '1522',
+                'ORACLE_USER': 'testuser',
+                'ORACLE_PASSWORD': 'testpass',
+                'ORACLE_SERVICENAME': 'testservice',
+                'ORACLE_ECHO': 'true',
+                'ORACLE_SSL_ENABLED': 'true',
+            },
+        ):
+            settings = OracleSettings()
+            assert settings.host == 'oracle-host'
+            assert settings.port == 1522
+            assert settings.user == 'testuser'
+            assert settings.password == 'testpass'
+            assert settings.servicename == 'testservice'
+            assert settings.echo is True
+            assert settings.ssl_enabled is True
 
 
 class TestDotenvLoading:

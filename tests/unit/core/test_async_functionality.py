@@ -1,8 +1,8 @@
 import asyncio
-from contextlib import asynccontextmanager, contextmanager
-from importlib.util import find_spec
 import pytest
 import sqlalchemy as sa
+from contextlib import asynccontextmanager, contextmanager
+from importlib.util import find_spec
 from sqlalchemy import Boolean, Column, Integer, String
 from sqlalchemy.engine import Engine
 from sqlalchemy.ext.asyncio import AsyncEngine

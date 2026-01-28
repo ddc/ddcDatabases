@@ -1,5 +1,5 @@
-from ddcDatabases.mssql import MSSQL, MSSQLConnectionConfig, MSSQLPoolConfig, MSSQLSessionConfig, MSSQLSSLConfig
 import pytest
+from ddcDatabases.mssql import MSSQL, MSSQLConnectionConfig, MSSQLPoolConfig, MSSQLSessionConfig, MSSQLSSLConfig
 from unittest.mock import MagicMock, patch
 
 

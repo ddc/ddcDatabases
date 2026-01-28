@@ -1,29 +1,39 @@
-from ddcDatabases.core.operations import DBUtils, DBUtilsAsync
-from ddcDatabases.core.persistent import PersistentConnectionConfig, close_all_persistent_connections
-from ddcDatabases.sqlite import (
-    Sqlite,
-    SqliteConnRetryConfig,
-    SqliteOpRetryConfig,
-    SqliteSessionConfig,
-)
-from importlib.metadata import version
 import logging
-from typing import Literal, NamedTuple
+from .core.operations import DBUtils, DBUtilsAsync
+from .core.persistent import PersistentConnectionConfig, close_all_persistent_connections
+from importlib.metadata import version
 
 __all__ = [
     "DBUtils",
     "DBUtilsAsync",
     "PersistentConnectionConfig",
-    "Sqlite",
-    "SqliteConnRetryConfig",
-    "SqliteOpRetryConfig",
-    "SqliteSessionConfig",
     "close_all_persistent_connections",
 ]
 
 # Conditional imports based on available dependencies
 try:
+    from .core.settings import clear_sqlite_settings_cache, get_sqlite_settings
+    from .sqlite import (
+        Sqlite,
+        SqliteConnRetryConfig,
+        SqliteOpRetryConfig,
+        SqliteSessionConfig,
+    )
+
+    __all__ += [
+        "Sqlite",
+        "SqliteConnRetryConfig",
+        "SqliteOpRetryConfig",
+        "SqliteSessionConfig",
+        "clear_sqlite_settings_cache",
+        "get_sqlite_settings",
+    ]
+except ImportError:
+    pass
+
+try:
     from .core.persistent import MongoDBPersistent
+    from .core.settings import clear_mongodb_settings_cache, get_mongodb_settings
     from .mongodb import (
         MongoDB,
         MongoDBConnectionConfig,
@@ -41,12 +51,15 @@ try:
         "MongoDBPersistent",
         "MongoDBQueryConfig",
         "MongoDBTLSConfig",
+        "clear_mongodb_settings_cache",
+        "get_mongodb_settings",
     ]
 except ImportError:
     pass
 
 try:
     from .core.persistent import MSSQLPersistent
+    from .core.settings import clear_mssql_settings_cache, get_mssql_settings
     from .mssql import (
         MSSQL,
         MSSQLConnectionConfig,
@@ -66,12 +79,15 @@ try:
         "MSSQLPoolConfig",
         "MSSQLSessionConfig",
         "MSSQLSSLConfig",
+        "clear_mssql_settings_cache",
+        "get_mssql_settings",
     ]
 except ImportError:
     pass
 
 try:
     from .core.persistent import MySQLPersistent
+    from .core.settings import clear_mysql_settings_cache, get_mysql_settings
     from .mysql import (
         MySQL,
         MySQLConnectionConfig,
@@ -91,6 +107,8 @@ try:
     MariaDBPoolConfig = MySQLPoolConfig
     MariaDBSessionConfig = MySQLSessionConfig
     MariaDBSSLConfig = MySQLSSLConfig
+    clear_mariadb_settings_cache = clear_mysql_settings_cache
+    get_mariadb_settings = get_mysql_settings
 
     __all__ += [
         "MySQL",
@@ -101,6 +119,8 @@ try:
         "MySQLPoolConfig",
         "MySQLSessionConfig",
         "MySQLSSLConfig",
+        "clear_mysql_settings_cache",
+        "get_mysql_settings",
         # MariaDB aliases
         "MariaDB",
         "MariaDBConnectionConfig",
@@ -110,12 +130,15 @@ try:
         "MariaDBPoolConfig",
         "MariaDBSessionConfig",
         "MariaDBSSLConfig",
+        "clear_mariadb_settings_cache",
+        "get_mariadb_settings",
     ]
 except ImportError:
     pass
 
 try:
     from .core.persistent import OraclePersistent
+    from .core.settings import clear_oracle_settings_cache, get_oracle_settings
     from .oracle import (
         Oracle,
         OracleConnectionConfig,
@@ -135,12 +158,15 @@ try:
         "OraclePoolConfig",
         "OracleSessionConfig",
         "OracleSSLConfig",
+        "clear_oracle_settings_cache",
+        "get_oracle_settings",
     ]
 except ImportError:
     pass
 
 try:
     from .core.persistent import PostgreSQLPersistent
+    from .core.settings import clear_postgresql_settings_cache, get_postgresql_settings
     from .postgresql import (
         PostgreSQL,
         PostgreSQLConnectionConfig,
@@ -160,6 +186,8 @@ try:
         "PostgreSQLPoolConfig",
         "PostgreSQLSessionConfig",
         "PostgreSQLSSLConfig",
+        "clear_postgresql_settings_cache",
+        "get_postgresql_settings",
     ]
 except ImportError:
     pass
@@ -170,47 +198,6 @@ __author__ = "Daniel Costa"
 __email__ = "danieldcsta@gmail.com>"
 __license__ = "MIT"
 __copyright__ = "Copyright 2024-present DDC Softwares"
-_req_python_version = (3, 12, 0)
-
-
-try:
-    _version = tuple(int(x) for x in version(__title__).split("."))
-except ModuleNotFoundError:
-    _version = (0, 0, 0)
-
-
-class VersionInfo(NamedTuple):
-    major: int
-    minor: int
-    micro: int
-    releaselevel: Literal["alpha", "beta", "candidate", "final"]
-    serial: int
-
-
-__version__ = _version
-__version_info__: VersionInfo = VersionInfo(
-    major=__version__[0],
-    minor=__version__[1],
-    micro=__version__[2],
-    releaselevel="final",
-    serial=0,
-)
-__req_python_version__: VersionInfo = VersionInfo(
-    major=_req_python_version[0],
-    minor=_req_python_version[1],
-    micro=_req_python_version[2],
-    releaselevel="final",
-    serial=0,
-)
+__version__ = version(__title__)
 
 logging.getLogger(__name__).addHandler(logging.NullHandler())
-
-del (
-    logging,
-    NamedTuple,
-    Literal,
-    VersionInfo,
-    version,
-    _version,
-    _req_python_version,
-)

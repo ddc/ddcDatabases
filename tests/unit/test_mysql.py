@@ -1,5 +1,5 @@
-from ddcDatabases.mysql import MySQL, MySQLConnectionConfig, MySQLPoolConfig, MySQLSessionConfig, MySQLSSLConfig
 import pytest
+from ddcDatabases.mysql import MySQL, MySQLConnectionConfig, MySQLPoolConfig, MySQLSessionConfig, MySQLSSLConfig
 from unittest.mock import MagicMock, patch
 
 

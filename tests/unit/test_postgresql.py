@@ -1,5 +1,5 @@
-from importlib.util import find_spec
 import pytest
+from importlib.util import find_spec
 from unittest.mock import MagicMock, patch
 
 POSTGRESQL_AVAILABLE = find_spec("asyncpg") is not None and find_spec("psycopg") is not None

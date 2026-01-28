@@ -1,10 +1,10 @@
+import pytest
 from ddcDatabases.mongodb import (
     MongoDB,
     MongoDBConnectionConfig,
     MongoDBQueryConfig,
     MongoDBTLSConfig,
 )
-import pytest
 from unittest.mock import MagicMock, patch
 
 

@@ -1,6 +1,6 @@
+import pytest
 from ddcDatabases.core.base import ConnectionTester
 from ddcDatabases.oracle import Oracle, OracleConnectionConfig, OraclePoolConfig, OracleSessionConfig, OracleSSLConfig
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 
 
