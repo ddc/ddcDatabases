@@ -638,10 +638,7 @@ logging.getLogger("ddcDatabases").addHandler(logging.StreamHandler())
 
 # Development
 
-Must have [UV](https://uv.run/docs/getting-started/installation),
-[Black](https://black.readthedocs.io/en/stable/getting_started.html),
-[Ruff](https://docs.astral.sh/ruff/installation/), and
-[Poe the Poet](https://poethepoet.naber.dev/installation) installed.
+Must have [UV](https://docs.astral.sh/uv/getting-started/installation/) installed.
 
 ## Create DEV Environment, Running Tests and Building Wheel
 
@@ -656,9 +653,11 @@ poe build
 ## Optionals
 
 ```shell
-poe profile (create a cprofile_unit.prof file from unit tests)
-poe profile-integration (create a cprofile_integration.prof file from integration tests)
-```
+# create a cprofile_unit.prof file from unit tests
+poe profile
+# create a cprofile_integration.prof file from integration tests
+poe profile-integration
+`````
 
 
 # License
