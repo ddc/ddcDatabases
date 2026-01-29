@@ -56,7 +56,8 @@ CONNECTION_ERROR_KEYWORDS: frozenset[str] = frozenset(
 
 
 class SettingsMessages:
-    # Field description strings for settings
+    """Field description strings for settings"""
+
     ECHO_DESCRIPTION = "Enable SQLAlchemy query logging"
     AUTOFLUSH_DESCRIPTION = "Enable autoflush"
     EXPIRE_ON_COMMIT_DESCRIPTION = "Enable expire on commit"

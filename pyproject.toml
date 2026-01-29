@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "ddcDatabases"
-version = "3.0.8"
+version = "3.0.9"
 description = "Simplified database ORM connections with support for multiple database engines"
 license = {text = "MIT"}
 readme = "README.md"
