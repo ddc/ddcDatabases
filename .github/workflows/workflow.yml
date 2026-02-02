@@ -40,9 +40,9 @@ jobs:
             uv pip install -e .[mongodb,mssql,oracle,pgsql,test]
           elif [[ '${{ matrix.os }}' == macos* ]]; then
             export PKG_CONFIG_PATH="$(brew --prefix mysql-client)/lib/pkgconfig"
-            uv pip install -e .[all,test]
+            uv sync --group test
           else
-            uv pip install -e .[all,test]
+            uv sync --group test
           fi
         shell: bash
 
@@ -81,7 +81,7 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y default-libmysqlclient-dev pkg-config
 
       - name: Install dependencies
-        run: uv sync --all-extras
+        run: uv sync --group test
         shell: bash
 
       - name: Install ODBC driver for MSSQL
