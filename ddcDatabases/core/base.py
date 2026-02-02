@@ -42,7 +42,7 @@ class BaseConnection(ABC):
         async_driver: str | None,
         conn_retry_config: BaseRetryConfig | None = None,
         op_retry_config: BaseOperationRetryConfig | None = None,
-        logger: logging.Logger | None = None,
+        logger: Any = None,
     ) -> None:
         self.connection_url = connection_url
         self.engine_args = engine_args
@@ -155,7 +155,7 @@ class ConnectionTester:
         sync_session: Session | None = None,
         async_session: AsyncSession | None = None,
         host_url: URL | str = "",
-        logger: logging.Logger | None = None,
+        logger: Any = None,
     ) -> None:
         self.sync_session = sync_session
         self.async_session = async_session

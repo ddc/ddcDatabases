@@ -13,7 +13,7 @@ from dataclasses import dataclass
 from sqlalchemy.engine import URL, Engine, create_engine
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
 from sqlalchemy.orm import Session
-from typing import AsyncGenerator, Generator
+from typing import Any, AsyncGenerator, Generator
 
 _logger = logging.getLogger(__name__)
 _logger.addHandler(logging.NullHandler())
@@ -72,7 +72,7 @@ class MSSQL(BaseConnection):
         op_retry_config: MSSQLOpRetryConfig | None = None,
         ssl_config: MSSQLSSLConfig | None = None,
         extra_engine_args: dict | None = None,
-        logger: logging.Logger | None = None,
+        logger: Any = None,
     ) -> None:
         _settings = get_mssql_settings()
 

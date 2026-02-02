@@ -12,7 +12,7 @@ from contextlib import asynccontextmanager, contextmanager
 from dataclasses import dataclass
 from sqlalchemy.engine import URL, Engine, create_engine
 from sqlalchemy.ext.asyncio import AsyncEngine
-from typing import AsyncGenerator, Generator
+from typing import Any, AsyncGenerator, Generator
 
 _logger = logging.getLogger(__name__)
 _logger.addHandler(logging.NullHandler())
@@ -67,7 +67,7 @@ class Oracle(BaseConnection):
         op_retry_config: OracleOpRetryConfig | None = None,
         ssl_config: OracleSSLConfig | None = None,
         extra_engine_args: dict | None = None,
-        logger: logging.Logger | None = None,
+        logger: Any = None,
     ) -> None:
         _settings = get_oracle_settings()
 

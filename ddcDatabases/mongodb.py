@@ -64,7 +64,7 @@ class MongoDB:
         conn_retry_config: MongoDBConnRetryConfig | None = None,
         op_retry_config: MongoDBOpRetryConfig | None = None,
         tls_config: MongoDBTLSConfig | None = None,
-        logger: logging.Logger | None = None,
+        logger: Any = None,
     ) -> None:
         _settings = get_mongodb_settings()
 

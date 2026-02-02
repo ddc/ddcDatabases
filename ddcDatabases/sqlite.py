@@ -39,7 +39,7 @@ class Sqlite:
         conn_retry_config: SqliteConnRetryConfig | None = None,
         op_retry_config: SqliteOpRetryConfig | None = None,
         extra_engine_args: dict[str, Any] | None = None,
-        logger: logging.Logger | None = None,
+        logger: Any = None,
     ) -> None:
         _settings = get_sqlite_settings()
 

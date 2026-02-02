@@ -6,7 +6,7 @@ import random
 import time
 from .configs import BaseRetryConfig
 from .constants import CONNECTION_ERROR_KEYWORDS
-from typing import Awaitable, Callable, TypeVar
+from typing import Any, Awaitable, Callable, TypeVar
 
 # Type variable for generic return types
 T = TypeVar('T')
@@ -66,7 +66,7 @@ def _handle_retry_exception(
     attempt: int,
     config: BaseRetryConfig,
     operation_name: str,
-    logger: logging.Logger | None = None,
+    logger: Any = None,
 ) -> float:
     """
     Handle an exception during retry operation.
@@ -107,7 +107,7 @@ def retry_operation(
     operation: Callable[[], T],
     config: BaseRetryConfig,
     operation_name: str = "operation",
-    logger: logging.Logger | None = None,
+    logger: Any = None,
 ) -> T:
     """
     Execute an operation with retry logic (synchronous).
@@ -147,7 +147,7 @@ async def retry_operation_async(
     operation: Callable[[], Awaitable[T]],
     config: BaseRetryConfig,
     operation_name: str = "operation",
-    logger: logging.Logger | None = None,
+    logger: Any = None,
 ) -> T:
     """
     Execute an operation with retry logic (asynchronous).

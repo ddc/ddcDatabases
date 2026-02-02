@@ -133,7 +133,7 @@ class BasePersistentConnection(IdleCheckerMixin, ABC, Generic[SessionT]):
         connection_key: str,
         config: PersistentConnectionConfig | None = None,
         retry_config: BaseRetryConfig | None = None,
-        logger: logging.Logger | None = None,
+        logger: Any = None,
     ) -> None:
         self._connection_key = connection_key
         self._config = config or PersistentConnectionConfig()
@@ -213,7 +213,7 @@ class PersistentSQLAlchemyConnection(BasePersistentConnection[Session]):
         expire_on_commit: bool = False,
         config: PersistentConnectionConfig | None = None,
         retry_config: BaseRetryConfig | None = None,
-        logger: logging.Logger | None = None,
+        logger: Any = None,
     ) -> None:
         super().__init__(connection_key, config, retry_config, logger)
         self._connection_url = connection_url
@@ -335,7 +335,7 @@ class PersistentSQLAlchemyAsyncConnection(BasePersistentConnection[AsyncSession]
         expire_on_commit: bool = False,
         config: PersistentConnectionConfig | None = None,
         retry_config: BaseRetryConfig | None = None,
-        logger: logging.Logger | None = None,
+        logger: Any = None,
     ) -> None:
         super().__init__(connection_key, config, retry_config, logger)
         self._connection_url = connection_url
@@ -486,7 +486,7 @@ class PersistentMongoDBConnection(IdleCheckerMixin):
         database: str,
         config: PersistentConnectionConfig | None = None,
         retry_config: BaseRetryConfig | None = None,
-        logger: logging.Logger | None = None,
+        logger: Any = None,
     ) -> None:
         self._connection_key = connection_key
         self._connection_url = connection_url

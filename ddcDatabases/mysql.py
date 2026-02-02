@@ -70,7 +70,7 @@ class MySQL(BaseConnection):
         op_retry_config: MySQLOpRetryConfig | None = None,
         ssl_config: MySQLSSLConfig | None = None,
         extra_engine_args: dict | None = None,
-        logger: logging.Logger | None = None,
+        logger: Any = None,
     ) -> None:
         _settings = get_mysql_settings()
 

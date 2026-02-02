@@ -15,7 +15,7 @@ from dataclasses import dataclass
 from sqlalchemy import URL
 from sqlalchemy.engine import Engine, create_engine
 from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
-from typing import AsyncGenerator, Generator
+from typing import Any, AsyncGenerator, Generator
 
 _logger = logging.getLogger(__name__)
 _logger.addHandler(logging.NullHandler())
@@ -73,7 +73,7 @@ class PostgreSQL(BaseConnection):
         op_retry_config: PostgreSQLOpRetryConfig | None = None,
         ssl_config: PostgreSQLSSLConfig | None = None,
         extra_engine_args: dict | None = None,
-        logger: logging.Logger | None = None,
+        logger: Any = None,
     ) -> None:
         _settings = get_postgresql_settings()
 
