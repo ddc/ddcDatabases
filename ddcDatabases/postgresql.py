@@ -45,12 +45,12 @@ class PostgreSQLSessionConfig(BaseSessionConfig):
 
 
 @dataclass(frozen=True, slots=True)
-class PostgreSQLConnRetryConfig(BaseRetryConfig):
+class PostgreSQLConnectionRetryConfig(BaseRetryConfig):
     pass
 
 
 @dataclass(frozen=True, slots=True)
-class PostgreSQLOpRetryConfig(BaseOperationRetryConfig):
+class PostgreSQLOperationRetryConfig(BaseOperationRetryConfig):
     pass
 
 
@@ -69,8 +69,8 @@ class PostgreSQL(BaseConnection):
         schema: str | None = None,
         pool_config: PostgreSQLPoolConfig | None = None,
         session_config: PostgreSQLSessionConfig | None = None,
-        conn_retry_config: PostgreSQLConnRetryConfig | None = None,
-        op_retry_config: PostgreSQLOpRetryConfig | None = None,
+        connection_retry_config: PostgreSQLConnectionRetryConfig | None = None,
+        operation_retry_config: PostgreSQLOperationRetryConfig | None = None,
         ssl_config: PostgreSQLSSLConfig | None = None,
         extra_engine_args: dict | None = None,
         logger: Any = None,
@@ -136,28 +136,34 @@ class PostgreSQL(BaseConnection):
         }
 
         # Create connection retry configuration
-        _crc = conn_retry_config or PostgreSQLConnRetryConfig()
-        self._conn_retry_config = PostgreSQLConnRetryConfig(
-            enable_retry=_crc.enable_retry if _crc.enable_retry is not None else _settings.conn_enable_retry,
-            max_retries=_crc.max_retries if _crc.max_retries is not None else _settings.conn_max_retries,
+        _crc = connection_retry_config or PostgreSQLConnectionRetryConfig()
+        self._connection_retry_config = PostgreSQLConnectionRetryConfig(
+            enable_retry=_crc.enable_retry if _crc.enable_retry is not None else _settings.connection_enable_retry,
+            max_retries=_crc.max_retries if _crc.max_retries is not None else _settings.connection_max_retries,
             initial_retry_delay=(
-                _crc.initial_retry_delay if _crc.initial_retry_delay is not None else _settings.conn_initial_retry_delay
+                _crc.initial_retry_delay
+                if _crc.initial_retry_delay is not None
+                else _settings.connection_initial_retry_delay
             ),
             max_retry_delay=(
-                _crc.max_retry_delay if _crc.max_retry_delay is not None else _settings.conn_max_retry_delay
+                _crc.max_retry_delay if _crc.max_retry_delay is not None else _settings.connection_max_retry_delay
             ),
         )
 
         # Create operation retry configuration
-        _orc = op_retry_config or PostgreSQLOpRetryConfig()
-        self._op_retry_config = PostgreSQLOpRetryConfig(
-            enable_retry=_orc.enable_retry if _orc.enable_retry is not None else _settings.op_enable_retry,
-            max_retries=_orc.max_retries if _orc.max_retries is not None else _settings.op_max_retries,
+        _orc = operation_retry_config or PostgreSQLOperationRetryConfig()
+        self._operation_retry_config = PostgreSQLOperationRetryConfig(
+            enable_retry=_orc.enable_retry if _orc.enable_retry is not None else _settings.operation_enable_retry,
+            max_retries=_orc.max_retries if _orc.max_retries is not None else _settings.operation_max_retries,
             initial_retry_delay=(
-                _orc.initial_retry_delay if _orc.initial_retry_delay is not None else _settings.op_initial_retry_delay
+                _orc.initial_retry_delay
+                if _orc.initial_retry_delay is not None
+                else _settings.operation_initial_retry_delay
             ),
-            max_retry_delay=_orc.max_retry_delay if _orc.max_retry_delay is not None else _settings.op_max_retry_delay,
-            jitter=_orc.jitter if _orc.jitter is not None else _settings.op_jitter,
+            max_retry_delay=(
+                _orc.max_retry_delay if _orc.max_retry_delay is not None else _settings.operation_max_retry_delay
+            ),
+            jitter=_orc.jitter if _orc.jitter is not None else _settings.operation_jitter,
         )
 
         self.logger = logger if logger is not None else _logger
@@ -169,8 +175,8 @@ class PostgreSQL(BaseConnection):
             expire_on_commit=self._session_config.expire_on_commit,
             sync_driver=self.sync_driver,
             async_driver=self.async_driver,
-            conn_retry_config=self._conn_retry_config,
-            op_retry_config=self._op_retry_config,
+            connection_retry_config=self._connection_retry_config,
+            operation_retry_config=self._operation_retry_config,
             logger=self.logger,
         )
 
@@ -200,11 +206,11 @@ class PostgreSQL(BaseConnection):
     def get_session_info(self) -> PostgreSQLSessionConfig:
         return self._session_config
 
-    def get_conn_retry_info(self) -> PostgreSQLConnRetryConfig:
-        return self._conn_retry_config
+    def get_connection_retry_info(self) -> PostgreSQLConnectionRetryConfig:
+        return self._connection_retry_config
 
-    def get_op_retry_info(self) -> PostgreSQLOpRetryConfig:
-        return self._op_retry_config
+    def get_operation_retry_info(self) -> PostgreSQLOperationRetryConfig:
+        return self._operation_retry_config
 
     def get_ssl_info(self) -> PostgreSQLSSLConfig:
         return self._ssl_config

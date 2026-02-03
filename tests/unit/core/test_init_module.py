@@ -181,16 +181,16 @@ class TestInitModule:
         from ddcDatabases import (
             MariaDB,
             MariaDBConnectionConfig,
-            MariaDBConnRetryConfig,
-            MariaDBOpRetryConfig,
+            MariaDBConnectionRetryConfig,
+            MariaDBOperationRetryConfig,
             MariaDBPersistent,
             MariaDBPoolConfig,
             MariaDBSessionConfig,
             MariaDBSSLConfig,
             MySQL,
             MySQLConnectionConfig,
-            MySQLConnRetryConfig,
-            MySQLOpRetryConfig,
+            MySQLConnectionRetryConfig,
+            MySQLOperationRetryConfig,
             MySQLPersistent,
             MySQLPoolConfig,
             MySQLSessionConfig,
@@ -200,8 +200,8 @@ class TestInitModule:
         # Verify all MariaDB aliases point to their MySQL equivalents
         assert MariaDB is MySQL
         assert MariaDBConnectionConfig is MySQLConnectionConfig
-        assert MariaDBConnRetryConfig is MySQLConnRetryConfig
-        assert MariaDBOpRetryConfig is MySQLOpRetryConfig
+        assert MariaDBConnectionRetryConfig is MySQLConnectionRetryConfig
+        assert MariaDBOperationRetryConfig is MySQLOperationRetryConfig
         assert MariaDBPersistent is MySQLPersistent
         assert MariaDBPoolConfig is MySQLPoolConfig
         assert MariaDBSessionConfig is MySQLSessionConfig

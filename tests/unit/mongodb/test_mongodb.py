@@ -67,16 +67,16 @@ class TestMongoDB:
         mock_settings.tls_cert_key_path = overrides.get('tls_cert_key_path', None)
         mock_settings.tls_allow_invalid_certificates = overrides.get('tls_allow_invalid_certificates', False)
         # Connection retry settings
-        mock_settings.conn_enable_retry = overrides.get('conn_enable_retry', False)
-        mock_settings.conn_max_retries = overrides.get('conn_max_retries', 0)
-        mock_settings.conn_initial_retry_delay = overrides.get('conn_initial_retry_delay', 0.0)
-        mock_settings.conn_max_retry_delay = overrides.get('conn_max_retry_delay', 0.0)
+        mock_settings.connection_enable_retry = overrides.get('connection_enable_retry', False)
+        mock_settings.connection_max_retries = overrides.get('connection_max_retries', 0)
+        mock_settings.connection_initial_retry_delay = overrides.get('connection_initial_retry_delay', 0.0)
+        mock_settings.connection_max_retry_delay = overrides.get('connection_max_retry_delay', 0.0)
         # Operation retry settings
-        mock_settings.op_enable_retry = overrides.get('op_enable_retry', False)
-        mock_settings.op_max_retries = overrides.get('op_max_retries', 0)
-        mock_settings.op_initial_retry_delay = overrides.get('op_initial_retry_delay', 0.0)
-        mock_settings.op_max_retry_delay = overrides.get('op_max_retry_delay', 0.0)
-        mock_settings.op_jitter = overrides.get('op_jitter', 0.1)
+        mock_settings.operation_enable_retry = overrides.get('operation_enable_retry', False)
+        mock_settings.operation_max_retries = overrides.get('operation_max_retries', 0)
+        mock_settings.operation_initial_retry_delay = overrides.get('operation_initial_retry_delay', 0.0)
+        mock_settings.operation_max_retry_delay = overrides.get('operation_max_retry_delay', 0.0)
+        mock_settings.operation_jitter = overrides.get('operation_jitter', 0.1)
         return mock_settings
 
     # noinspection PyMethodMayBeStatic
@@ -856,11 +856,11 @@ class TestMongoDB:
         mock_client.admin.command.side_effect = PyMongoError("Connection failed")
 
         with patch('ddcDatabases.mongodb.MongoClient', return_value=mock_client):
-            from ddcDatabases.mongodb import MongoDBConnRetryConfig
+            from ddcDatabases.mongodb import MongoDBConnectionRetryConfig
 
             mongodb = MongoDB(
                 collection="test_collection",
-                conn_retry_config=MongoDBConnRetryConfig(enable_retry=False),
+                connection_retry_config=MongoDBConnectionRetryConfig(enable_retry=False),
             )
 
             with pytest.raises(SystemExit) as exc_info:
@@ -982,14 +982,14 @@ class TestMongoDB:
         assert query_info.batch_size == 500
 
     @patch('ddcDatabases.mongodb.get_mongodb_settings')
-    def test_get_op_retry_info(self, mock_get_settings):
-        """Test get_op_retry_info returns operation retry config"""
+    def test_get_operation_retry_info(self, mock_get_settings):
+        """Test get_operation_retry_info returns operation retry config"""
         mock_get_settings.return_value = self._create_mock_settings()
         mongodb = MongoDB(collection="test_collection")
 
-        op_retry_info = mongodb.get_op_retry_info()
+        op_retry_info = mongodb.get_operation_retry_info()
 
-        assert op_retry_info is mongodb._op_retry_config
+        assert op_retry_info is mongodb._operation_retry_config
         # Check that it has the expected attributes from BaseOperationRetryConfig
         assert hasattr(op_retry_info, 'enable_retry')
         assert hasattr(op_retry_info, 'max_retries')
@@ -1235,7 +1235,7 @@ class TestMongoDB:
     @patch('ddcDatabases.mongodb.AsyncIOMotorClient')
     async def test_async_aenter_connection_error(self, mock_async_client, mock_get_settings):
         """Test async __aenter__ handles connection error"""
-        from ddcDatabases.mongodb import MongoDBConnRetryConfig
+        from ddcDatabases.mongodb import MongoDBConnectionRetryConfig
         from pymongo.errors import PyMongoError
 
         mock_get_settings.return_value = self._create_mock_settings()
@@ -1250,7 +1250,7 @@ class TestMongoDB:
 
         mongodb = MongoDB(
             collection="test_collection",
-            conn_retry_config=MongoDBConnRetryConfig(enable_retry=False),
+            connection_retry_config=MongoDBConnectionRetryConfig(enable_retry=False),
         )
 
         with pytest.raises(SystemExit) as exc_info:

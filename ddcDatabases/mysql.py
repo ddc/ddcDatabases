@@ -43,12 +43,12 @@ class MySQLSessionConfig(BaseSessionConfig):
 
 
 @dataclass(frozen=True, slots=True)
-class MySQLConnRetryConfig(BaseRetryConfig):
+class MySQLConnectionRetryConfig(BaseRetryConfig):
     pass
 
 
 @dataclass(frozen=True, slots=True)
-class MySQLOpRetryConfig(BaseOperationRetryConfig):
+class MySQLOperationRetryConfig(BaseOperationRetryConfig):
     pass
 
 
@@ -66,8 +66,8 @@ class MySQL(BaseConnection):
         database: str | None = None,
         pool_config: MySQLPoolConfig | None = None,
         session_config: MySQLSessionConfig | None = None,
-        conn_retry_config: MySQLConnRetryConfig | None = None,
-        op_retry_config: MySQLOpRetryConfig | None = None,
+        connection_retry_config: MySQLConnectionRetryConfig | None = None,
+        operation_retry_config: MySQLOperationRetryConfig | None = None,
         ssl_config: MySQLSSLConfig | None = None,
         extra_engine_args: dict | None = None,
         logger: Any = None,
@@ -155,28 +155,34 @@ class MySQL(BaseConnection):
         }
 
         # Create connection retry configuration
-        _crc = conn_retry_config or MySQLConnRetryConfig()
-        self._conn_retry_config = MySQLConnRetryConfig(
-            enable_retry=_crc.enable_retry if _crc.enable_retry is not None else _settings.conn_enable_retry,
-            max_retries=_crc.max_retries if _crc.max_retries is not None else _settings.conn_max_retries,
+        _crc = connection_retry_config or MySQLConnectionRetryConfig()
+        self._connection_retry_config = MySQLConnectionRetryConfig(
+            enable_retry=_crc.enable_retry if _crc.enable_retry is not None else _settings.connection_enable_retry,
+            max_retries=_crc.max_retries if _crc.max_retries is not None else _settings.connection_max_retries,
             initial_retry_delay=(
-                _crc.initial_retry_delay if _crc.initial_retry_delay is not None else _settings.conn_initial_retry_delay
+                _crc.initial_retry_delay
+                if _crc.initial_retry_delay is not None
+                else _settings.connection_initial_retry_delay
             ),
             max_retry_delay=(
-                _crc.max_retry_delay if _crc.max_retry_delay is not None else _settings.conn_max_retry_delay
+                _crc.max_retry_delay if _crc.max_retry_delay is not None else _settings.connection_max_retry_delay
             ),
         )
 
         # Create operation retry configuration
-        _orc = op_retry_config or MySQLOpRetryConfig()
-        self._op_retry_config = MySQLOpRetryConfig(
-            enable_retry=_orc.enable_retry if _orc.enable_retry is not None else _settings.op_enable_retry,
-            max_retries=_orc.max_retries if _orc.max_retries is not None else _settings.op_max_retries,
+        _orc = operation_retry_config or MySQLOperationRetryConfig()
+        self._operation_retry_config = MySQLOperationRetryConfig(
+            enable_retry=_orc.enable_retry if _orc.enable_retry is not None else _settings.operation_enable_retry,
+            max_retries=_orc.max_retries if _orc.max_retries is not None else _settings.operation_max_retries,
             initial_retry_delay=(
-                _orc.initial_retry_delay if _orc.initial_retry_delay is not None else _settings.op_initial_retry_delay
+                _orc.initial_retry_delay
+                if _orc.initial_retry_delay is not None
+                else _settings.operation_initial_retry_delay
             ),
-            max_retry_delay=_orc.max_retry_delay if _orc.max_retry_delay is not None else _settings.op_max_retry_delay,
-            jitter=_orc.jitter if _orc.jitter is not None else _settings.op_jitter,
+            max_retry_delay=(
+                _orc.max_retry_delay if _orc.max_retry_delay is not None else _settings.operation_max_retry_delay
+            ),
+            jitter=_orc.jitter if _orc.jitter is not None else _settings.operation_jitter,
         )
 
         self.logger = logger if logger is not None else _logger
@@ -188,8 +194,8 @@ class MySQL(BaseConnection):
             expire_on_commit=self._session_config.expire_on_commit,
             sync_driver=self.sync_driver,
             async_driver=self.async_driver,
-            conn_retry_config=self._conn_retry_config,
-            op_retry_config=self._op_retry_config,
+            connection_retry_config=self._connection_retry_config,
+            operation_retry_config=self._operation_retry_config,
             logger=self.logger,
         )
 
@@ -219,11 +225,11 @@ class MySQL(BaseConnection):
     def get_session_info(self) -> MySQLSessionConfig:
         return self._session_config
 
-    def get_conn_retry_info(self) -> MySQLConnRetryConfig:
-        return self._conn_retry_config
+    def get_connection_retry_info(self) -> MySQLConnectionRetryConfig:
+        return self._connection_retry_config
 
-    def get_op_retry_info(self) -> MySQLOpRetryConfig:
-        return self._op_retry_config
+    def get_operation_retry_info(self) -> MySQLOperationRetryConfig:
+        return self._operation_retry_config
 
     def get_ssl_info(self) -> MySQLSSLConfig:
         return self._ssl_config

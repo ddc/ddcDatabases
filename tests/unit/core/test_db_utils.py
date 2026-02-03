@@ -35,8 +35,8 @@ class ConcreteTestConnection:
         expire_on_commit,
         sync_driver,
         async_driver,
-        conn_retry_config=None,
-        op_retry_config=None,
+        connection_retry_config=None,
+        operation_retry_config=None,
     ):
         """Create a concrete test implementation of BaseConnection"""
         from ddcDatabases.core.base import BaseConnection
@@ -82,8 +82,8 @@ class ConcreteTestConnection:
             expire_on_commit=expire_on_commit,
             sync_driver=sync_driver,
             async_driver=async_driver,
-            conn_retry_config=conn_retry_config,
-            op_retry_config=op_retry_config,
+            connection_retry_config=connection_retry_config,
+            operation_retry_config=operation_retry_config,
         )
 
 
@@ -656,7 +656,7 @@ class TestBaseConnectionContextManagers:
             expire_on_commit=False,
             sync_driver="postgresql+psycopg",
             async_driver=None,
-            conn_retry_config=BaseRetryConfig(enable_retry=False),
+            connection_retry_config=BaseRetryConfig(enable_retry=False),
         )
 
         mock_session = MagicMock()

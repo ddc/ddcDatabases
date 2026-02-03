@@ -90,6 +90,11 @@ class SettingsMessages:
     JITTER_DESCRIPTION = "Jitter factor for retry delays (0.0-1.0)"
     DISCONNECT_IDLE_TIMEOUT_DESCRIPTION = "Disconnect idle timeout in seconds for persistent connections"
 
+    # Persistent connection settings descriptions
+    PERSISTENT_IDLE_TIMEOUT_DESCRIPTION = "Seconds before idle persistent connection is closed"
+    PERSISTENT_HEALTH_CHECK_INTERVAL_DESCRIPTION = "Seconds between health checks for persistent connections"
+    PERSISTENT_AUTO_RECONNECT_DESCRIPTION = "Enable automatic reconnection for persistent connections"
+
     # SQLite specific
     SQLITE_FILE_PATH_DESCRIPTION = "Path to SQLite database file"
 

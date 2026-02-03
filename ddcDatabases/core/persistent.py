@@ -13,7 +13,7 @@ import logging
 import threading
 import time
 import weakref
-from .configs import BaseRetryConfig
+from .configs import BaseOperationRetryConfig, BaseRetryConfig
 from .retry import retry_operation, retry_operation_async
 from .settings import (
     get_mongodb_settings,
@@ -29,7 +29,7 @@ from sqlalchemy.engine import URL, Engine, create_engine
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
 from sqlalchemy.orm import Session, sessionmaker
-from typing import Any, Generic, TypeVar, cast
+from typing import Any, Callable, Generic, Literal, TypeVar, cast, overload
 
 _logger = logging.getLogger(__name__)
 _logger.addHandler(logging.NullHandler())
@@ -43,9 +43,9 @@ SessionT = TypeVar('SessionT', Session, AsyncSession)
 class PersistentConnectionConfig:
     """Configuration for persistent connections."""
 
-    idle_timeout: int = 300  # seconds
-    health_check_interval: int = 30  # seconds
-    auto_reconnect: bool = True
+    idle_timeout: int | None = None
+    health_check_interval: int | None = None
+    auto_reconnect: bool | None = None
 
 
 # Global registry for persistent connections (weak references to allow cleanup)
@@ -120,7 +120,8 @@ class BasePersistentConnection(IdleCheckerMixin, ABC, Generic[SessionT]):
         '_last_used',
         '_lock',
         '_config',
-        '_retry_config',
+        '_connection_retry_config',
+        '_operation_retry_config',
         '_idle_checker_thread',
         '_shutdown_event',
         '_is_connected',
@@ -132,12 +133,14 @@ class BasePersistentConnection(IdleCheckerMixin, ABC, Generic[SessionT]):
         self,
         connection_key: str,
         config: PersistentConnectionConfig | None = None,
-        retry_config: BaseRetryConfig | None = None,
+        connection_retry_config: BaseRetryConfig | None = None,
+        operation_retry_config: BaseOperationRetryConfig | None = None,
         logger: Any = None,
     ) -> None:
         self._connection_key = connection_key
         self._config = config or PersistentConnectionConfig()
-        self._retry_config = retry_config or BaseRetryConfig()
+        self._connection_retry_config = connection_retry_config or BaseRetryConfig()
+        self._operation_retry_config = operation_retry_config or BaseOperationRetryConfig()
         self._engine: Engine | AsyncEngine | None = None
         self._session: SessionT | None = None
         self._last_used = time.time()
@@ -212,10 +215,11 @@ class PersistentSQLAlchemyConnection(BasePersistentConnection[Session]):
         autoflush: bool = False,
         expire_on_commit: bool = False,
         config: PersistentConnectionConfig | None = None,
-        retry_config: BaseRetryConfig | None = None,
+        connection_retry_config: BaseRetryConfig | None = None,
+        operation_retry_config: BaseOperationRetryConfig | None = None,
         logger: Any = None,
     ) -> None:
-        super().__init__(connection_key, config, retry_config, logger)
+        super().__init__(connection_key, config, connection_retry_config, operation_retry_config, logger)
         self._connection_url = connection_url
         self._engine_args = engine_args or {}
         self._autoflush = autoflush
@@ -284,7 +288,7 @@ class PersistentSQLAlchemyConnection(BasePersistentConnection[Session]):
             if self._config.auto_reconnect:
                 return retry_operation(
                     do_connect,
-                    self._retry_config,
+                    self._connection_retry_config,
                     f"{self._connection_key}_connect",
                     logger=self._logger,
                 )
@@ -296,6 +300,49 @@ class PersistentSQLAlchemyConnection(BasePersistentConnection[Session]):
         with self._lock:
             self._disconnect_internal()
             self._logger.info(f"[{self._connection_key}] Disconnected")
+
+    def execute_with_retry(self, operation: Callable[[Session], T]) -> T:
+        """
+        Execute an operation with automatic session management and retry logic.
+
+        Connects (or reuses existing connection), executes the operation,
+        commits on success, and rolls back on failure.
+
+        Args:
+            operation: A callable that takes a Session and returns a result.
+
+        Returns:
+            The result of the operation.
+
+        Raises:
+            Exception: If the operation fails after all retries.
+
+        Example:
+            conn = PostgreSQLPersistent()
+            result = conn.execute_with_retry(
+                lambda session: MyDal(session).do_something()
+            )
+        """
+
+        def do_operation() -> T:
+            session = self.connect()
+            try:
+                result = operation(session)
+                session.commit()
+                return result
+            except Exception:
+                session.rollback()
+                raise
+
+        if self._config.auto_reconnect:
+            return retry_operation(
+                do_operation,
+                self._operation_retry_config,
+                f"{self._connection_key}_execute",
+                logger=self._logger,
+            )
+        else:
+            return do_operation()
 
     def __enter__(self) -> Session:
         """Context manager entry."""
@@ -334,10 +381,11 @@ class PersistentSQLAlchemyAsyncConnection(BasePersistentConnection[AsyncSession]
         autoflush: bool = False,
         expire_on_commit: bool = False,
         config: PersistentConnectionConfig | None = None,
-        retry_config: BaseRetryConfig | None = None,
+        connection_retry_config: BaseRetryConfig | None = None,
+        operation_retry_config: BaseOperationRetryConfig | None = None,
         logger: Any = None,
     ) -> None:
-        super().__init__(connection_key, config, retry_config, logger)
+        super().__init__(connection_key, config, connection_retry_config, operation_retry_config, logger)
         self._connection_url = connection_url
         self._engine_args = engine_args or {}
         self._autoflush = autoflush
@@ -422,7 +470,7 @@ class PersistentSQLAlchemyAsyncConnection(BasePersistentConnection[AsyncSession]
             if self._config.auto_reconnect:
                 return await retry_operation_async(
                     do_connect,
-                    self._retry_config,
+                    self._connection_retry_config,
                     f"{self._connection_key}_async_connect",
                     logger=self._logger,
                 )
@@ -440,6 +488,52 @@ class PersistentSQLAlchemyAsyncConnection(BasePersistentConnection[AsyncSession]
         async with self._async_lock:
             await self._async_disconnect_internal()
             self._logger.info(f"[{self._connection_key}] Disconnected")
+
+    async def execute_with_retry(self, operation: Callable[[AsyncSession], T]) -> T:
+        """
+        Execute an async operation with automatic session management and retry logic.
+
+        Connects (or reuses existing connection), executes the operation,
+        commits on success, and rolls back on failure.
+
+        Args:
+            operation: A callable that takes an AsyncSession and returns a result (can be sync or async).
+
+        Returns:
+            The result of the operation.
+
+        Raises:
+            Exception: If the operation fails after all retries.
+
+        Example:
+            conn = PostgreSQLPersistent(async_mode=True)
+            result = await conn.execute_with_retry(
+                lambda session: MyDal(session).do_something()
+            )
+        """
+
+        async def do_operation() -> T:
+            session = await self.async_connect()
+            try:
+                result = operation(session)
+                # Handle both sync and async operation results
+                if asyncio.iscoroutine(result):
+                    result = await result
+                await session.commit()
+                return result
+            except Exception:
+                await session.rollback()
+                raise
+
+        if self._config.auto_reconnect:
+            return await retry_operation_async(
+                do_operation,
+                self._operation_retry_config,
+                f"{self._connection_key}_execute",
+                logger=self._logger,
+            )
+        else:
+            return await do_operation()
 
     async def __aenter__(self) -> AsyncSession:
         """Async context manager entry."""
@@ -471,7 +565,8 @@ class PersistentMongoDBConnection(IdleCheckerMixin):
         '_last_used',
         '_lock',
         '_config',
-        '_retry_config',
+        '_connection_retry_config',
+        '_operation_retry_config',
         '_idle_checker_thread',
         '_shutdown_event',
         '_is_connected',
@@ -485,14 +580,16 @@ class PersistentMongoDBConnection(IdleCheckerMixin):
         connection_url: str,
         database: str,
         config: PersistentConnectionConfig | None = None,
-        retry_config: BaseRetryConfig | None = None,
+        connection_retry_config: BaseRetryConfig | None = None,
+        operation_retry_config: BaseOperationRetryConfig | None = None,
         logger: Any = None,
     ) -> None:
         self._connection_key = connection_key
         self._connection_url = connection_url
         self._database = database
         self._config = config or PersistentConnectionConfig()
-        self._retry_config = retry_config or BaseRetryConfig()
+        self._connection_retry_config = connection_retry_config or BaseRetryConfig()
+        self._operation_retry_config = operation_retry_config or BaseOperationRetryConfig()
         self._client = None
         self._db = None
         self._last_used = time.time()
@@ -535,7 +632,7 @@ class PersistentMongoDBConnection(IdleCheckerMixin):
         with self._lock:
             self._update_last_used()
 
-            if self._is_connected and self._client and self._db:
+            if self._is_connected and self._client is not None and self._db is not None:
                 # Verify connection is still valid
                 try:
                     self._client.admin.command("ping")
@@ -556,7 +653,7 @@ class PersistentMongoDBConnection(IdleCheckerMixin):
             if self._config.auto_reconnect:
                 return retry_operation(
                     do_connect,
-                    self._retry_config,
+                    self._connection_retry_config,
                     f"{self._connection_key}_connect",
                     logger=self._logger,
                 )
@@ -612,6 +709,39 @@ class PostgreSQLPersistent:
             # use async session
     """
 
+    @overload
+    def __new__(
+        cls,
+        host: str | None = None,
+        port: int | None = None,
+        user: str | None = None,
+        password: str | None = None,
+        database: str | None = None,
+        async_mode: Literal[False] = False,
+        config: PersistentConnectionConfig | None = None,
+        connection_retry_config: BaseRetryConfig | None = None,
+        operation_retry_config: BaseOperationRetryConfig | None = None,
+        logger: Any = None,
+        **engine_kwargs: Any,
+    ) -> PersistentSQLAlchemyConnection: ...
+
+    @overload
+    def __new__(
+        cls,
+        host: str | None = None,
+        port: int | None = None,
+        user: str | None = None,
+        password: str | None = None,
+        database: str | None = None,
+        *,
+        async_mode: Literal[True],
+        config: PersistentConnectionConfig | None = None,
+        connection_retry_config: BaseRetryConfig | None = None,
+        operation_retry_config: BaseOperationRetryConfig | None = None,
+        logger: Any = None,
+        **engine_kwargs: Any,
+    ) -> PersistentSQLAlchemyAsyncConnection: ...
+
     def __new__(
         cls,
         host: str | None = None,
@@ -621,7 +751,9 @@ class PostgreSQLPersistent:
         database: str | None = None,
         async_mode: bool = False,
         config: PersistentConnectionConfig | None = None,
-        retry_config: BaseRetryConfig | None = None,
+        connection_retry_config: BaseRetryConfig | None = None,
+        operation_retry_config: BaseOperationRetryConfig | None = None,
+        logger: Any = None,
         **engine_kwargs: Any,
     ) -> PersistentSQLAlchemyConnection | PersistentSQLAlchemyAsyncConnection:
         """Create or return existing persistent PostgreSQL connection."""
@@ -632,6 +764,20 @@ class PostgreSQLPersistent:
         password = password or _settings.password
         database = database or _settings.database
         connection_key = f"postgresql://{user}@{host}:{port}/{database}"  # NOSONAR
+
+        # Build config from settings, allowing partial overrides
+        _cfg = config or PersistentConnectionConfig()
+        config = PersistentConnectionConfig(
+            idle_timeout=_cfg.idle_timeout if _cfg.idle_timeout is not None else _settings.persistent_idle_timeout,
+            health_check_interval=(
+                _cfg.health_check_interval
+                if _cfg.health_check_interval is not None
+                else _settings.persistent_health_check_interval
+            ),
+            auto_reconnect=(
+                _cfg.auto_reconnect if _cfg.auto_reconnect is not None else _settings.persistent_auto_reconnect
+            ),
+        )
 
         with _registry_lock:
             if connection_key in _persistent_connections:
@@ -654,11 +800,13 @@ class PostgreSQLPersistent:
                     connection_url=connection_url,
                     engine_args=engine_kwargs,
                     config=config,
-                    retry_config=retry_config,
+                    connection_retry_config=connection_retry_config,
+                    operation_retry_config=operation_retry_config,
+                    logger=logger,
                 )
             else:
                 connection_url = URL.create(
-                    drivername="postgresql+psycopg2",
+                    drivername="postgresql+psycopg",
                     username=user,
                     password=password,
                     host=host,
@@ -670,7 +818,9 @@ class PostgreSQLPersistent:
                     connection_url=connection_url,
                     engine_args=engine_kwargs,
                     config=config,
-                    retry_config=retry_config,
+                    connection_retry_config=connection_retry_config,
+                    operation_retry_config=operation_retry_config,
+                    logger=logger,
                 )
 
             _persistent_connections[connection_key] = conn
@@ -696,6 +846,39 @@ class MySQLPersistent:
             # use async session
     """
 
+    @overload
+    def __new__(
+        cls,
+        host: str | None = None,
+        port: int | None = None,
+        user: str | None = None,
+        password: str | None = None,
+        database: str | None = None,
+        async_mode: Literal[False] = False,
+        config: PersistentConnectionConfig | None = None,
+        connection_retry_config: BaseRetryConfig | None = None,
+        operation_retry_config: BaseOperationRetryConfig | None = None,
+        logger: Any = None,
+        **engine_kwargs: Any,
+    ) -> PersistentSQLAlchemyConnection: ...
+
+    @overload
+    def __new__(
+        cls,
+        host: str | None = None,
+        port: int | None = None,
+        user: str | None = None,
+        password: str | None = None,
+        database: str | None = None,
+        *,
+        async_mode: Literal[True],
+        config: PersistentConnectionConfig | None = None,
+        connection_retry_config: BaseRetryConfig | None = None,
+        operation_retry_config: BaseOperationRetryConfig | None = None,
+        logger: Any = None,
+        **engine_kwargs: Any,
+    ) -> PersistentSQLAlchemyAsyncConnection: ...
+
     def __new__(
         cls,
         host: str | None = None,
@@ -705,7 +888,9 @@ class MySQLPersistent:
         database: str | None = None,
         async_mode: bool = False,
         config: PersistentConnectionConfig | None = None,
-        retry_config: BaseRetryConfig | None = None,
+        connection_retry_config: BaseRetryConfig | None = None,
+        operation_retry_config: BaseOperationRetryConfig | None = None,
+        logger: Any = None,
         **engine_kwargs: Any,
     ) -> PersistentSQLAlchemyConnection | PersistentSQLAlchemyAsyncConnection:
         """Create or return existing persistent MySQL connection."""
@@ -716,6 +901,20 @@ class MySQLPersistent:
         password = password or _settings.password
         database = database or _settings.database
         connection_key = f"mysql://{user}@{host}:{port}/{database}"  # NOSONAR
+
+        # Build config from settings, allowing partial overrides
+        _cfg = config or PersistentConnectionConfig()
+        config = PersistentConnectionConfig(
+            idle_timeout=_cfg.idle_timeout if _cfg.idle_timeout is not None else _settings.persistent_idle_timeout,
+            health_check_interval=(
+                _cfg.health_check_interval
+                if _cfg.health_check_interval is not None
+                else _settings.persistent_health_check_interval
+            ),
+            auto_reconnect=(
+                _cfg.auto_reconnect if _cfg.auto_reconnect is not None else _settings.persistent_auto_reconnect
+            ),
+        )
 
         with _registry_lock:
             if connection_key in _persistent_connections:
@@ -738,7 +937,9 @@ class MySQLPersistent:
                     connection_url=connection_url,
                     engine_args=engine_kwargs,
                     config=config,
-                    retry_config=retry_config,
+                    connection_retry_config=connection_retry_config,
+                    operation_retry_config=operation_retry_config,
+                    logger=logger,
                 )
             else:
                 connection_url = URL.create(
@@ -754,7 +955,9 @@ class MySQLPersistent:
                     connection_url=connection_url,
                     engine_args=engine_kwargs,
                     config=config,
-                    retry_config=retry_config,
+                    connection_retry_config=connection_retry_config,
+                    operation_retry_config=operation_retry_config,
+                    logger=logger,
                 )
 
             _persistent_connections[connection_key] = conn
@@ -780,6 +983,39 @@ class MSSQLPersistent:
             # use async session
     """
 
+    @overload
+    def __new__(
+        cls,
+        host: str | None = None,
+        port: int | None = None,
+        user: str | None = None,
+        password: str | None = None,
+        database: str | None = None,
+        async_mode: Literal[False] = False,
+        config: PersistentConnectionConfig | None = None,
+        connection_retry_config: BaseRetryConfig | None = None,
+        operation_retry_config: BaseOperationRetryConfig | None = None,
+        logger: Any = None,
+        **engine_kwargs: Any,
+    ) -> PersistentSQLAlchemyConnection: ...
+
+    @overload
+    def __new__(
+        cls,
+        host: str | None = None,
+        port: int | None = None,
+        user: str | None = None,
+        password: str | None = None,
+        database: str | None = None,
+        *,
+        async_mode: Literal[True],
+        config: PersistentConnectionConfig | None = None,
+        connection_retry_config: BaseRetryConfig | None = None,
+        operation_retry_config: BaseOperationRetryConfig | None = None,
+        logger: Any = None,
+        **engine_kwargs: Any,
+    ) -> PersistentSQLAlchemyAsyncConnection: ...
+
     def __new__(
         cls,
         host: str | None = None,
@@ -789,7 +1025,9 @@ class MSSQLPersistent:
         database: str | None = None,
         async_mode: bool = False,
         config: PersistentConnectionConfig | None = None,
-        retry_config: BaseRetryConfig | None = None,
+        connection_retry_config: BaseRetryConfig | None = None,
+        operation_retry_config: BaseOperationRetryConfig | None = None,
+        logger: Any = None,
         **engine_kwargs: Any,
     ) -> PersistentSQLAlchemyConnection | PersistentSQLAlchemyAsyncConnection:
         """Create or return existing persistent MSSQL connection."""
@@ -800,6 +1038,20 @@ class MSSQLPersistent:
         password = password or _settings.password
         database = database or _settings.database
         connection_key = f"mssql://{user}@{host}:{port}/{database}"  # NOSONAR
+
+        # Build config from settings, allowing partial overrides
+        _cfg = config or PersistentConnectionConfig()
+        config = PersistentConnectionConfig(
+            idle_timeout=_cfg.idle_timeout if _cfg.idle_timeout is not None else _settings.persistent_idle_timeout,
+            health_check_interval=(
+                _cfg.health_check_interval
+                if _cfg.health_check_interval is not None
+                else _settings.persistent_health_check_interval
+            ),
+            auto_reconnect=(
+                _cfg.auto_reconnect if _cfg.auto_reconnect is not None else _settings.persistent_auto_reconnect
+            ),
+        )
 
         with _registry_lock:
             if connection_key in _persistent_connections:
@@ -823,7 +1075,9 @@ class MSSQLPersistent:
                     connection_url=connection_url,
                     engine_args=engine_kwargs,
                     config=config,
-                    retry_config=retry_config,
+                    connection_retry_config=connection_retry_config,
+                    operation_retry_config=operation_retry_config,
+                    logger=logger,
                 )
             else:
                 connection_url = URL.create(
@@ -840,7 +1094,9 @@ class MSSQLPersistent:
                     connection_url=connection_url,
                     engine_args=engine_kwargs,
                     config=config,
-                    retry_config=retry_config,
+                    connection_retry_config=connection_retry_config,
+                    operation_retry_config=operation_retry_config,
+                    logger=logger,
                 )
 
             _persistent_connections[connection_key] = conn
@@ -868,7 +1124,9 @@ class OraclePersistent:
         password: str | None = None,
         servicename: str | None = None,
         config: PersistentConnectionConfig | None = None,
-        retry_config: BaseRetryConfig | None = None,
+        connection_retry_config: BaseRetryConfig | None = None,
+        operation_retry_config: BaseOperationRetryConfig | None = None,
+        logger: Any = None,
         **engine_kwargs: Any,
     ) -> PersistentSQLAlchemyConnection:
         """Create or return existing persistent Oracle connection."""
@@ -879,6 +1137,20 @@ class OraclePersistent:
         password = password or _settings.password
         servicename = servicename or _settings.servicename
         connection_key = f"oracle://{user}@{host}:{port}/{servicename}"  # NOSONAR
+
+        # Build config from settings, allowing partial overrides
+        _cfg = config or PersistentConnectionConfig()
+        config = PersistentConnectionConfig(
+            idle_timeout=_cfg.idle_timeout if _cfg.idle_timeout is not None else _settings.persistent_idle_timeout,
+            health_check_interval=(
+                _cfg.health_check_interval
+                if _cfg.health_check_interval is not None
+                else _settings.persistent_health_check_interval
+            ),
+            auto_reconnect=(
+                _cfg.auto_reconnect if _cfg.auto_reconnect is not None else _settings.persistent_auto_reconnect
+            ),
+        )
 
         with _registry_lock:
             if connection_key in _persistent_connections:
@@ -897,7 +1169,9 @@ class OraclePersistent:
                 connection_url=connection_url,
                 engine_args=engine_kwargs,
                 config=config,
-                retry_config=retry_config,
+                connection_retry_config=connection_retry_config,
+                operation_retry_config=operation_retry_config,
+                logger=logger,
             )
 
             _persistent_connections[connection_key] = conn
@@ -925,7 +1199,9 @@ class MongoDBPersistent:
         password: str | None = None,
         database: str | None = None,
         config: PersistentConnectionConfig | None = None,
-        retry_config: BaseRetryConfig | None = None,
+        connection_retry_config: BaseRetryConfig | None = None,
+        operation_retry_config: BaseOperationRetryConfig | None = None,
+        logger: Any = None,
     ) -> PersistentMongoDBConnection:
         """Create or return existing persistent MongoDB connection."""
         _settings = get_mongodb_settings()
@@ -935,6 +1211,20 @@ class MongoDBPersistent:
         password = password or _settings.password
         database = database or _settings.database
         connection_key = f"mongodb://{user}@{host}:{port}/{database}"  # NOSONAR
+
+        # Build config from settings, allowing partial overrides
+        _cfg = config or PersistentConnectionConfig()
+        config = PersistentConnectionConfig(
+            idle_timeout=_cfg.idle_timeout if _cfg.idle_timeout is not None else _settings.persistent_idle_timeout,
+            health_check_interval=(
+                _cfg.health_check_interval
+                if _cfg.health_check_interval is not None
+                else _settings.persistent_health_check_interval
+            ),
+            auto_reconnect=(
+                _cfg.auto_reconnect if _cfg.auto_reconnect is not None else _settings.persistent_auto_reconnect
+            ),
+        )
 
         with _registry_lock:
             if connection_key in _persistent_connections:
@@ -946,7 +1236,9 @@ class MongoDBPersistent:
                 connection_url=connection_url,
                 database=database,
                 config=config,
-                retry_config=retry_config,
+                connection_retry_config=connection_retry_config,
+                operation_retry_config=operation_retry_config,
+                logger=logger,
             )
 
             _persistent_connections[connection_key] = conn

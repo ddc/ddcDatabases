@@ -1,6 +1,9 @@
 import logging
 from .core.operations import DBUtils, DBUtilsAsync
-from .core.persistent import PersistentConnectionConfig, close_all_persistent_connections
+from .core.persistent import (
+    PersistentConnectionConfig,
+    close_all_persistent_connections,
+)
 from importlib.metadata import version
 
 __all__ = [
@@ -15,15 +18,15 @@ try:
     from .core.settings import clear_sqlite_settings_cache, get_sqlite_settings
     from .sqlite import (
         Sqlite,
-        SqliteConnRetryConfig,
-        SqliteOpRetryConfig,
+        SqliteConnectionRetryConfig,
+        SqliteOperationRetryConfig,
         SqliteSessionConfig,
     )
 
     __all__ += [
         "Sqlite",
-        "SqliteConnRetryConfig",
-        "SqliteOpRetryConfig",
+        "SqliteConnectionRetryConfig",
+        "SqliteOperationRetryConfig",
         "SqliteSessionConfig",
         "clear_sqlite_settings_cache",
         "get_sqlite_settings",
@@ -37,8 +40,8 @@ try:
     from .mongodb import (
         MongoDB,
         MongoDBConnectionConfig,
-        MongoDBConnRetryConfig,
-        MongoDBOpRetryConfig,
+        MongoDBConnectionRetryConfig,
+        MongoDBOperationRetryConfig,
         MongoDBQueryConfig,
         MongoDBTLSConfig,
     )
@@ -46,8 +49,8 @@ try:
     __all__ += [
         "MongoDB",
         "MongoDBConnectionConfig",
-        "MongoDBConnRetryConfig",
-        "MongoDBOpRetryConfig",
+        "MongoDBConnectionRetryConfig",
+        "MongoDBOperationRetryConfig",
         "MongoDBPersistent",
         "MongoDBQueryConfig",
         "MongoDBTLSConfig",
@@ -63,8 +66,8 @@ try:
     from .mssql import (
         MSSQL,
         MSSQLConnectionConfig,
-        MSSQLConnRetryConfig,
-        MSSQLOpRetryConfig,
+        MSSQLConnectionRetryConfig,
+        MSSQLOperationRetryConfig,
         MSSQLPoolConfig,
         MSSQLSessionConfig,
         MSSQLSSLConfig,
@@ -73,8 +76,8 @@ try:
     __all__ += [
         "MSSQL",
         "MSSQLConnectionConfig",
-        "MSSQLConnRetryConfig",
-        "MSSQLOpRetryConfig",
+        "MSSQLConnectionRetryConfig",
+        "MSSQLOperationRetryConfig",
         "MSSQLPersistent",
         "MSSQLPoolConfig",
         "MSSQLSessionConfig",
@@ -91,8 +94,8 @@ try:
     from .mysql import (
         MySQL,
         MySQLConnectionConfig,
-        MySQLConnRetryConfig,
-        MySQLOpRetryConfig,
+        MySQLConnectionRetryConfig,
+        MySQLOperationRetryConfig,
         MySQLPoolConfig,
         MySQLSessionConfig,
         MySQLSSLConfig,
@@ -101,8 +104,8 @@ try:
     # MariaDB aliases (MariaDB is fully compatible with MySQL driver)
     MariaDB = MySQL
     MariaDBConnectionConfig = MySQLConnectionConfig
-    MariaDBConnRetryConfig = MySQLConnRetryConfig
-    MariaDBOpRetryConfig = MySQLOpRetryConfig
+    MariaDBConnectionRetryConfig = MySQLConnectionRetryConfig
+    MariaDBOperationRetryConfig = MySQLOperationRetryConfig
     MariaDBPersistent = MySQLPersistent
     MariaDBPoolConfig = MySQLPoolConfig
     MariaDBSessionConfig = MySQLSessionConfig
@@ -113,8 +116,8 @@ try:
     __all__ += [
         "MySQL",
         "MySQLConnectionConfig",
-        "MySQLConnRetryConfig",
-        "MySQLOpRetryConfig",
+        "MySQLConnectionRetryConfig",
+        "MySQLOperationRetryConfig",
         "MySQLPersistent",
         "MySQLPoolConfig",
         "MySQLSessionConfig",
@@ -124,8 +127,8 @@ try:
         # MariaDB aliases
         "MariaDB",
         "MariaDBConnectionConfig",
-        "MariaDBConnRetryConfig",
-        "MariaDBOpRetryConfig",
+        "MariaDBConnectionRetryConfig",
+        "MariaDBOperationRetryConfig",
         "MariaDBPersistent",
         "MariaDBPoolConfig",
         "MariaDBSessionConfig",
@@ -142,8 +145,8 @@ try:
     from .oracle import (
         Oracle,
         OracleConnectionConfig,
-        OracleConnRetryConfig,
-        OracleOpRetryConfig,
+        OracleConnectionRetryConfig,
+        OracleOperationRetryConfig,
         OraclePoolConfig,
         OracleSessionConfig,
         OracleSSLConfig,
@@ -152,8 +155,8 @@ try:
     __all__ += [
         "Oracle",
         "OracleConnectionConfig",
-        "OracleConnRetryConfig",
-        "OracleOpRetryConfig",
+        "OracleConnectionRetryConfig",
+        "OracleOperationRetryConfig",
         "OraclePersistent",
         "OraclePoolConfig",
         "OracleSessionConfig",
@@ -170,8 +173,8 @@ try:
     from .postgresql import (
         PostgreSQL,
         PostgreSQLConnectionConfig,
-        PostgreSQLConnRetryConfig,
-        PostgreSQLOpRetryConfig,
+        PostgreSQLConnectionRetryConfig,
+        PostgreSQLOperationRetryConfig,
         PostgreSQLPoolConfig,
         PostgreSQLSessionConfig,
         PostgreSQLSSLConfig,
@@ -180,8 +183,8 @@ try:
     __all__ += [
         "PostgreSQL",
         "PostgreSQLConnectionConfig",
-        "PostgreSQLConnRetryConfig",
-        "PostgreSQLOpRetryConfig",
+        "PostgreSQLConnectionRetryConfig",
+        "PostgreSQLOperationRetryConfig",
         "PostgreSQLPersistent",
         "PostgreSQLPoolConfig",
         "PostgreSQLSessionConfig",

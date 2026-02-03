@@ -30,15 +30,15 @@ class TestMSSQL:
             "odbcdriver_version": 17,
             "ssl_encrypt": False,
             "ssl_trust_server_certificate": True,
-            "conn_enable_retry": True,
-            "conn_max_retries": 3,
-            "conn_initial_retry_delay": 1.0,
-            "conn_max_retry_delay": 30.0,
-            "op_enable_retry": True,
-            "op_max_retries": 3,
-            "op_initial_retry_delay": 1.0,
-            "op_max_retry_delay": 30.0,
-            "op_jitter": 0.1,
+            "connection_enable_retry": True,
+            "connection_max_retries": 3,
+            "connection_initial_retry_delay": 1.0,
+            "connection_max_retry_delay": 30.0,
+            "operation_enable_retry": True,
+            "operation_max_retries": 3,
+            "operation_initial_retry_delay": 1.0,
+            "operation_max_retry_delay": 30.0,
+            "operation_jitter": 0.1,
         }
         defaults.update(overrides)
         for key, value in defaults.items():
@@ -467,14 +467,14 @@ class TestMSSQL:
         assert session_info.autoflush == False
 
     @patch('ddcDatabases.mssql.get_mssql_settings')
-    def test_get_op_retry_info(self, mock_get_settings):
-        """Test get_op_retry_info returns operation retry config"""
+    def test_get_operation_retry_info(self, mock_get_settings):
+        """Test get_operation_retry_info returns operation retry config"""
         mock_get_settings.return_value = self._create_mock_settings()
         mssql = MSSQL()
 
-        op_retry_info = mssql.get_op_retry_info()
+        op_retry_info = mssql.get_operation_retry_info()
 
-        assert op_retry_info is mssql._op_retry_config
+        assert op_retry_info is mssql._operation_retry_config
         assert hasattr(op_retry_info, 'enable_retry')
         assert hasattr(op_retry_info, 'max_retries')
         assert hasattr(op_retry_info, 'jitter')

@@ -508,15 +508,15 @@ class TestPostgreSQL:
         mock_settings.ssl_ca_cert_path = None
         mock_settings.ssl_client_cert_path = None
         mock_settings.ssl_client_key_path = None
-        mock_settings.conn_enable_retry = None
-        mock_settings.conn_max_retries = None
-        mock_settings.conn_initial_retry_delay = None
-        mock_settings.conn_max_retry_delay = None
-        mock_settings.op_enable_retry = None
-        mock_settings.op_max_retries = None
-        mock_settings.op_initial_retry_delay = None
-        mock_settings.op_max_retry_delay = None
-        mock_settings.op_jitter = None
+        mock_settings.connection_enable_retry = None
+        mock_settings.connection_max_retries = None
+        mock_settings.connection_initial_retry_delay = None
+        mock_settings.connection_max_retry_delay = None
+        mock_settings.operation_enable_retry = None
+        mock_settings.operation_max_retries = None
+        mock_settings.operation_initial_retry_delay = None
+        mock_settings.operation_max_retry_delay = None
+        mock_settings.operation_jitter = None
         mock_get_settings.return_value = mock_settings
 
         postgresql = PostgreSQL(
@@ -577,15 +577,15 @@ class TestPostgreSQL:
         mock_settings.ssl_ca_cert_path = None
         mock_settings.ssl_client_cert_path = None
         mock_settings.ssl_client_key_path = None
-        mock_settings.conn_enable_retry = None
-        mock_settings.conn_max_retries = None
-        mock_settings.conn_initial_retry_delay = None
-        mock_settings.conn_max_retry_delay = None
-        mock_settings.op_enable_retry = None
-        mock_settings.op_max_retries = None
-        mock_settings.op_initial_retry_delay = None
-        mock_settings.op_max_retry_delay = None
-        mock_settings.op_jitter = None
+        mock_settings.connection_enable_retry = None
+        mock_settings.connection_max_retries = None
+        mock_settings.connection_initial_retry_delay = None
+        mock_settings.connection_max_retry_delay = None
+        mock_settings.operation_enable_retry = None
+        mock_settings.operation_max_retries = None
+        mock_settings.operation_initial_retry_delay = None
+        mock_settings.operation_max_retry_delay = None
+        mock_settings.operation_jitter = None
         mock_get_settings.return_value = mock_settings
 
         postgresql = PostgreSQL(session_config=PostgreSQLSessionConfig(autocommit=True))
@@ -623,15 +623,15 @@ class TestPostgreSQL:
         mock_settings.ssl_ca_cert_path = None
         mock_settings.ssl_client_cert_path = None
         mock_settings.ssl_client_key_path = None
-        mock_settings.conn_enable_retry = None
-        mock_settings.conn_max_retries = None
-        mock_settings.conn_initial_retry_delay = None
-        mock_settings.conn_max_retry_delay = None
-        mock_settings.op_enable_retry = None
-        mock_settings.op_max_retries = None
-        mock_settings.op_initial_retry_delay = None
-        mock_settings.op_max_retry_delay = None
-        mock_settings.op_jitter = None
+        mock_settings.connection_enable_retry = None
+        mock_settings.connection_max_retries = None
+        mock_settings.connection_initial_retry_delay = None
+        mock_settings.connection_max_retry_delay = None
+        mock_settings.operation_enable_retry = None
+        mock_settings.operation_max_retries = None
+        mock_settings.operation_initial_retry_delay = None
+        mock_settings.operation_max_retry_delay = None
+        mock_settings.operation_jitter = None
         mock_get_settings.return_value = mock_settings
 
         postgresql = PostgreSQL(session_config=PostgreSQLSessionConfig(autocommit=False))
@@ -668,15 +668,15 @@ class TestPostgreSQL:
         mock_settings.ssl_ca_cert_path = None
         mock_settings.ssl_client_cert_path = None
         mock_settings.ssl_client_key_path = None
-        mock_settings.conn_enable_retry = None
-        mock_settings.conn_max_retries = None
-        mock_settings.conn_initial_retry_delay = None
-        mock_settings.conn_max_retry_delay = None
-        mock_settings.op_enable_retry = None
-        mock_settings.op_max_retries = None
-        mock_settings.op_initial_retry_delay = None
-        mock_settings.op_max_retry_delay = None
-        mock_settings.op_jitter = None
+        mock_settings.connection_enable_retry = None
+        mock_settings.connection_max_retries = None
+        mock_settings.connection_initial_retry_delay = None
+        mock_settings.connection_max_retry_delay = None
+        mock_settings.operation_enable_retry = None
+        mock_settings.operation_max_retries = None
+        mock_settings.operation_initial_retry_delay = None
+        mock_settings.operation_max_retry_delay = None
+        mock_settings.operation_jitter = None
         mock_get_settings.return_value = mock_settings
 
         postgresql = PostgreSQL()
@@ -1116,15 +1116,15 @@ class TestPostgreSQL:
         mock_settings.ssl_ca_cert_path = None
         mock_settings.ssl_client_cert_path = None
         mock_settings.ssl_client_key_path = None
-        mock_settings.conn_enable_retry = True
-        mock_settings.conn_max_retries = 3
-        mock_settings.conn_initial_retry_delay = 1.0
-        mock_settings.conn_max_retry_delay = 30.0
-        mock_settings.op_enable_retry = True
-        mock_settings.op_max_retries = 3
-        mock_settings.op_initial_retry_delay = 1.0
-        mock_settings.op_max_retry_delay = 30.0
-        mock_settings.op_jitter = 0.1
+        mock_settings.connection_enable_retry = True
+        mock_settings.connection_max_retries = 3
+        mock_settings.connection_initial_retry_delay = 1.0
+        mock_settings.connection_max_retry_delay = 30.0
+        mock_settings.operation_enable_retry = True
+        mock_settings.operation_max_retries = 3
+        mock_settings.operation_initial_retry_delay = 1.0
+        mock_settings.operation_max_retry_delay = 30.0
+        mock_settings.operation_jitter = 0.1
         mock_get_settings.return_value = mock_settings
 
         postgresql = PostgreSQL()
@@ -1162,15 +1162,15 @@ class TestPostgreSQL:
         mock_settings.ssl_ca_cert_path = None
         mock_settings.ssl_client_cert_path = None
         mock_settings.ssl_client_key_path = None
-        mock_settings.conn_enable_retry = True
-        mock_settings.conn_max_retries = 3
-        mock_settings.conn_initial_retry_delay = 1.0
-        mock_settings.conn_max_retry_delay = 30.0
-        mock_settings.op_enable_retry = True
-        mock_settings.op_max_retries = 3
-        mock_settings.op_initial_retry_delay = 1.0
-        mock_settings.op_max_retry_delay = 30.0
-        mock_settings.op_jitter = 0.1
+        mock_settings.connection_enable_retry = True
+        mock_settings.connection_max_retries = 3
+        mock_settings.connection_initial_retry_delay = 1.0
+        mock_settings.connection_max_retry_delay = 30.0
+        mock_settings.operation_enable_retry = True
+        mock_settings.operation_max_retries = 3
+        mock_settings.operation_initial_retry_delay = 1.0
+        mock_settings.operation_max_retry_delay = 30.0
+        mock_settings.operation_jitter = 0.1
         mock_get_settings.return_value = mock_settings
 
         postgresql = PostgreSQL(pool_config=PostgreSQLPoolConfig(pool_size=20, max_overflow=40))
@@ -1208,15 +1208,15 @@ class TestPostgreSQL:
         mock_settings.ssl_ca_cert_path = None
         mock_settings.ssl_client_cert_path = None
         mock_settings.ssl_client_key_path = None
-        mock_settings.conn_enable_retry = True
-        mock_settings.conn_max_retries = 3
-        mock_settings.conn_initial_retry_delay = 1.0
-        mock_settings.conn_max_retry_delay = 30.0
-        mock_settings.op_enable_retry = True
-        mock_settings.op_max_retries = 3
-        mock_settings.op_initial_retry_delay = 1.0
-        mock_settings.op_max_retry_delay = 30.0
-        mock_settings.op_jitter = 0.1
+        mock_settings.connection_enable_retry = True
+        mock_settings.connection_max_retries = 3
+        mock_settings.connection_initial_retry_delay = 1.0
+        mock_settings.connection_max_retry_delay = 30.0
+        mock_settings.operation_enable_retry = True
+        mock_settings.operation_max_retries = 3
+        mock_settings.operation_initial_retry_delay = 1.0
+        mock_settings.operation_max_retry_delay = 30.0
+        mock_settings.operation_jitter = 0.1
         mock_get_settings.return_value = mock_settings
 
         postgresql = PostgreSQL(session_config=PostgreSQLSessionConfig(echo=True, autoflush=False))
@@ -1229,8 +1229,8 @@ class TestPostgreSQL:
         assert session_info.autoflush == False
 
     @patch('ddcDatabases.postgresql.get_postgresql_settings')
-    def test_get_op_retry_info(self, mock_get_settings):
-        """Test get_op_retry_info returns operation retry config"""
+    def test_get_operation_retry_info(self, mock_get_settings):
+        """Test get_operation_retry_info returns operation retry config"""
         from ddcDatabases.postgresql import PostgreSQL
 
         mock_settings = MagicMock()
@@ -1254,22 +1254,22 @@ class TestPostgreSQL:
         mock_settings.ssl_ca_cert_path = None
         mock_settings.ssl_client_cert_path = None
         mock_settings.ssl_client_key_path = None
-        mock_settings.conn_enable_retry = True
-        mock_settings.conn_max_retries = 3
-        mock_settings.conn_initial_retry_delay = 1.0
-        mock_settings.conn_max_retry_delay = 30.0
-        mock_settings.op_enable_retry = True
-        mock_settings.op_max_retries = 3
-        mock_settings.op_initial_retry_delay = 1.0
-        mock_settings.op_max_retry_delay = 30.0
-        mock_settings.op_jitter = 0.1
+        mock_settings.connection_enable_retry = True
+        mock_settings.connection_max_retries = 3
+        mock_settings.connection_initial_retry_delay = 1.0
+        mock_settings.connection_max_retry_delay = 30.0
+        mock_settings.operation_enable_retry = True
+        mock_settings.operation_max_retries = 3
+        mock_settings.operation_initial_retry_delay = 1.0
+        mock_settings.operation_max_retry_delay = 30.0
+        mock_settings.operation_jitter = 0.1
         mock_get_settings.return_value = mock_settings
 
         postgresql = PostgreSQL()
 
-        op_retry_info = postgresql.get_op_retry_info()
+        op_retry_info = postgresql.get_operation_retry_info()
 
-        assert op_retry_info is postgresql._op_retry_config
+        assert op_retry_info is postgresql._operation_retry_config
         assert hasattr(op_retry_info, 'enable_retry')
         assert hasattr(op_retry_info, 'max_retries')
         assert hasattr(op_retry_info, 'jitter')

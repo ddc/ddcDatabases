@@ -29,16 +29,16 @@ class TestOracle:
             "ssl_enabled": False,
             "ssl_wallet_path": None,
             # Connection retry settings
-            "conn_enable_retry": True,
-            "conn_max_retries": 3,
-            "conn_initial_retry_delay": 1.0,
-            "conn_max_retry_delay": 30.0,
+            "connection_enable_retry": True,
+            "connection_max_retries": 3,
+            "connection_initial_retry_delay": 1.0,
+            "connection_max_retry_delay": 30.0,
             # Operation retry settings
-            "op_enable_retry": True,
-            "op_max_retries": 3,
-            "op_initial_retry_delay": 0.5,
-            "op_max_retry_delay": 10.0,
-            "op_jitter": 0.1,
+            "operation_enable_retry": True,
+            "operation_max_retries": 3,
+            "operation_initial_retry_delay": 0.5,
+            "operation_max_retry_delay": 10.0,
+            "operation_jitter": 0.1,
         }
         defaults.update(overrides)
         for key, value in defaults.items():
@@ -342,26 +342,26 @@ class TestOracle:
         assert session_info.autoflush == False
 
     @patch('ddcDatabases.oracle.get_oracle_settings')
-    def test_get_conn_retry_info(self, mock_get_settings):
-        """Test get_conn_retry_info returns connection retry config"""
+    def test_get_connection_retry_info(self, mock_get_settings):
+        """Test get_connection_retry_info returns connection retry config"""
         mock_get_settings.return_value = self._create_mock_settings()
         oracle = Oracle()
 
-        conn_retry_info = oracle.get_conn_retry_info()
+        conn_retry_info = oracle.get_connection_retry_info()
 
-        assert conn_retry_info is oracle._conn_retry_config
+        assert conn_retry_info is oracle._connection_retry_config
         assert hasattr(conn_retry_info, 'enable_retry')
         assert hasattr(conn_retry_info, 'max_retries')
 
     @patch('ddcDatabases.oracle.get_oracle_settings')
-    def test_get_op_retry_info(self, mock_get_settings):
-        """Test get_op_retry_info returns operation retry config"""
+    def test_get_operation_retry_info(self, mock_get_settings):
+        """Test get_operation_retry_info returns operation retry config"""
         mock_get_settings.return_value = self._create_mock_settings()
         oracle = Oracle()
 
-        op_retry_info = oracle.get_op_retry_info()
+        op_retry_info = oracle.get_operation_retry_info()
 
-        assert op_retry_info is oracle._op_retry_config
+        assert op_retry_info is oracle._operation_retry_config
         assert hasattr(op_retry_info, 'enable_retry')
         assert hasattr(op_retry_info, 'max_retries')
         assert hasattr(op_retry_info, 'jitter')

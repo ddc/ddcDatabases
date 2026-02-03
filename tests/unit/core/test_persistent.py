@@ -2,6 +2,7 @@
 
 import pytest
 import time
+from ddcDatabases.core.configs import BaseOperationRetryConfig as OperationRetryConfig
 from ddcDatabases.core.configs import BaseRetryConfig as RetryConfig
 
 # noinspection PyProtectedMember
@@ -34,11 +35,11 @@ class TestPersistentConnectionConfig:
     """Test PersistentConnectionConfig dataclass."""
 
     def test_default_values(self):
-        """Test default configuration values."""
+        """Test default configuration values are None (to be filled from settings)."""
         config = PersistentConnectionConfig()
-        assert config.idle_timeout == 300
-        assert config.health_check_interval == 30
-        assert config.auto_reconnect is True
+        assert config.idle_timeout is None
+        assert config.health_check_interval is None
+        assert config.auto_reconnect is None
 
     def test_custom_values(self):
         """Test custom configuration values."""
@@ -73,16 +74,20 @@ class TestPersistentSQLAlchemyConnection:
     def test_custom_config(self):
         """Test connection with custom config."""
         config = PersistentConnectionConfig(idle_timeout=100)
-        retry_config = RetryConfig(max_retries=5)
+        conn_retry = RetryConfig(max_retries=5)
+        op_retry = OperationRetryConfig(max_retries=3, jitter=0.2)
 
         conn = PersistentSQLAlchemyConnection(
             connection_key="test://localhost/db",
             connection_url="postgresql://user:pass@localhost/db",
             config=config,
-            retry_config=retry_config,
+            connection_retry_config=conn_retry,
+            operation_retry_config=op_retry,
         )
         assert conn._config.idle_timeout == 100
-        assert conn._retry_config.max_retries == 5
+        assert conn._connection_retry_config.max_retries == 5
+        assert conn._operation_retry_config.max_retries == 3
+        assert conn._operation_retry_config.jitter == 0.2
 
     def test_connect_creates_engine_and_session(self):
         """Test that connect creates engine and session."""
@@ -773,78 +778,78 @@ class TestRetrySettingsIntegration:
         from ddcDatabases.core.settings import PostgreSQLSettings
 
         settings = PostgreSQLSettings()
-        assert hasattr(settings, 'conn_enable_retry')
-        assert hasattr(settings, 'conn_max_retries')
-        assert hasattr(settings, 'conn_initial_retry_delay')
-        assert hasattr(settings, 'conn_max_retry_delay')
-        assert hasattr(settings, 'op_enable_retry')
-        assert hasattr(settings, 'op_max_retries')
-        assert hasattr(settings, 'op_initial_retry_delay')
-        assert hasattr(settings, 'op_max_retry_delay')
-        assert hasattr(settings, 'op_jitter')
-        assert hasattr(settings, 'conn_disconnect_idle_timeout')
+        assert hasattr(settings, 'connection_enable_retry')
+        assert hasattr(settings, 'connection_max_retries')
+        assert hasattr(settings, 'connection_initial_retry_delay')
+        assert hasattr(settings, 'connection_max_retry_delay')
+        assert hasattr(settings, 'operation_enable_retry')
+        assert hasattr(settings, 'operation_max_retries')
+        assert hasattr(settings, 'operation_initial_retry_delay')
+        assert hasattr(settings, 'operation_max_retry_delay')
+        assert hasattr(settings, 'operation_jitter')
+        assert hasattr(settings, 'connection_disconnect_idle_timeout')
 
-        assert settings.conn_enable_retry is True
-        assert settings.conn_max_retries == 3
-        assert settings.conn_initial_retry_delay == pytest.approx(1.0)
-        assert settings.conn_max_retry_delay == pytest.approx(30.0)
-        assert settings.op_enable_retry is True
-        assert settings.op_max_retries == 3
-        assert settings.op_initial_retry_delay == pytest.approx(0.5)
-        assert settings.op_max_retry_delay == pytest.approx(10.0)
-        assert settings.op_jitter == pytest.approx(0.1)
-        assert settings.conn_disconnect_idle_timeout == 300
+        assert settings.connection_enable_retry is True
+        assert settings.connection_max_retries == 3
+        assert settings.connection_initial_retry_delay == pytest.approx(1.0)
+        assert settings.connection_max_retry_delay == pytest.approx(30.0)
+        assert settings.operation_enable_retry is True
+        assert settings.operation_max_retries == 3
+        assert settings.operation_initial_retry_delay == pytest.approx(0.5)
+        assert settings.operation_max_retry_delay == pytest.approx(10.0)
+        assert settings.operation_jitter == pytest.approx(0.1)
+        assert settings.connection_disconnect_idle_timeout == 300
 
     def test_mysql_retry_settings(self):
         """Test MySQL settings include retry fields."""
         from ddcDatabases.core.settings import MySQLSettings
 
         settings = MySQLSettings()
-        assert settings.conn_enable_retry is True
-        assert settings.conn_max_retries == 3
-        assert settings.op_enable_retry is True
-        assert settings.op_max_retries == 3
-        assert settings.conn_disconnect_idle_timeout == 300
+        assert settings.connection_enable_retry is True
+        assert settings.connection_max_retries == 3
+        assert settings.operation_enable_retry is True
+        assert settings.operation_max_retries == 3
+        assert settings.connection_disconnect_idle_timeout == 300
 
     def test_mssql_retry_settings(self):
         """Test MSSQL settings include retry fields."""
         from ddcDatabases.core.settings import MSSQLSettings
 
         settings = MSSQLSettings()
-        assert settings.conn_enable_retry is True
-        assert settings.conn_max_retries == 3
-        assert settings.op_enable_retry is True
-        assert settings.op_max_retries == 3
-        assert settings.conn_disconnect_idle_timeout == 300
+        assert settings.connection_enable_retry is True
+        assert settings.connection_max_retries == 3
+        assert settings.operation_enable_retry is True
+        assert settings.operation_max_retries == 3
+        assert settings.connection_disconnect_idle_timeout == 300
 
     def test_oracle_retry_settings(self):
         """Test Oracle settings include retry fields."""
         from ddcDatabases.core.settings import OracleSettings
 
         settings = OracleSettings()
-        assert settings.conn_enable_retry is True
-        assert settings.conn_max_retries == 3
-        assert settings.op_enable_retry is True
-        assert settings.op_max_retries == 3
-        assert settings.conn_disconnect_idle_timeout == 300
+        assert settings.connection_enable_retry is True
+        assert settings.connection_max_retries == 3
+        assert settings.operation_enable_retry is True
+        assert settings.operation_max_retries == 3
+        assert settings.connection_disconnect_idle_timeout == 300
 
     def test_mongodb_retry_settings(self):
         """Test MongoDB settings include retry fields."""
         from ddcDatabases.core.settings import MongoDBSettings
 
         settings = MongoDBSettings()
-        assert settings.conn_enable_retry is True
-        assert settings.conn_max_retries == 3
-        assert settings.op_enable_retry is True
-        assert settings.op_max_retries == 3
-        assert settings.conn_disconnect_idle_timeout == 300
+        assert settings.connection_enable_retry is True
+        assert settings.connection_max_retries == 3
+        assert settings.operation_enable_retry is True
+        assert settings.operation_max_retries == 3
+        assert settings.connection_disconnect_idle_timeout == 300
 
     def test_sqlite_retry_settings(self):
         """Test SQLite settings include retry fields (minimal)."""
         from ddcDatabases.core.settings import SQLiteSettings
 
         settings = SQLiteSettings()
-        assert settings.conn_enable_retry is False  # SQLite disabled by default
-        assert settings.conn_max_retries == 1  # Minimal retries for file-based DB
-        assert settings.op_enable_retry is False  # SQLite disabled by default
-        assert settings.op_max_retries == 1  # Minimal retries for file-based DB
+        assert settings.connection_enable_retry is False  # SQLite disabled by default
+        assert settings.connection_max_retries == 1  # Minimal retries for file-based DB
+        assert settings.operation_enable_retry is False  # SQLite disabled by default
+        assert settings.operation_max_retries == 1  # Minimal retries for file-based DB

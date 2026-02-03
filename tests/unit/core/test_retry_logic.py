@@ -465,7 +465,7 @@ class TestRetryPolicyInDatabaseClasses:
         from ddcDatabases.postgresql import PostgreSQL
 
         pg = PostgreSQL()
-        retry_info = pg.get_conn_retry_info()
+        retry_info = pg.get_connection_retry_info()
 
         assert retry_info.enable_retry is True
         assert retry_info.max_retries == 3
@@ -477,7 +477,7 @@ class TestRetryPolicyInDatabaseClasses:
         from ddcDatabases.mysql import MySQL
 
         mysql = MySQL()
-        retry_info = mysql.get_conn_retry_info()
+        retry_info = mysql.get_connection_retry_info()
 
         assert retry_info.enable_retry is True
         assert retry_info.max_retries == 3
@@ -487,7 +487,7 @@ class TestRetryPolicyInDatabaseClasses:
         from ddcDatabases.mssql import MSSQL
 
         mssql = MSSQL()
-        retry_info = mssql.get_conn_retry_info()
+        retry_info = mssql.get_connection_retry_info()
 
         assert retry_info.enable_retry is True
         assert retry_info.max_retries == 3
@@ -497,7 +497,7 @@ class TestRetryPolicyInDatabaseClasses:
         from ddcDatabases.oracle import Oracle
 
         oracle = Oracle()
-        retry_info = oracle.get_conn_retry_info()
+        retry_info = oracle.get_connection_retry_info()
 
         assert retry_info.enable_retry is True
         assert retry_info.max_retries == 3
@@ -507,7 +507,7 @@ class TestRetryPolicyInDatabaseClasses:
         from ddcDatabases.sqlite import Sqlite
 
         sqlite = Sqlite()
-        retry_info = sqlite.get_conn_retry_info()
+        retry_info = sqlite.get_connection_retry_info()
 
         # SQLite has retry disabled by default
         assert retry_info.enable_retry is False
@@ -518,24 +518,24 @@ class TestRetryPolicyInDatabaseClasses:
         from ddcDatabases.mongodb import MongoDB
 
         mongodb = MongoDB(collection="test")
-        retry_info = mongodb.get_conn_retry_info()
+        retry_info = mongodb.get_connection_retry_info()
 
         assert retry_info.enable_retry is True
         assert retry_info.max_retries == 3
 
     def test_custom_retry_settings(self):
         """Test passing custom retry settings to database class."""
-        from ddcDatabases.postgresql import PostgreSQL, PostgreSQLConnRetryConfig
+        from ddcDatabases.postgresql import PostgreSQL, PostgreSQLConnectionRetryConfig
 
         pg = PostgreSQL(
-            conn_retry_config=PostgreSQLConnRetryConfig(
+            connection_retry_config=PostgreSQLConnectionRetryConfig(
                 enable_retry=False,
                 max_retries=5,
                 initial_retry_delay=2.0,
                 max_retry_delay=60.0,
             ),
         )
-        retry_info = pg.get_conn_retry_info()
+        retry_info = pg.get_connection_retry_info()
 
         assert retry_info.enable_retry is False
         assert retry_info.max_retries == 5

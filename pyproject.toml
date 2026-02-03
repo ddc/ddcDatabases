@@ -69,7 +69,7 @@ dev = [
     {include-group = "test"},
     "black>=26.1.0",
     "poethepoet>=0.40.0",
-    "ruff>=0.14.14",
+    "ruff>=0.15.0",
 ]
 
 [tool.hatch.build]
@@ -91,6 +91,10 @@ test-integration = "uv run pytest tests/integration --no-cov"
 addopts = "-v --cov --cov-report=term --cov-report=xml --junitxml=junit.xml"
 junit_family = "legacy"
 testpaths = ["tests/unit"]
+pythonpath = ["."]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
 asyncio_mode = "strict"
 asyncio_default_fixture_loop_scope = "function"
 markers = [
