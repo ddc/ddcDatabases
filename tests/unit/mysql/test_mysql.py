@@ -79,11 +79,11 @@ class TestMySQL:
             if not mysql_self.connection_url["username"] or not mysql_self.connection_url["password"]:
                 raise RuntimeError("Missing username/password")
 
-        with patch.object(MySQL, '__init__', patched_init):
+        with patch.object(MySQL, "__init__", patched_init):
             with pytest.raises(RuntimeError, match="Missing username/password"):
                 MySQL()
 
-    @patch('ddcDatabases.mysql.get_mysql_settings')
+    @patch("ddcDatabases.mysql.get_mysql_settings")
     def test_init_with_parameters(self, mock_get_settings):
         """Test MySQL initialization with override parameters"""
         mock_settings = self._create_mock_settings(
@@ -107,7 +107,7 @@ class TestMySQL:
         assert mysql.connection_url["password"] == "custompass"
         assert mysql._session_config.echo
 
-    @patch('ddcDatabases.mysql.get_mysql_settings')
+    @patch("ddcDatabases.mysql.get_mysql_settings")
     def test_minimal_init(self, mock_get_settings):
         """Test MySQL minimal initialization"""
         mock_settings = self._create_mock_settings()
@@ -119,7 +119,7 @@ class TestMySQL:
         assert mysql.connection_url["port"] == 3306
         assert mysql.sync_driver == "mysql+mysqldb"
 
-    @patch('ddcDatabases.mysql.get_mysql_settings')
+    @patch("ddcDatabases.mysql.get_mysql_settings")
     def test_extra_engine_args(self, mock_get_settings):
         """Test MySQL with extra engine arguments"""
         mock_settings = self._create_mock_settings(database="dev")
@@ -136,7 +136,7 @@ class TestMySQL:
         # Test that default args are still present
         assert not mysql.engine_args["echo"]
 
-    @patch('ddcDatabases.mysql.get_mysql_settings')
+    @patch("ddcDatabases.mysql.get_mysql_settings")
     def test_autoflush_and_expire_on_commit(self, mock_get_settings):
         """Test MySQL autoflush and expire_on_commit parameters"""
         mock_settings = self._create_mock_settings(database="dev")
@@ -147,7 +147,7 @@ class TestMySQL:
         assert not mysql._session_config.autoflush
         assert not mysql._session_config.expire_on_commit
 
-    @patch('ddcDatabases.mysql.get_mysql_settings')
+    @patch("ddcDatabases.mysql.get_mysql_settings")
     def test_pool_size_parameter(self, mock_get_settings):
         """Test MySQL pool_size parameter"""
         mock_settings = self._create_mock_settings(database="dev", pool_size=10)
@@ -158,7 +158,7 @@ class TestMySQL:
         assert mysql._pool_config.pool_size == 15
         assert mysql.engine_args["pool_size"] == 15
 
-    @patch('ddcDatabases.mysql.get_mysql_settings')
+    @patch("ddcDatabases.mysql.get_mysql_settings")
     def test_max_overflow_parameter(self, mock_get_settings):
         """Test MySQL max_overflow parameter"""
         mock_settings = self._create_mock_settings(database="dev", max_overflow=20)
@@ -169,7 +169,7 @@ class TestMySQL:
         assert mysql._pool_config.max_overflow == 30
         assert mysql.engine_args["max_overflow"] == 30
 
-    @patch('ddcDatabases.mysql.get_mysql_settings')
+    @patch("ddcDatabases.mysql.get_mysql_settings")
     def test_pool_parameters_defaults(self, mock_get_settings):
         """Test MySQL pool parameters use settings defaults"""
         mock_settings = self._create_mock_settings(database="dev", pool_size=10, max_overflow=20)
@@ -182,7 +182,7 @@ class TestMySQL:
         assert mysql.engine_args["pool_size"] == 10
         assert mysql.engine_args["max_overflow"] == 20
 
-    @patch('ddcDatabases.mysql.get_mysql_settings')
+    @patch("ddcDatabases.mysql.get_mysql_settings")
     def test_ssl_enabled(self, mock_get_settings):
         """Test MySQL SSL configuration"""
         mock_settings = self._create_mock_settings(database="dev", ssl_mode="DISABLED")
@@ -205,7 +205,7 @@ class TestMySQL:
         assert ssl_dict["cert"] == "/path/to/client.pem"
         assert ssl_dict["key"] == "/path/to/client-key.pem"
 
-    @patch('ddcDatabases.mysql.get_mysql_settings')
+    @patch("ddcDatabases.mysql.get_mysql_settings")
     def test_ssl_disabled(self, mock_get_settings):
         """Test MySQL without SSL does not add ssl to connect_args"""
         mock_settings = self._create_mock_settings(database="dev", ssl_mode="DISABLED")
@@ -216,7 +216,7 @@ class TestMySQL:
         assert mysql._ssl_config.ssl_mode == "DISABLED"
         assert "ssl" not in mysql.engine_args["connect_args"]
 
-    @patch('ddcDatabases.mysql.get_mysql_settings')
+    @patch("ddcDatabases.mysql.get_mysql_settings")
     def test_get_connection_info(self, mock_get_settings):
         """Test get_connection_info returns connection config"""
         mock_get_settings.return_value = self._create_mock_settings()
@@ -229,7 +229,7 @@ class TestMySQL:
         assert conn_info.host == "127.0.0.1"  # localhost normalized to 127.0.0.1
         assert conn_info.port == 3306
 
-    @patch('ddcDatabases.mysql.get_mysql_settings')
+    @patch("ddcDatabases.mysql.get_mysql_settings")
     def test_get_pool_info(self, mock_get_settings):
         """Test get_pool_info returns pool config"""
         mock_get_settings.return_value = self._create_mock_settings()
@@ -242,7 +242,7 @@ class TestMySQL:
         assert pool_info.pool_size == 20
         assert pool_info.max_overflow == 40
 
-    @patch('ddcDatabases.mysql.get_mysql_settings')
+    @patch("ddcDatabases.mysql.get_mysql_settings")
     def test_get_session_info(self, mock_get_settings):
         """Test get_session_info returns session config"""
         mock_get_settings.return_value = self._create_mock_settings()
@@ -255,7 +255,7 @@ class TestMySQL:
         assert session_info.echo
         assert not session_info.autoflush
 
-    @patch('ddcDatabases.mysql.get_mysql_settings')
+    @patch("ddcDatabases.mysql.get_mysql_settings")
     def test_get_connection_retry_info(self, mock_get_settings):
         """Test get_connection_retry_info returns connection retry config"""
         mock_get_settings.return_value = self._create_mock_settings()
@@ -264,10 +264,10 @@ class TestMySQL:
         conn_retry_info = mysql.get_connection_retry_info()
 
         assert conn_retry_info is mysql._connection_retry_config
-        assert hasattr(conn_retry_info, 'enable_retry')
-        assert hasattr(conn_retry_info, 'max_retries')
+        assert hasattr(conn_retry_info, "enable_retry")
+        assert hasattr(conn_retry_info, "max_retries")
 
-    @patch('ddcDatabases.mysql.get_mysql_settings')
+    @patch("ddcDatabases.mysql.get_mysql_settings")
     def test_get_operation_retry_info(self, mock_get_settings):
         """Test get_operation_retry_info returns operation retry config"""
         mock_get_settings.return_value = self._create_mock_settings()
@@ -276,11 +276,11 @@ class TestMySQL:
         op_retry_info = mysql.get_operation_retry_info()
 
         assert op_retry_info is mysql._operation_retry_config
-        assert hasattr(op_retry_info, 'enable_retry')
-        assert hasattr(op_retry_info, 'max_retries')
-        assert hasattr(op_retry_info, 'jitter')
+        assert hasattr(op_retry_info, "enable_retry")
+        assert hasattr(op_retry_info, "max_retries")
+        assert hasattr(op_retry_info, "jitter")
 
-    @patch('ddcDatabases.mysql.get_mysql_settings')
+    @patch("ddcDatabases.mysql.get_mysql_settings")
     def test_get_ssl_info(self, mock_get_settings):
         """Test get_ssl_info returns SSL config"""
         mock_get_settings.return_value = self._create_mock_settings()

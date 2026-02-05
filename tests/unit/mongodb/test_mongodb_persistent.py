@@ -95,7 +95,7 @@ class TestMongoDBPersistent:
         )
         assert conn1 is not conn2
 
-    @patch('pymongo.MongoClient')
+    @patch("pymongo.MongoClient")
     def test_context_manager(self, mock_client_class):
         """Test MongoDB persistent connection context manager."""
         mock_client = MagicMock()
@@ -116,7 +116,7 @@ class TestMongoDBPersistent:
 
         conn.shutdown()
 
-    @patch('pymongo.MongoClient')
+    @patch("pymongo.MongoClient")
     def test_health_check_on_connect(self, mock_client_class):
         """Test that MongoDB health check (ping) runs on connect."""
         mock_client = MagicMock()
@@ -144,7 +144,7 @@ class TestMongoDBPersistent:
             connection_url="mongodb://user:pass@localhost/admin",
             database="test_db",
         )
-        assert hasattr(conn, '_lock')
+        assert hasattr(conn, "_lock")
 
     def test_connection_key_format(self):
         """Test that connection key has correct format."""

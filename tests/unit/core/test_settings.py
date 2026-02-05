@@ -98,12 +98,12 @@ class TestSQLiteSettings:
         with patch.dict(
             os.environ,
             {
-                'SQLITE_FILE_PATH': 'tests/data/test.db',
-                'SQLITE_ECHO': 'true',
+                "SQLITE_FILE_PATH": "tests/data/test.db",
+                "SQLITE_ECHO": "true",
             },
         ):
             settings = SQLiteSettings()
-            assert settings.file_path == 'tests/data/test.db'
+            assert settings.file_path == "tests/data/test.db"
             assert settings.echo
 
 
@@ -144,25 +144,25 @@ class TestPostgreSQLSettings:
         with patch.dict(
             os.environ,
             {
-                'POSTGRESQL_HOST': 'custom-host',
-                'POSTGRESQL_PORT': '9999',
-                'POSTGRESQL_USER': 'testuser',
-                'POSTGRESQL_PASSWORD': 'testpass',
-                'POSTGRESQL_DATABASE': 'testdb',
-                'POSTGRESQL_ECHO': 'true',
-                'POSTGRESQL_SCHEMA': 'custom_schema',
-                'POSTGRESQL_SSL_MODE': 'require',
+                "POSTGRESQL_HOST": "custom-host",
+                "POSTGRESQL_PORT": "9999",
+                "POSTGRESQL_USER": "testuser",
+                "POSTGRESQL_PASSWORD": "testpass",
+                "POSTGRESQL_DATABASE": "testdb",
+                "POSTGRESQL_ECHO": "true",
+                "POSTGRESQL_SCHEMA": "custom_schema",
+                "POSTGRESQL_SSL_MODE": "require",
             },
         ):
             settings = PostgreSQLSettings()
-            assert settings.host == 'custom-host'
+            assert settings.host == "custom-host"
             assert settings.port == 9999
-            assert settings.user == 'testuser'
-            assert settings.password == 'testpass'
-            assert settings.database == 'testdb'
+            assert settings.user == "testuser"
+            assert settings.password == "testpass"
+            assert settings.database == "testdb"
             assert settings.echo
-            assert settings.schema == 'custom_schema'
-            assert settings.ssl_mode == 'require'
+            assert settings.schema == "custom_schema"
+            assert settings.ssl_mode == "require"
 
 
 class TestMSSQLSettings:
@@ -193,23 +193,23 @@ class TestMSSQLSettings:
         with patch.dict(
             os.environ,
             {
-                'MSSQL_HOST': 'mssql-host',
-                'MSSQL_PORT': '1434',
-                'MSSQL_USER': 'testuser',
-                'MSSQL_PASSWORD': 'testpass',
-                'MSSQL_DATABASE': 'testdb',
-                'MSSQL_SCHEMA': 'custom_schema',
-                'MSSQL_ECHO': 'true',
-                'MSSQL_SSL_ENCRYPT': 'true',
+                "MSSQL_HOST": "mssql-host",
+                "MSSQL_PORT": "1434",
+                "MSSQL_USER": "testuser",
+                "MSSQL_PASSWORD": "testpass",
+                "MSSQL_DATABASE": "testdb",
+                "MSSQL_SCHEMA": "custom_schema",
+                "MSSQL_ECHO": "true",
+                "MSSQL_SSL_ENCRYPT": "true",
             },
         ):
             settings = MSSQLSettings()
-            assert settings.host == 'mssql-host'
+            assert settings.host == "mssql-host"
             assert settings.port == 1434
-            assert settings.user == 'testuser'
-            assert settings.password == 'testpass'
-            assert settings.database == 'testdb'
-            assert settings.schema == 'custom_schema'
+            assert settings.user == "testuser"
+            assert settings.password == "testpass"
+            assert settings.database == "testdb"
+            assert settings.schema == "custom_schema"
             assert settings.echo is True
             assert settings.ssl_encrypt is True
 
@@ -250,23 +250,23 @@ class TestMySQLSettings:
         with patch.dict(
             os.environ,
             {
-                'MYSQL_HOST': 'mysql-host',
-                'MYSQL_PORT': '3307',
-                'MYSQL_USER': 'testuser',
-                'MYSQL_PASSWORD': 'testpass',
-                'MYSQL_DATABASE': 'testdb',
-                'MYSQL_ECHO': 'true',
-                'MYSQL_SSL_MODE': 'REQUIRED',
+                "MYSQL_HOST": "mysql-host",
+                "MYSQL_PORT": "3307",
+                "MYSQL_USER": "testuser",
+                "MYSQL_PASSWORD": "testpass",
+                "MYSQL_DATABASE": "testdb",
+                "MYSQL_ECHO": "true",
+                "MYSQL_SSL_MODE": "REQUIRED",
             },
         ):
             settings = MySQLSettings()
-            assert settings.host == 'mysql-host'
+            assert settings.host == "mysql-host"
             assert settings.port == 3307
-            assert settings.user == 'testuser'
-            assert settings.password == 'testpass'
-            assert settings.database == 'testdb'
+            assert settings.user == "testuser"
+            assert settings.password == "testpass"
+            assert settings.database == "testdb"
             assert settings.echo is True
-            assert settings.ssl_mode == 'REQUIRED'
+            assert settings.ssl_mode == "REQUIRED"
 
 
 class TestMongoDBSettings:
@@ -294,21 +294,21 @@ class TestMongoDBSettings:
         with patch.dict(
             os.environ,
             {
-                'MONGODB_HOST': 'mongo-host',
-                'MONGODB_PORT': '27018',
-                'MONGODB_USER': 'testuser',
-                'MONGODB_PASSWORD': 'testpass',
-                'MONGODB_DATABASE': 'testdb',
-                'MONGODB_BATCH_SIZE': '1000',
-                'MONGODB_TLS_ENABLED': 'true',
+                "MONGODB_HOST": "mongo-host",
+                "MONGODB_PORT": "27018",
+                "MONGODB_USER": "testuser",
+                "MONGODB_PASSWORD": "testpass",
+                "MONGODB_DATABASE": "testdb",
+                "MONGODB_BATCH_SIZE": "1000",
+                "MONGODB_TLS_ENABLED": "true",
             },
         ):
             settings = MongoDBSettings()
-            assert settings.host == 'mongo-host'
+            assert settings.host == "mongo-host"
             assert settings.port == 27018
-            assert settings.user == 'testuser'
-            assert settings.password == 'testpass'
-            assert settings.database == 'testdb'
+            assert settings.user == "testuser"
+            assert settings.password == "testpass"
+            assert settings.database == "testdb"
             assert settings.batch_size == 1000
             assert settings.tls_enabled is True
 
@@ -335,21 +335,21 @@ class TestOracleSettings:
         with patch.dict(
             os.environ,
             {
-                'ORACLE_HOST': 'oracle-host',
-                'ORACLE_PORT': '1522',
-                'ORACLE_USER': 'testuser',
-                'ORACLE_PASSWORD': 'testpass',
-                'ORACLE_SERVICENAME': 'testservice',
-                'ORACLE_ECHO': 'true',
-                'ORACLE_SSL_ENABLED': 'true',
+                "ORACLE_HOST": "oracle-host",
+                "ORACLE_PORT": "1522",
+                "ORACLE_USER": "testuser",
+                "ORACLE_PASSWORD": "testpass",
+                "ORACLE_SERVICENAME": "testservice",
+                "ORACLE_ECHO": "true",
+                "ORACLE_SSL_ENABLED": "true",
             },
         ):
             settings = OracleSettings()
-            assert settings.host == 'oracle-host'
+            assert settings.host == "oracle-host"
             assert settings.port == 1522
-            assert settings.user == 'testuser'
-            assert settings.password == 'testpass'
-            assert settings.servicename == 'testservice'
+            assert settings.user == "testuser"
+            assert settings.password == "testpass"
+            assert settings.servicename == "testservice"
             assert settings.echo is True
             assert settings.ssl_enabled is True
 
@@ -380,8 +380,8 @@ class TestDotenvLoading:
 
         ddcDatabases.core.settings._dotenv_loaded = False
 
-    @patch('ddcDatabases.core.settings._dotenv_loaded', True)
-    @patch('ddcDatabases.core.settings.load_dotenv')
+    @patch("ddcDatabases.core.settings._dotenv_loaded", True)
+    @patch("ddcDatabases.core.settings.load_dotenv")
     def test_dotenv_not_loaded_if_already_loaded(self, mock_load_dotenv):
         """Test that dotenv is not loaded if already loaded"""
         get_postgresql_settings.cache_clear()
@@ -401,7 +401,7 @@ class TestDotenvLoading:
         import ddcDatabases.core.settings as settings_module
 
         # Patch load_dotenv before reloading to ensure it's mocked
-        with patch.object(settings_module, 'load_dotenv') as mock_load_dotenv:
+        with patch.object(settings_module, "load_dotenv") as mock_load_dotenv:
             # Reset the flag and cache
             settings_module._dotenv_loaded = False
             get_sqlite_settings.cache_clear()

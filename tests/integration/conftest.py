@@ -2,6 +2,14 @@ import pytest
 from sqlalchemy import Boolean, Identity, String
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
+# Testcontainer image versions
+POSTGRES_IMAGE = "postgres:18-alpine"
+MYSQL_IMAGE = "mysql:9"
+MSSQL_IMAGE = "mcr.microsoft.com/mssql/server:2022-latest"
+MONGODB_IMAGE = "mongo:8"
+MARIADB_IMAGE = "mariadb:12"
+ORACLE_IMAGE = "gvenzl/oracle-free:23-slim"
+
 
 class Base(DeclarativeBase):
     pass
@@ -14,49 +22,49 @@ class IntegrationModel(Base):
     enabled: Mapped[bool] = mapped_column(Boolean, default=True)
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="session")
 def postgres_container():
     from testcontainers.postgres import PostgresContainer
 
-    with PostgresContainer("postgres:18-alpine") as pg:
+    with PostgresContainer(POSTGRES_IMAGE) as pg:
         yield pg
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="session")
 def mysql_container():
     from testcontainers.mysql import MySqlContainer
 
-    with MySqlContainer("mysql:9") as mysql:
+    with MySqlContainer(MYSQL_IMAGE) as mysql:
         yield mysql
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="session")
 def mssql_container():
     from testcontainers.mssql import SqlServerContainer
 
-    with SqlServerContainer("mcr.microsoft.com/mssql/server:2022-latest", password="Strong@Pass123") as mssql:
+    with SqlServerContainer(MSSQL_IMAGE, password="Strong@Pass123") as mssql:
         yield mssql
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="session")
 def mongodb_container():
     from testcontainers.mongodb import MongoDbContainer
 
-    with MongoDbContainer("mongo:8") as mongo:
+    with MongoDbContainer(MONGODB_IMAGE) as mongo:
         yield mongo
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="session")
 def mariadb_container():
     from testcontainers.mysql import MySqlContainer
 
-    with MySqlContainer("mariadb:11") as mariadb:
+    with MySqlContainer(MARIADB_IMAGE) as mariadb:
         yield mariadb
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="session")
 def oracle_container():
     from testcontainers.oracle import OracleDbContainer
 
-    with OracleDbContainer("gvenzl/oracle-free:slim") as oracle:
+    with OracleDbContainer(ORACLE_IMAGE) as oracle:
         yield oracle

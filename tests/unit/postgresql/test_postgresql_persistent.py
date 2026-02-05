@@ -159,8 +159,8 @@ class TestPostgreSQLPersistent:
         mock_session = AsyncMock()
         mock_session.execute = AsyncMock()
 
-        with patch.object(PersistentSQLAlchemyAsyncConnection, '_create_engine', return_value=mock_engine):
-            with patch.object(PersistentSQLAlchemyAsyncConnection, '_create_session', return_value=mock_session):
+        with patch.object(PersistentSQLAlchemyAsyncConnection, "_create_engine", return_value=mock_engine):
+            with patch.object(PersistentSQLAlchemyAsyncConnection, "_create_session", return_value=mock_session):
                 conn = PersistentSQLAlchemyAsyncConnection(
                     connection_key="postgresql://test@localhost:5432/testdb",
                     connection_url="postgresql+asyncpg://user:pass@localhost/db",

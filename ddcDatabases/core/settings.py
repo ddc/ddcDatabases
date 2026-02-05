@@ -7,7 +7,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 from typing import TypeVar
 
 # Type variable for generic settings factory
-T = TypeVar('T', bound=BaseSettings)
+T = TypeVar("T", bound=BaseSettings)
 
 # Lazy loading flag for dotenv - thread-safe singleton pattern
 _dotenv_loaded = False

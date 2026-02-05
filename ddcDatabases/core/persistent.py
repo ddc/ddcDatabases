@@ -36,8 +36,8 @@ _logger = logging.getLogger(__name__)
 _logger.addHandler(logging.NullHandler())
 
 # Type variables
-T = TypeVar('T')
-SessionT = TypeVar('SessionT', Session, AsyncSession)
+T = TypeVar("T")
+SessionT = TypeVar("SessionT", Session, AsyncSession)
 
 
 @dataclass(slots=True, frozen=True)
@@ -115,19 +115,19 @@ class BasePersistentConnection(IdleCheckerMixin, ABC, Generic[SessionT]):
     """
 
     __slots__ = (
-        '_connection_key',
-        '_engine',
-        '_session',
-        '_last_used',
-        '_lock',
-        '_config',
-        '_connection_retry_config',
-        '_operation_retry_config',
-        '_idle_checker_thread',
-        '_shutdown_event',
-        '_is_connected',
-        '_logger',
-        '__weakref__',  # Required for WeakValueDictionary
+        "_connection_key",
+        "_engine",
+        "_session",
+        "_last_used",
+        "_lock",
+        "_config",
+        "_connection_retry_config",
+        "_operation_retry_config",
+        "_idle_checker_thread",
+        "_shutdown_event",
+        "_is_connected",
+        "_logger",
+        "__weakref__",  # Required for WeakValueDictionary
     )
 
     def __init__(
@@ -202,10 +202,10 @@ class PersistentSQLAlchemyConnection(BasePersistentConnection[Session]):
     """
 
     __slots__ = (
-        '_connection_url',
-        '_engine_args',
-        '_autoflush',
-        '_expire_on_commit',
+        "_connection_url",
+        "_engine_args",
+        "_autoflush",
+        "_expire_on_commit",
     )
 
     def __init__(
@@ -367,11 +367,11 @@ class PersistentSQLAlchemyAsyncConnection(BasePersistentConnection[AsyncSession]
     """
 
     __slots__ = (
-        '_connection_url',
-        '_engine_args',
-        '_autoflush',
-        '_expire_on_commit',
-        '_async_lock',
+        "_connection_url",
+        "_engine_args",
+        "_autoflush",
+        "_expire_on_commit",
+        "_async_lock",
     )
 
     def __init__(
@@ -558,21 +558,21 @@ class PersistentMongoDBConnection(IdleCheckerMixin):
     """
 
     __slots__ = (
-        '_connection_key',
-        '_connection_url',
-        '_database',
-        '_client',
-        '_db',
-        '_last_used',
-        '_lock',
-        '_config',
-        '_connection_retry_config',
-        '_operation_retry_config',
-        '_idle_checker_thread',
-        '_shutdown_event',
-        '_is_connected',
-        '_logger',
-        '__weakref__',  # Required for WeakValueDictionary
+        "_connection_key",
+        "_connection_url",
+        "_database",
+        "_client",
+        "_db",
+        "_last_used",
+        "_lock",
+        "_config",
+        "_connection_retry_config",
+        "_operation_retry_config",
+        "_idle_checker_thread",
+        "_shutdown_event",
+        "_is_connected",
+        "_logger",
+        "__weakref__",  # Required for WeakValueDictionary
     )
 
     def __init__(

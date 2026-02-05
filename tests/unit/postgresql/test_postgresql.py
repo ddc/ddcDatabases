@@ -59,11 +59,11 @@ class TestPostgreSQL:
             if not postgresql_self.connection_url["username"] or not postgresql_self.connection_url["password"]:
                 raise RuntimeError("Missing username/password")
 
-        with patch.object(PostgreSQL, '__init__', patched_init):
+        with patch.object(PostgreSQL, "__init__", patched_init):
             with pytest.raises(RuntimeError, match="Missing username/password"):
                 PostgreSQL()
 
-    @patch('ddcDatabases.postgresql.get_postgresql_settings')
+    @patch("ddcDatabases.postgresql.get_postgresql_settings")
     def test_init_with_parameters(self, mock_get_settings):
         """Test PostgreSQL initialization with override parameters"""
         mock_settings = MagicMock()
@@ -93,7 +93,7 @@ class TestPostgreSQL:
         assert postgresql.connection_url["password"] == "custompass"
         assert postgresql._session_config.echo
 
-    @patch('ddcDatabases.postgresql.get_postgresql_settings')
+    @patch("ddcDatabases.postgresql.get_postgresql_settings")
     def test_extra_engine_args(self, mock_get_settings):
         """Test PostgreSQL with extra engine arguments"""
         mock_settings = MagicMock()
@@ -118,7 +118,7 @@ class TestPostgreSQL:
         # Test that default args are still present
         assert not postgresql.engine_args["echo"]
 
-    @patch('ddcDatabases.postgresql.get_postgresql_settings')
+    @patch("ddcDatabases.postgresql.get_postgresql_settings")
     def test_autoflush_and_expire_on_commit(self, mock_get_settings):
         """Test PostgreSQL autoflush and expire_on_commit parameters"""
         mock_settings = MagicMock()
@@ -137,7 +137,7 @@ class TestPostgreSQL:
         assert not postgresql._session_config.autoflush
         assert not postgresql._session_config.expire_on_commit
 
-    @patch('ddcDatabases.postgresql.get_postgresql_settings')
+    @patch("ddcDatabases.postgresql.get_postgresql_settings")
     def test_autocommit_parameter(self, mock_get_settings):
         """Test PostgreSQL autocommit parameter"""
         mock_settings = MagicMock()
@@ -156,7 +156,7 @@ class TestPostgreSQL:
 
         assert postgresql._session_config.autocommit
 
-    @patch('ddcDatabases.postgresql.get_postgresql_settings')
+    @patch("ddcDatabases.postgresql.get_postgresql_settings")
     def test_connect_args_psycopg_driver(self, mock_get_settings):
         """Test that psycopg driver sets correct connect_args"""
         mock_settings = MagicMock()
@@ -196,7 +196,7 @@ class TestPostgreSQL:
         assert "psycopg" not in test_driver_pg8000
         assert "pg8000" in test_driver_pg8000
 
-    @patch('ddcDatabases.postgresql.get_postgresql_settings')
+    @patch("ddcDatabases.postgresql.get_postgresql_settings")
     def test_driver_detection_logic(self, mock_get_settings):
         """Test driver detection logic in init"""
         mock_settings = MagicMock()
@@ -244,15 +244,15 @@ class TestPostgreSQL:
         postgresql = PostgreSQL(extra_engine_args=extra_args)
 
         # Test that extra args are properly included
-        assert postgresql.engine_args['pool_pre_ping']
-        assert postgresql.engine_args['pool_recycle'] == 3600
-        assert postgresql.engine_args['pool_timeout'] == 60
+        assert postgresql.engine_args["pool_pre_ping"]
+        assert postgresql.engine_args["pool_recycle"] == 3600
+        assert postgresql.engine_args["pool_timeout"] == 60
 
         # Test that extra_engine_args dict is properly stored
-        assert hasattr(postgresql, 'extra_engine_args')
+        assert hasattr(postgresql, "extra_engine_args")
         assert postgresql.extra_engine_args == extra_args
 
-    @patch('ddcDatabases.postgresql.get_postgresql_settings')
+    @patch("ddcDatabases.postgresql.get_postgresql_settings")
     def test_context_manager_methods_exist(self, mock_get_settings):
         """Test that context manager methods exist and can be called safely"""
         mock_settings = MagicMock()
@@ -269,12 +269,12 @@ class TestPostgreSQL:
         postgresql = PostgreSQL()
 
         # Test that methods exist and are callable
-        assert hasattr(postgresql, '_get_engine')
-        assert hasattr(postgresql, '_get_async_engine')
+        assert hasattr(postgresql, "_get_engine")
+        assert hasattr(postgresql, "_get_async_engine")
         assert callable(postgresql._get_engine)
         assert callable(postgresql._get_async_engine)
 
-    @patch('ddcDatabases.postgresql.get_postgresql_settings')
+    @patch("ddcDatabases.postgresql.get_postgresql_settings")
     def test_get_base_engine_args_method(self, mock_get_settings):
         """Test _get_base_engine_args method - covers lines 70-87"""
         from sqlalchemy import URL
@@ -333,7 +333,7 @@ class TestPostgreSQL:
         assert result["connect_args"]["connect_timeout"] == 30
         assert result["isolation_level"] == "READ_COMMITTED"
 
-    @patch('ddcDatabases.postgresql.get_postgresql_settings')
+    @patch("ddcDatabases.postgresql.get_postgresql_settings")
     def test_sync_driver_autocommit_logic(self, mock_get_settings):
         """Test autocommit logic for sync driver - covers autocommit branch"""
         mock_settings = MagicMock()
@@ -378,7 +378,7 @@ class TestPostgreSQL:
         assert "isolation_level" in engine_args
         assert engine_args["isolation_level"] == "AUTOCOMMIT"
 
-    @patch('ddcDatabases.postgresql.get_postgresql_settings')
+    @patch("ddcDatabases.postgresql.get_postgresql_settings")
     def test_async_driver_autocommit_logic(self, mock_get_settings):
         """Test autocommit logic for async driver - covers async autocommit branch"""
         mock_settings = MagicMock()
@@ -426,7 +426,7 @@ class TestPostgreSQL:
         assert "command_timeout" in engine_args["connect_args"]
         assert engine_args["connect_args"]["command_timeout"] == 30
 
-    @patch('ddcDatabases.postgresql.get_postgresql_settings')
+    @patch("ddcDatabases.postgresql.get_postgresql_settings")
     def test_pool_size_parameter(self, mock_get_settings):
         """Test PostgreSQL pool_size parameter"""
         mock_settings = MagicMock()
@@ -445,7 +445,7 @@ class TestPostgreSQL:
 
         assert postgresql._pool_config.pool_size == 15
 
-    @patch('ddcDatabases.postgresql.get_postgresql_settings')
+    @patch("ddcDatabases.postgresql.get_postgresql_settings")
     def test_max_overflow_parameter(self, mock_get_settings):
         """Test PostgreSQL max_overflow parameter"""
         mock_settings = MagicMock()
@@ -464,7 +464,7 @@ class TestPostgreSQL:
 
         assert postgresql._pool_config.max_overflow == 30
 
-    @patch('ddcDatabases.postgresql.get_postgresql_settings')
+    @patch("ddcDatabases.postgresql.get_postgresql_settings")
     def test_pool_parameters_defaults(self, mock_get_settings):
         """Test PostgreSQL pool parameters use settings defaults"""
         mock_settings = MagicMock()
@@ -485,7 +485,7 @@ class TestPostgreSQL:
         assert postgresql._pool_config.pool_size == 25
         assert postgresql._pool_config.max_overflow == 50
 
-    @patch('ddcDatabases.postgresql.get_postgresql_settings')
+    @patch("ddcDatabases.postgresql.get_postgresql_settings")
     def test_enhanced_configuration_methods(self, mock_get_settings):
         """Test the new enhanced configuration getter methods"""
         mock_settings = MagicMock()
@@ -554,7 +554,7 @@ class TestPostgreSQL:
         assert not session_config.expire_on_commit
         assert session_config.autocommit
 
-    @patch('ddcDatabases.postgresql.get_postgresql_settings')
+    @patch("ddcDatabases.postgresql.get_postgresql_settings")
     def test_get_engine_method_with_psycopg(self, mock_get_settings):
         """Test the _get_engine method with psycopg driver"""
         mock_settings = MagicMock()
@@ -595,12 +595,12 @@ class TestPostgreSQL:
         with postgresql._get_engine() as engine:
             # Verify engine was created with expected properties
             assert engine is not None
-            assert hasattr(engine, 'dispose')
-            assert hasattr(engine, 'url')
+            assert hasattr(engine, "dispose")
+            assert hasattr(engine, "url")
             # Verify autocommit is configured via isolation_level in the URL or engine
             assert "psycopg" in str(engine.url)
 
-    @patch('ddcDatabases.postgresql.get_postgresql_settings')
+    @patch("ddcDatabases.postgresql.get_postgresql_settings")
     def test_get_engine_method_without_autocommit(self, mock_get_settings):
         """Test the _get_engine method without autocommit"""
         mock_settings = MagicMock()
@@ -641,11 +641,11 @@ class TestPostgreSQL:
         with postgresql._get_engine() as engine:
             # Verify engine was created with expected properties
             assert engine is not None
-            assert hasattr(engine, 'dispose')
-            assert hasattr(engine, 'url')
+            assert hasattr(engine, "dispose")
+            assert hasattr(engine, "url")
             assert "psycopg" in str(engine.url)
 
-    @patch('ddcDatabases.postgresql.get_postgresql_settings')
+    @patch("ddcDatabases.postgresql.get_postgresql_settings")
     def test_get_engine_method_non_psycopg_driver(self, mock_get_settings):
         """Test the _get_engine method with non-psycopg driver"""
         mock_settings = MagicMock()
@@ -686,11 +686,11 @@ class TestPostgreSQL:
         with postgresql._get_engine() as engine:
             # Verify engine was created with expected properties
             assert engine is not None
-            assert hasattr(engine, 'dispose')
-            assert hasattr(engine, 'url')
+            assert hasattr(engine, "dispose")
+            assert hasattr(engine, "url")
             assert "psycopg" in str(engine.url)
 
-    @patch('ddcDatabases.postgresql.get_postgresql_settings')
+    @patch("ddcDatabases.postgresql.get_postgresql_settings")
     def test_get_async_engine_method_with_asyncpg(self, mock_get_settings):
         """Test the _get_async_engine method with asyncpg driver"""
         mock_settings = MagicMock()
@@ -720,8 +720,8 @@ class TestPostgreSQL:
         async def test_async():
             async with postgresql._get_async_engine() as engine:
                 # Verify we get a real SQLAlchemy AsyncEngine
-                assert hasattr(engine, 'dispose')
-                assert hasattr(engine, 'begin')
+                assert hasattr(engine, "dispose")
+                assert hasattr(engine, "begin")
                 # Verify URL was constructed correctly
                 assert "postgresql+asyncpg" in str(engine.url)
                 assert "localhost" in str(engine.url)
@@ -731,7 +731,7 @@ class TestPostgreSQL:
 
         asyncio.run(test_async())
 
-    @patch('ddcDatabases.postgresql.get_postgresql_settings')
+    @patch("ddcDatabases.postgresql.get_postgresql_settings")
     def test_get_async_engine_method_without_autocommit(self, mock_get_settings):
         """Test the _get_async_engine method without autocommit"""
         mock_settings = MagicMock()
@@ -758,8 +758,8 @@ class TestPostgreSQL:
         async def test_async():
             async with postgresql._get_async_engine() as engine:
                 # Verify we get a real SQLAlchemy AsyncEngine
-                assert hasattr(engine, 'dispose')
-                assert hasattr(engine, 'begin')
+                assert hasattr(engine, "dispose")
+                assert hasattr(engine, "begin")
                 # Verify URL was constructed correctly
                 assert "postgresql+asyncpg" in str(engine.url)
 
@@ -767,7 +767,7 @@ class TestPostgreSQL:
 
         asyncio.run(test_async())
 
-    @patch('ddcDatabases.postgresql.get_postgresql_settings')
+    @patch("ddcDatabases.postgresql.get_postgresql_settings")
     def test_get_async_engine_method_non_asyncpg_driver(self, mock_get_settings):
         """Test the _get_async_engine method with non-asyncpg driver"""
         mock_settings = MagicMock()
@@ -794,8 +794,8 @@ class TestPostgreSQL:
         async def test_async():
             async with postgresql._get_async_engine() as engine:
                 # Verify we get a real SQLAlchemy AsyncEngine
-                assert hasattr(engine, 'dispose')
-                assert hasattr(engine, 'begin')
+                assert hasattr(engine, "dispose")
+                assert hasattr(engine, "begin")
                 # Verify URL was constructed correctly
                 assert "postgresql+asyncpg" in str(engine.url)
 
@@ -803,7 +803,7 @@ class TestPostgreSQL:
 
         asyncio.run(test_async())
 
-    @patch('ddcDatabases.postgresql.get_postgresql_settings')
+    @patch("ddcDatabases.postgresql.get_postgresql_settings")
     def test_repr_method(self, mock_get_settings):
         """Test the enhanced __repr__ method"""
         mock_settings = MagicMock()
@@ -843,7 +843,7 @@ class TestPostgreSQL:
         assert "echo=True" in repr_str
         assert ")" in repr_str
 
-    @patch('ddcDatabases.postgresql.get_postgresql_settings')
+    @patch("ddcDatabases.postgresql.get_postgresql_settings")
     def test_configuration_immutability(self, mock_get_settings):
         """Test that configuration objects are properly immutable"""
         mock_settings = MagicMock()
@@ -881,7 +881,7 @@ class TestPostgreSQL:
         with pytest.raises(dataclasses.FrozenInstanceError):
             session_config.echo = True  # noqa
 
-    @patch('ddcDatabases.postgresql.get_postgresql_settings')
+    @patch("ddcDatabases.postgresql.get_postgresql_settings")
     def test_schema_default(self, mock_get_settings):
         """Test PostgreSQL schema defaults to public"""
         mock_settings = MagicMock()
@@ -913,7 +913,7 @@ class TestPostgreSQL:
         conn_config = postgresql.get_connection_info()
         assert conn_config.schema == "public"
 
-    @patch('ddcDatabases.postgresql.get_postgresql_settings')
+    @patch("ddcDatabases.postgresql.get_postgresql_settings")
     def test_schema_custom(self, mock_get_settings):
         """Test PostgreSQL with custom schema sets search_path"""
         mock_settings = MagicMock()
@@ -958,7 +958,7 @@ class TestPostgreSQL:
 
         assert sync_connect_args["options"] == "-c search_path=custom_schema"
 
-    @patch('ddcDatabases.postgresql.get_postgresql_settings')
+    @patch("ddcDatabases.postgresql.get_postgresql_settings")
     def test_schema_public_no_options(self, mock_get_settings):
         """Test PostgreSQL with public schema does not set search_path options"""
         mock_settings = MagicMock()
@@ -997,7 +997,7 @@ class TestPostgreSQL:
 
         assert "options" not in sync_connect_args
 
-    @patch('ddcDatabases.postgresql.get_postgresql_settings')
+    @patch("ddcDatabases.postgresql.get_postgresql_settings")
     def test_ssl_enabled_with_options(self, mock_get_settings):
         """Test PostgreSQL SSL configuration"""
         mock_settings = MagicMock()
@@ -1054,7 +1054,7 @@ class TestPostgreSQL:
         assert sync_connect_args["sslcert"] == "/path/to/client.pem"
         assert sync_connect_args["sslkey"] == "/path/to/client-key.pem"
 
-    @patch('ddcDatabases.postgresql.get_postgresql_settings')
+    @patch("ddcDatabases.postgresql.get_postgresql_settings")
     def test_ssl_disabled_no_connect_args(self, mock_get_settings):
         """Test PostgreSQL with SSL disabled does not add SSL connect_args"""
         mock_settings = MagicMock()
@@ -1091,7 +1091,7 @@ class TestPostgreSQL:
 
         assert "sslmode" not in sync_connect_args
 
-    @patch('ddcDatabases.postgresql.get_postgresql_settings')
+    @patch("ddcDatabases.postgresql.get_postgresql_settings")
     def test_get_connection_info(self, mock_get_settings):
         """Test get_connection_info returns connection config"""
         from ddcDatabases.postgresql import PostgreSQL, PostgreSQLConnectionConfig
@@ -1137,7 +1137,7 @@ class TestPostgreSQL:
         assert conn_info.host == "localhost"
         assert conn_info.port == 5432
 
-    @patch('ddcDatabases.postgresql.get_postgresql_settings')
+    @patch("ddcDatabases.postgresql.get_postgresql_settings")
     def test_get_pool_info(self, mock_get_settings):
         """Test get_pool_info returns pool config"""
         from ddcDatabases.postgresql import PostgreSQL, PostgreSQLPoolConfig
@@ -1183,7 +1183,7 @@ class TestPostgreSQL:
         assert pool_info.pool_size == 20
         assert pool_info.max_overflow == 40
 
-    @patch('ddcDatabases.postgresql.get_postgresql_settings')
+    @patch("ddcDatabases.postgresql.get_postgresql_settings")
     def test_get_session_info(self, mock_get_settings):
         """Test get_session_info returns session config"""
         from ddcDatabases.postgresql import PostgreSQL, PostgreSQLSessionConfig
@@ -1229,7 +1229,7 @@ class TestPostgreSQL:
         assert session_info.echo
         assert not session_info.autoflush
 
-    @patch('ddcDatabases.postgresql.get_postgresql_settings')
+    @patch("ddcDatabases.postgresql.get_postgresql_settings")
     def test_get_operation_retry_info(self, mock_get_settings):
         """Test get_operation_retry_info returns operation retry config"""
         from ddcDatabases.postgresql import PostgreSQL
@@ -1271,6 +1271,6 @@ class TestPostgreSQL:
         op_retry_info = postgresql.get_operation_retry_info()
 
         assert op_retry_info is postgresql._operation_retry_config
-        assert hasattr(op_retry_info, 'enable_retry')
-        assert hasattr(op_retry_info, 'max_retries')
-        assert hasattr(op_retry_info, 'jitter')
+        assert hasattr(op_retry_info, "enable_retry")
+        assert hasattr(op_retry_info, "max_retries")
+        assert hasattr(op_retry_info, "jitter")

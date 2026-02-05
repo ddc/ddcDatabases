@@ -17,7 +17,7 @@ Base = declarative_base()
 
 
 class DatabaseModel(Base):
-    __tablename__ = 'test_model'
+    __tablename__ = "test_model"
 
     id = Column(Integer, primary_key=True)
     name = Column(String(50))
@@ -124,7 +124,7 @@ class TestBaseConnection:
         assert conn.session is None
 
     @pytest.mark.skipif(not POSTGRESQL_AVAILABLE, reason="PostgreSQL drivers not available")
-    @patch('sqlalchemy.engine.create_engine')
+    @patch("sqlalchemy.engine.create_engine")
     def test_get_engine(self, mock_create_engine):
         """Test _get_engine context manager"""
         connection_url = {
@@ -586,7 +586,7 @@ class TestDBUtilsAsync:
         mock_session.execute.assert_called_once()
         # Check that delete statement was used
         call_args = mock_session.execute.call_args[0][0]
-        assert hasattr(call_args, 'table')
+        assert hasattr(call_args, "table")
         mock_session.commit.assert_called_once()
 
     @pytest.mark.asyncio
@@ -663,9 +663,9 @@ class TestBaseConnectionContextManagers:
         mock_engine = MagicMock()
 
         with (
-            patch.object(conn, '_get_engine') as mock_get_engine,
-            patch('ddcDatabases.core.base.sessionmaker') as mock_sessionmaker,
-            patch.object(conn, '_test_connection_sync') as mock_test_conn,
+            patch.object(conn, "_get_engine") as mock_get_engine,
+            patch("ddcDatabases.core.base.sessionmaker") as mock_sessionmaker,
+            patch.object(conn, "_test_connection_sync") as mock_test_conn,
         ):
             mock_get_engine.return_value.__enter__.return_value = mock_engine
             mock_get_engine.return_value.__exit__.return_value = None
@@ -704,11 +704,10 @@ class TestBaseConnectionContextManagers:
         mock_engine = AsyncMock()
 
         with (
-            patch.object(conn, '_get_async_engine') as mock_get_engine,
-            patch('ddcDatabases.core.base.async_sessionmaker') as mock_sessionmaker,
-            patch.object(conn, '_test_connection_async') as mock_test_conn,
+            patch.object(conn, "_get_async_engine") as mock_get_engine,
+            patch("ddcDatabases.core.base.async_sessionmaker") as mock_sessionmaker,
+            patch.object(conn, "_test_connection_async") as mock_test_conn,
         ):
-
             mock_get_engine.return_value.__aenter__.return_value = mock_engine
             mock_get_engine.return_value.__aexit__.return_value = None
 
@@ -729,7 +728,7 @@ class TestBaseConnectionContextManagers:
             mock_engine.dispose.assert_called_once()
 
     @pytest.mark.skipif(not POSTGRESQL_AVAILABLE, reason="PostgreSQL drivers not available")
-    @patch('sqlalchemy.engine.create_engine')
+    @patch("sqlalchemy.engine.create_engine")
     def test_get_engine_context_manager(self, mock_create_engine):
         """Test _get_engine context manager - Lines 86-102"""
         connection_url = {"host": "localhost", "database": "test"}
@@ -774,8 +773,8 @@ class TestBaseConnectionContextManagers:
             # Our concrete implementation creates real engines
             assert engine is not None
             # Check that the engine has the expected configuration
-            assert hasattr(engine, 'dispose')  # Engine should have disposed method
-            assert hasattr(engine, 'url')  # Should have URL attribute
+            assert hasattr(engine, "dispose")  # Engine should have disposed method
+            assert hasattr(engine, "url")  # Should have URL attribute
 
     def test_test_connection_sync_method(self):
         """Test _test_connection_sync method - Lines 122-132"""
@@ -792,7 +791,7 @@ class TestBaseConnectionContextManagers:
 
         mock_session = MagicMock()
 
-        with patch('ddcDatabases.core.base.ConnectionTester') as mock_tester_class:
+        with patch("ddcDatabases.core.base.ConnectionTester") as mock_tester_class:
             mock_tester = MagicMock()
             mock_tester_class.return_value = mock_tester
 
@@ -802,10 +801,10 @@ class TestBaseConnectionContextManagers:
             mock_tester_class.assert_called_once()
             call_kwargs = mock_tester_class.call_args[1]
 
-            assert call_kwargs['sync_session'] is mock_session
-            assert isinstance(call_kwargs['host_url'], URL)
+            assert call_kwargs["sync_session"] is mock_session
+            assert isinstance(call_kwargs["host_url"], URL)
             # Verify password was removed from connection URL
-            assert 'password' not in str(call_kwargs['host_url'])
+            assert "password" not in str(call_kwargs["host_url"])
 
             mock_tester.test_connection_sync.assert_called_once()
 
@@ -825,7 +824,7 @@ class TestBaseConnectionContextManagers:
 
         mock_session = AsyncMock()
 
-        with patch('ddcDatabases.core.base.ConnectionTester') as mock_tester_class:
+        with patch("ddcDatabases.core.base.ConnectionTester") as mock_tester_class:
             mock_tester = MagicMock()
             mock_tester.test_connection_async = AsyncMock()
             mock_tester_class.return_value = mock_tester
@@ -836,10 +835,10 @@ class TestBaseConnectionContextManagers:
             mock_tester_class.assert_called_once()
             call_kwargs = mock_tester_class.call_args[1]
 
-            assert call_kwargs['async_session'] is mock_session
-            assert isinstance(call_kwargs['host_url'], URL)
+            assert call_kwargs["async_session"] is mock_session
+            assert isinstance(call_kwargs["host_url"], URL)
             # Verify password was removed from connection URL
-            assert 'password' not in str(call_kwargs['host_url'])
+            assert "password" not in str(call_kwargs["host_url"])
 
             mock_tester.test_connection_async.assert_called_once()
 

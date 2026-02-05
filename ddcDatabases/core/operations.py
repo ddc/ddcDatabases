@@ -22,11 +22,11 @@ _logger = logging.getLogger(__name__)
 _logger.addHandler(logging.NullHandler())
 
 # Type variable for generic model types
-T = TypeVar('T')
+T = TypeVar("T")
 
 
 class DBUtils:
-    __slots__ = ('session', 'retry_config')
+    __slots__ = ("session", "retry_config")
 
     def __init__(self, session: Session, retry_config: BaseOperationRetryConfig | None = None) -> None:
         self.session = session
@@ -201,7 +201,7 @@ class DBUtils:
 
 
 class DBUtilsAsync:
-    __slots__ = ('session', 'retry_config')
+    __slots__ = ("session", "retry_config")
 
     def __init__(self, session: AsyncSession, retry_config: BaseOperationRetryConfig | None = None) -> None:
         self.session = session

@@ -2,7 +2,6 @@ from unittest.mock import patch
 
 
 class TestInitModule:
-
     def test_logging_configuration(self):
         """Test that logging is properly configured with NullHandler"""
         import logging
@@ -24,11 +23,11 @@ class TestInitModule:
 
         try:
             # Create a test scenario that will trigger ModuleNotFoundError
-            if 'ddcDatabases' in sys.modules:
-                del sys.modules['ddcDatabases']
+            if "ddcDatabases" in sys.modules:
+                del sys.modules["ddcDatabases"]
 
             # Mock the version function to raise ModuleNotFoundError
-            with patch('importlib.metadata.version') as mock_version:
+            with patch("importlib.metadata.version") as mock_version:
                 mock_version.side_effect = ModuleNotFoundError("No module named 'ddcDatabases'")
 
                 # This should trigger the exception handling code
@@ -52,11 +51,11 @@ class TestInitModule:
         import sys
 
         # Force a re-import with mocked version to test the exception path
-        with patch('importlib.metadata.version') as mock_version:
+        with patch("importlib.metadata.version") as mock_version:
             mock_version.side_effect = ModuleNotFoundError("No module named 'ddcDatabases'")
 
             # Remove the module from cache if it exists
-            modules_to_remove = [name for name in sys.modules.keys() if name.startswith('ddcDatabases')]
+            modules_to_remove = [name for name in sys.modules.keys() if name.startswith("ddcDatabases")]
             for module_name in modules_to_remove:
                 del sys.modules[module_name]
 
@@ -71,12 +70,12 @@ class TestInitModule:
         import ddcDatabases
 
         constants = [
-            '__title__',
-            '__author__',
-            '__email__',
-            '__license__',
-            '__copyright__',
-            '__version__',
+            "__title__",
+            "__author__",
+            "__email__",
+            "__license__",
+            "__copyright__",
+            "__version__",
         ]
 
         for const in constants:

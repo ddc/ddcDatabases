@@ -45,7 +45,7 @@ class TestOracle:
             setattr(mock_settings, key, value)
         return mock_settings
 
-    @patch('ddcDatabases.oracle.get_oracle_settings')
+    @patch("ddcDatabases.oracle.get_oracle_settings")
     def test_init_basic(self, mock_get_settings):
         """Test Oracle basic initialization"""
         mock_settings = self._create_mock_settings()
@@ -100,11 +100,11 @@ class TestOracle:
             if not oracle_self.connection_url["username"] or not oracle_self.connection_url["password"]:
                 raise RuntimeError("Missing username/password")
 
-        with patch.object(Oracle, '__init__', patched_init):
+        with patch.object(Oracle, "__init__", patched_init):
             with pytest.raises(RuntimeError, match="Missing username/password"):
                 Oracle()
 
-    @patch('ddcDatabases.oracle.get_oracle_settings')
+    @patch("ddcDatabases.oracle.get_oracle_settings")
     def test_init_with_parameters(self, mock_get_settings):
         """Test Oracle initialization with override parameters"""
         mock_settings = self._create_mock_settings(
@@ -128,7 +128,7 @@ class TestOracle:
         assert oracle.connection_url["query"]["service_name"] == "customxe"
         assert oracle._session_config.echo
 
-    @patch('ddcDatabases.oracle.get_oracle_settings')
+    @patch("ddcDatabases.oracle.get_oracle_settings")
     def test_minimal_init(self, mock_get_settings):
         """Test Oracle minimal initialization"""
         mock_settings = self._create_mock_settings()
@@ -169,7 +169,7 @@ class TestOracle:
         assert result
         mock_session.execute.assert_called_once()
 
-    @patch('ddcDatabases.oracle.get_oracle_settings')
+    @patch("ddcDatabases.oracle.get_oracle_settings")
     def test_extra_engine_args(self, mock_get_settings):
         """Test Oracle with extra engine arguments"""
         mock_settings = self._create_mock_settings()
@@ -186,7 +186,7 @@ class TestOracle:
         # Test that default args are still present
         assert not oracle.engine_args["echo"]
 
-    @patch('ddcDatabases.oracle.get_oracle_settings')
+    @patch("ddcDatabases.oracle.get_oracle_settings")
     def test_autoflush_and_expire_on_commit(self, mock_get_settings):
         """Test Oracle autoflush and expire_on_commit parameters"""
         mock_settings = self._create_mock_settings()
@@ -197,7 +197,7 @@ class TestOracle:
         assert not oracle._session_config.autoflush
         assert not oracle._session_config.expire_on_commit
 
-    @patch('ddcDatabases.oracle.get_oracle_settings')
+    @patch("ddcDatabases.oracle.get_oracle_settings")
     def test_autocommit_parameter(self, mock_get_settings):
         """Test Oracle autocommit parameter"""
         mock_settings = self._create_mock_settings()
@@ -207,7 +207,7 @@ class TestOracle:
 
         assert not oracle._session_config.autocommit
 
-    @patch('ddcDatabases.oracle.get_oracle_settings')
+    @patch("ddcDatabases.oracle.get_oracle_settings")
     def test_connection_timeout_parameter(self, mock_get_settings):
         """Test Oracle connection_timeout parameter"""
         mock_settings = self._create_mock_settings()
@@ -217,7 +217,7 @@ class TestOracle:
 
         assert oracle._pool_config.connection_timeout == 60
 
-    @patch('ddcDatabases.oracle.get_oracle_settings')
+    @patch("ddcDatabases.oracle.get_oracle_settings")
     def test_all_parameters_defaults(self, mock_get_settings):
         """Test Oracle parameters use settings defaults"""
         mock_settings = self._create_mock_settings()
@@ -230,7 +230,7 @@ class TestOracle:
         assert not oracle._session_config.autocommit
         assert oracle._pool_config.connection_timeout == 30
 
-    @patch('ddcDatabases.oracle.get_oracle_settings')
+    @patch("ddcDatabases.oracle.get_oracle_settings")
     def test_pool_recycle_parameter(self, mock_get_settings):
         """Test Oracle pool_recycle parameter"""
         mock_settings = self._create_mock_settings()
@@ -241,7 +241,7 @@ class TestOracle:
         assert oracle._pool_config.pool_recycle == 7200
         assert oracle.engine_args["pool_recycle"] == 7200
 
-    @patch('ddcDatabases.oracle.get_oracle_settings')
+    @patch("ddcDatabases.oracle.get_oracle_settings")
     def test_pool_size_parameter(self, mock_get_settings):
         """Test Oracle pool_size parameter"""
         mock_settings = self._create_mock_settings()
@@ -252,7 +252,7 @@ class TestOracle:
         assert oracle._pool_config.pool_size == 15
         assert oracle.engine_args["pool_size"] == 15
 
-    @patch('ddcDatabases.oracle.get_oracle_settings')
+    @patch("ddcDatabases.oracle.get_oracle_settings")
     def test_max_overflow_parameter(self, mock_get_settings):
         """Test Oracle max_overflow parameter"""
         mock_settings = self._create_mock_settings()
@@ -263,7 +263,7 @@ class TestOracle:
         assert oracle._pool_config.max_overflow == 30
         assert oracle.engine_args["max_overflow"] == 30
 
-    @patch('ddcDatabases.oracle.get_oracle_settings')
+    @patch("ddcDatabases.oracle.get_oracle_settings")
     def test_pool_parameters_defaults(self, mock_get_settings):
         """Test Oracle pool parameters use settings defaults"""
         mock_settings = self._create_mock_settings()
@@ -278,7 +278,7 @@ class TestOracle:
         assert oracle.engine_args["pool_size"] == 10
         assert oracle.engine_args["max_overflow"] == 20
 
-    @patch('ddcDatabases.oracle.get_oracle_settings')
+    @patch("ddcDatabases.oracle.get_oracle_settings")
     def test_ssl_wallet_path(self, mock_get_settings):
         """Test Oracle SSL wallet path configuration"""
         mock_settings = self._create_mock_settings()
@@ -290,7 +290,7 @@ class TestOracle:
         assert oracle._ssl_config.ssl_wallet_path == "/path/to/wallet"
         assert oracle.engine_args["connect_args"]["wallet_location"] == "/path/to/wallet"
 
-    @patch('ddcDatabases.oracle.get_oracle_settings')
+    @patch("ddcDatabases.oracle.get_oracle_settings")
     def test_ssl_disabled_no_wallet(self, mock_get_settings):
         """Test Oracle without SSL wallet does not add wallet_location"""
         mock_settings = self._create_mock_settings()
@@ -302,7 +302,7 @@ class TestOracle:
         assert oracle._ssl_config.ssl_wallet_path is None
         assert "wallet_location" not in oracle.engine_args["connect_args"]
 
-    @patch('ddcDatabases.oracle.get_oracle_settings')
+    @patch("ddcDatabases.oracle.get_oracle_settings")
     def test_get_connection_info(self, mock_get_settings):
         """Test get_connection_info returns connection config"""
         mock_get_settings.return_value = self._create_mock_settings()
@@ -315,7 +315,7 @@ class TestOracle:
         assert conn_info.host == "localhost"
         assert conn_info.port == 1521
 
-    @patch('ddcDatabases.oracle.get_oracle_settings')
+    @patch("ddcDatabases.oracle.get_oracle_settings")
     def test_get_pool_info(self, mock_get_settings):
         """Test get_pool_info returns pool config"""
         mock_get_settings.return_value = self._create_mock_settings()
@@ -328,7 +328,7 @@ class TestOracle:
         assert pool_info.pool_size == 20
         assert pool_info.max_overflow == 40
 
-    @patch('ddcDatabases.oracle.get_oracle_settings')
+    @patch("ddcDatabases.oracle.get_oracle_settings")
     def test_get_session_info(self, mock_get_settings):
         """Test get_session_info returns session config"""
         mock_get_settings.return_value = self._create_mock_settings()
@@ -341,7 +341,7 @@ class TestOracle:
         assert session_info.echo
         assert not session_info.autoflush
 
-    @patch('ddcDatabases.oracle.get_oracle_settings')
+    @patch("ddcDatabases.oracle.get_oracle_settings")
     def test_get_connection_retry_info(self, mock_get_settings):
         """Test get_connection_retry_info returns connection retry config"""
         mock_get_settings.return_value = self._create_mock_settings()
@@ -350,10 +350,10 @@ class TestOracle:
         conn_retry_info = oracle.get_connection_retry_info()
 
         assert conn_retry_info is oracle._connection_retry_config
-        assert hasattr(conn_retry_info, 'enable_retry')
-        assert hasattr(conn_retry_info, 'max_retries')
+        assert hasattr(conn_retry_info, "enable_retry")
+        assert hasattr(conn_retry_info, "max_retries")
 
-    @patch('ddcDatabases.oracle.get_oracle_settings')
+    @patch("ddcDatabases.oracle.get_oracle_settings")
     def test_get_operation_retry_info(self, mock_get_settings):
         """Test get_operation_retry_info returns operation retry config"""
         mock_get_settings.return_value = self._create_mock_settings()
@@ -362,11 +362,11 @@ class TestOracle:
         op_retry_info = oracle.get_operation_retry_info()
 
         assert op_retry_info is oracle._operation_retry_config
-        assert hasattr(op_retry_info, 'enable_retry')
-        assert hasattr(op_retry_info, 'max_retries')
-        assert hasattr(op_retry_info, 'jitter')
+        assert hasattr(op_retry_info, "enable_retry")
+        assert hasattr(op_retry_info, "max_retries")
+        assert hasattr(op_retry_info, "jitter")
 
-    @patch('ddcDatabases.oracle.get_oracle_settings')
+    @patch("ddcDatabases.oracle.get_oracle_settings")
     def test_get_ssl_info(self, mock_get_settings):
         """Test get_ssl_info returns SSL config"""
         mock_get_settings.return_value = self._create_mock_settings()

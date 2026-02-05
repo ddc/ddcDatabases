@@ -17,7 +17,7 @@ Base = declarative_base()
 
 
 class AsyncTestModel(Base):
-    __tablename__ = 'async_test_model'
+    __tablename__ = "async_test_model"
 
     id = Column(Integer, primary_key=True)
     name = Column(String(50))
@@ -101,11 +101,10 @@ class TestAsyncBaseConnection:
         )
 
         with (
-            patch.object(conn, '_get_async_engine') as mock_get_engine,
-            patch('ddcDatabases.core.base.async_sessionmaker') as mock_sessionmaker,
-            patch.object(conn, '_test_connection_async') as mock_test_conn,
+            patch.object(conn, "_get_async_engine") as mock_get_engine,
+            patch("ddcDatabases.core.base.async_sessionmaker") as mock_sessionmaker,
+            patch.object(conn, "_test_connection_async") as mock_test_conn,
         ):
-
             mock_engine = AsyncMock()
             mock_get_engine.return_value.__aenter__.return_value = mock_engine
 
@@ -173,8 +172,8 @@ class TestAsyncBaseConnection:
         async with conn._get_async_engine() as engine:
             # Our concrete implementation creates real engines
             assert engine is not None
-            assert hasattr(engine, 'dispose')  # Engine should have disposed method
-            assert hasattr(engine, 'url')  # Should have URL attribute
+            assert hasattr(engine, "dispose")  # Engine should have disposed method
+            assert hasattr(engine, "url")  # Should have URL attribute
 
 
 @pytest.mark.asyncio
@@ -338,7 +337,7 @@ class TestDBUtilsAsync:
         mock_session.execute.assert_called_once()
         # Verify that delete statement was created correctly
         call_args = mock_session.execute.call_args[0][0]
-        assert hasattr(call_args, 'table')  # Should be a delete statement
+        assert hasattr(call_args, "table")  # Should be a delete statement
         mock_session.commit.assert_called_once()
 
     async def test_deleteall_exception_handling(self):

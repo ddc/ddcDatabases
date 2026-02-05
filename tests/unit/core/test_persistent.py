@@ -201,7 +201,7 @@ class TestPersistentMongoDBConnection:
         assert conn._database == "test_db"
         assert not conn.is_connected
 
-    @patch('pymongo.MongoClient')
+    @patch("pymongo.MongoClient")
     def test_connect_success(self, mock_client_class):
         """Test successful MongoDB connection."""
         mock_client = MagicMock()
@@ -242,7 +242,7 @@ class TestPersistentMongoDBConnection:
         assert conn._client is None
         assert conn._db is None
 
-    @patch('pymongo.MongoClient')
+    @patch("pymongo.MongoClient")
     def test_context_manager(self, mock_client_class):
         """Test MongoDB context manager usage."""
         mock_client = MagicMock()
@@ -538,8 +538,8 @@ class TestPersistentSQLAlchemyAsyncConnectionAsync:
         mock_session = AsyncMock()
         mock_session.execute = AsyncMock()
 
-        with patch.object(PersistentSQLAlchemyAsyncConnection, '_create_engine', return_value=mock_engine):
-            with patch.object(PersistentSQLAlchemyAsyncConnection, '_create_session', return_value=mock_session):
+        with patch.object(PersistentSQLAlchemyAsyncConnection, "_create_engine", return_value=mock_engine):
+            with patch.object(PersistentSQLAlchemyAsyncConnection, "_create_session", return_value=mock_session):
                 conn = PersistentSQLAlchemyAsyncConnection(
                     connection_key="test://localhost/db",
                     connection_url="postgresql+asyncpg://user:pass@localhost/db",
@@ -559,8 +559,8 @@ class TestPersistentSQLAlchemyAsyncConnectionAsync:
         mock_session = AsyncMock()
         mock_session.execute = AsyncMock()
 
-        with patch.object(PersistentSQLAlchemyAsyncConnection, '_create_engine', return_value=mock_engine):
-            with patch.object(PersistentSQLAlchemyAsyncConnection, '_create_session', return_value=mock_session):
+        with patch.object(PersistentSQLAlchemyAsyncConnection, "_create_engine", return_value=mock_engine):
+            with patch.object(PersistentSQLAlchemyAsyncConnection, "_create_session", return_value=mock_session):
                 conn = PersistentSQLAlchemyAsyncConnection(
                     connection_key="test://localhost/db",
                     connection_url="postgresql+asyncpg://user:pass@localhost/db",
@@ -623,8 +623,8 @@ class TestPersistentSQLAlchemyAsyncConnectionAsync:
         mock_session2 = AsyncMock()
         mock_session2.execute = AsyncMock()
 
-        with patch.object(PersistentSQLAlchemyAsyncConnection, '_create_engine', return_value=mock_engine):
-            with patch.object(PersistentSQLAlchemyAsyncConnection, '_create_session', return_value=mock_session2):
+        with patch.object(PersistentSQLAlchemyAsyncConnection, "_create_engine", return_value=mock_engine):
+            with patch.object(PersistentSQLAlchemyAsyncConnection, "_create_session", return_value=mock_session2):
                 conn = PersistentSQLAlchemyAsyncConnection(
                     connection_key="test://localhost/db",
                     connection_url="postgresql+asyncpg://user:pass@localhost/db",
@@ -646,7 +646,7 @@ class TestPersistentSQLAlchemyAsyncConnectionAsync:
 class TestPersistentMongoDBConnectionAdvanced:
     """Test advanced PersistentMongoDBConnection scenarios."""
 
-    @patch('pymongo.MongoClient')
+    @patch("pymongo.MongoClient")
     def test_connect_reconnects_on_ping_failure(self, mock_client_class):
         """Test that connect reconnects when ping fails."""
         from pymongo.errors import PyMongoError
@@ -761,13 +761,385 @@ class TestPersistentSQLAlchemyConnectionAdvanced:
         assert conn.is_connected
 
         # Simulate connection loss
-        with patch.object(session1, 'execute', side_effect=SQLAlchemyError("Connection lost")):
+        with patch.object(session1, "execute", side_effect=SQLAlchemyError("Connection lost")):
             # This should trigger reconnection
             session2 = conn.connect()
             assert conn.is_connected
             assert session2 is not None
 
         conn.shutdown()
+
+
+class TestSyncConnectSessionReuse:
+    """Test that connect() reuses existing valid session."""
+
+    def test_connect_reuses_valid_session(self):
+        """Test that a second connect() call reuses the existing session when healthy."""
+        config = TEST_CONFIG
+        conn = PersistentSQLAlchemyConnection(
+            connection_key="test://localhost/db",
+            connection_url="sqlite:///:memory:",
+            config=config,
+        )
+
+        session1 = conn.connect()
+        session2 = conn.connect()
+
+        assert session1 is session2
+        assert conn.is_connected
+
+        conn.shutdown()
+
+
+class TestSyncConnectAutoReconnect:
+    """Test auto_reconnect=True branches in sync connect."""
+
+    def test_connect_with_auto_reconnect(self):
+        """Test connect() with auto_reconnect enabled uses retry_operation."""
+        config = PersistentConnectionConfig(
+            idle_timeout=300,
+            health_check_interval=1,
+            auto_reconnect=True,
+        )
+        conn = PersistentSQLAlchemyConnection(
+            connection_key="test://localhost/db",
+            connection_url="sqlite:///:memory:",
+            config=config,
+        )
+
+        session = conn.connect()
+        assert conn.is_connected
+        assert session is not None
+
+        conn.shutdown()
+
+
+class TestSyncExecuteWithRetry:
+    """Test execute_with_retry for sync connections."""
+
+    def test_execute_with_retry_success(self):
+        """Test execute_with_retry commits on success."""
+        config = TEST_CONFIG
+        conn = PersistentSQLAlchemyConnection(
+            connection_key="test://localhost/db",
+            connection_url="sqlite:///:memory:",
+            config=config,
+        )
+
+        def operation(session):
+            return "result"
+
+        result = conn.execute_with_retry(operation)
+        assert result == "result"
+        assert conn.is_connected
+
+        conn.shutdown()
+
+    def test_execute_with_retry_failure_rollback(self):
+        """Test execute_with_retry rolls back on failure."""
+        config = TEST_CONFIG
+        conn = PersistentSQLAlchemyConnection(
+            connection_key="test://localhost/db",
+            connection_url="sqlite:///:memory:",
+            config=config,
+        )
+
+        def failing_operation(session):
+            raise ValueError("operation failed")
+
+        with pytest.raises(ValueError, match="operation failed"):
+            conn.execute_with_retry(failing_operation)
+
+        conn.shutdown()
+
+    def test_execute_with_retry_auto_reconnect(self):
+        """Test execute_with_retry with auto_reconnect enabled."""
+        config = PersistentConnectionConfig(
+            idle_timeout=300,
+            health_check_interval=1,
+            auto_reconnect=True,
+        )
+        conn = PersistentSQLAlchemyConnection(
+            connection_key="test://localhost/db",
+            connection_url="sqlite:///:memory:",
+            config=config,
+        )
+
+        def operation(session):
+            return 42
+
+        result = conn.execute_with_retry(operation)
+        assert result == 42
+
+        conn.shutdown()
+
+
+class TestAsyncExecuteWithRetry:
+    """Test execute_with_retry for async connections."""
+
+    @pytest.mark.asyncio
+    async def test_async_execute_with_retry_success(self):
+        """Test async execute_with_retry commits on success."""
+        config = TEST_CONFIG
+
+        mock_engine = MagicMock()
+        mock_session = AsyncMock()
+        mock_session.execute = AsyncMock()
+        mock_session.commit = AsyncMock()
+        mock_session.rollback = AsyncMock()
+
+        with patch.object(PersistentSQLAlchemyAsyncConnection, "_create_engine", return_value=mock_engine):
+            with patch.object(PersistentSQLAlchemyAsyncConnection, "_create_session", return_value=mock_session):
+                conn = PersistentSQLAlchemyAsyncConnection(
+                    connection_key="test://localhost/db",
+                    connection_url="postgresql+asyncpg://user:pass@localhost/db",
+                    config=config,
+                )
+
+                def operation(session):
+                    return "async_result"
+
+                result = await conn.execute_with_retry(operation)
+                assert result == "async_result"
+                mock_session.commit.assert_awaited_once()
+
+    @pytest.mark.asyncio
+    async def test_async_execute_with_retry_failure_rollback(self):
+        """Test async execute_with_retry rolls back on failure."""
+        config = TEST_CONFIG
+
+        mock_engine = MagicMock()
+        mock_session = AsyncMock()
+        mock_session.execute = AsyncMock()
+        mock_session.commit = AsyncMock()
+        mock_session.rollback = AsyncMock()
+
+        with patch.object(PersistentSQLAlchemyAsyncConnection, "_create_engine", return_value=mock_engine):
+            with patch.object(PersistentSQLAlchemyAsyncConnection, "_create_session", return_value=mock_session):
+                conn = PersistentSQLAlchemyAsyncConnection(
+                    connection_key="test://localhost/db",
+                    connection_url="postgresql+asyncpg://user:pass@localhost/db",
+                    config=config,
+                )
+
+                def failing_operation(session):
+                    raise ValueError("async op failed")
+
+                with pytest.raises(ValueError, match="async op failed"):
+                    await conn.execute_with_retry(failing_operation)
+
+                mock_session.rollback.assert_awaited_once()
+
+    @pytest.mark.asyncio
+    async def test_async_execute_with_retry_auto_reconnect(self):
+        """Test async execute_with_retry with auto_reconnect enabled."""
+        config = PersistentConnectionConfig(
+            idle_timeout=300,
+            health_check_interval=1,
+            auto_reconnect=True,
+        )
+
+        mock_engine = MagicMock()
+        mock_session = AsyncMock()
+        mock_session.execute = AsyncMock()
+        mock_session.commit = AsyncMock()
+        mock_session.rollback = AsyncMock()
+
+        with patch.object(PersistentSQLAlchemyAsyncConnection, "_create_engine", return_value=mock_engine):
+            with patch.object(PersistentSQLAlchemyAsyncConnection, "_create_session", return_value=mock_session):
+                conn = PersistentSQLAlchemyAsyncConnection(
+                    connection_key="test://localhost/db",
+                    connection_url="postgresql+asyncpg://user:pass@localhost/db",
+                    config=config,
+                )
+
+                def operation(session):
+                    return "retried"
+
+                result = await conn.execute_with_retry(operation)
+                assert result == "retried"
+
+    @pytest.mark.asyncio
+    async def test_async_execute_with_retry_coroutine_result(self):
+        """Test async execute_with_retry handles coroutine return values."""
+        config = TEST_CONFIG
+
+        mock_engine = MagicMock()
+        mock_session = AsyncMock()
+        mock_session.execute = AsyncMock()
+        mock_session.commit = AsyncMock()
+        mock_session.rollback = AsyncMock()
+
+        with patch.object(PersistentSQLAlchemyAsyncConnection, "_create_engine", return_value=mock_engine):
+            with patch.object(PersistentSQLAlchemyAsyncConnection, "_create_session", return_value=mock_session):
+                conn = PersistentSQLAlchemyAsyncConnection(
+                    connection_key="test://localhost/db",
+                    connection_url="postgresql+asyncpg://user:pass@localhost/db",
+                    config=config,
+                )
+
+                async def async_operation(session):
+                    return "coroutine_result"
+
+                result = await conn.execute_with_retry(async_operation)
+                assert result == "coroutine_result"
+
+
+class TestAsyncConnectSessionReuse:
+    """Test async connect() session reuse path."""
+
+    @pytest.mark.asyncio
+    async def test_async_connect_reuses_valid_session(self):
+        """Test that a second async_connect() reuses the existing session when healthy."""
+        config = TEST_CONFIG
+
+        mock_engine = MagicMock()
+        mock_session = AsyncMock()
+        mock_session.execute = AsyncMock()
+
+        with patch.object(PersistentSQLAlchemyAsyncConnection, "_create_engine", return_value=mock_engine):
+            with patch.object(PersistentSQLAlchemyAsyncConnection, "_create_session", return_value=mock_session):
+                conn = PersistentSQLAlchemyAsyncConnection(
+                    connection_key="test://localhost/db",
+                    connection_url="postgresql+asyncpg://user:pass@localhost/db",
+                    config=config,
+                )
+
+                session1 = await conn.async_connect()
+                session2 = await conn.async_connect()
+
+                assert session1 is session2
+
+
+class TestAsyncConnectAutoReconnect:
+    """Test async auto_reconnect=True branch."""
+
+    @pytest.mark.asyncio
+    async def test_async_connect_with_auto_reconnect(self):
+        """Test async_connect() with auto_reconnect enabled uses retry_operation_async."""
+        config = PersistentConnectionConfig(
+            idle_timeout=300,
+            health_check_interval=1,
+            auto_reconnect=True,
+        )
+
+        mock_engine = MagicMock()
+        mock_session = AsyncMock()
+        mock_session.execute = AsyncMock()
+
+        with patch.object(PersistentSQLAlchemyAsyncConnection, "_create_engine", return_value=mock_engine):
+            with patch.object(PersistentSQLAlchemyAsyncConnection, "_create_session", return_value=mock_session):
+                conn = PersistentSQLAlchemyAsyncConnection(
+                    connection_key="test://localhost/db",
+                    connection_url="postgresql+asyncpg://user:pass@localhost/db",
+                    config=config,
+                )
+
+                session = await conn.async_connect()
+                assert conn.is_connected
+                assert session is mock_session
+
+
+class TestMongoDBConnectSessionReuse:
+    """Test MongoDB connect() session reuse path."""
+
+    @patch("pymongo.MongoClient")
+    def test_mongodb_connect_reuses_valid_connection(self, mock_client_class):
+        """Test that a second connect() reuses the existing MongoDB connection."""
+        mock_client = MagicMock()
+        mock_db = MagicMock()
+        mock_client.__getitem__ = MagicMock(return_value=mock_db)
+        mock_client_class.return_value = mock_client
+
+        config = TEST_CONFIG
+        conn = PersistentMongoDBConnection(
+            connection_key="mongodb://localhost/db",
+            connection_url="mongodb://user:pass@localhost/admin",
+            database="test_db",
+            config=config,
+        )
+
+        db1 = conn.connect()
+        db2 = conn.connect()
+
+        assert db1 is db2
+        assert conn.is_connected
+
+        conn.shutdown()
+
+
+class TestMongoDBConnectAutoReconnect:
+    """Test MongoDB auto_reconnect=True branch."""
+
+    @patch("pymongo.MongoClient")
+    def test_mongodb_connect_with_auto_reconnect(self, mock_client_class):
+        """Test MongoDB connect() with auto_reconnect enabled."""
+        mock_client = MagicMock()
+        mock_db = MagicMock()
+        mock_client.__getitem__ = MagicMock(return_value=mock_db)
+        mock_client_class.return_value = mock_client
+
+        config = PersistentConnectionConfig(
+            idle_timeout=300,
+            health_check_interval=1,
+            auto_reconnect=True,
+        )
+        conn = PersistentMongoDBConnection(
+            connection_key="mongodb://localhost/db",
+            connection_url="mongodb://user:pass@localhost/admin",
+            database="test_db",
+            config=config,
+        )
+
+        db = conn.connect()
+        assert conn.is_connected
+        assert db is mock_db
+
+        conn.shutdown()
+
+
+class TestCloseAllWithErrors:
+    """Test close_all_persistent_connections with shutdown errors."""
+
+    # noinspection PyMethodMayBeStatic
+    def setup_method(self):
+        close_all_persistent_connections()
+
+    # noinspection PyMethodMayBeStatic
+    def teardown_method(self):
+        close_all_persistent_connections()
+
+    def test_close_all_handles_shutdown_errors(self):
+        """Test that close_all handles errors during shutdown gracefully."""
+        mock_conn = MagicMock()
+        mock_conn.shutdown.side_effect = Exception("Shutdown failed")
+
+        with _registry_lock:
+            _persistent_connections["test://error/db"] = mock_conn
+
+        # Should not raise
+        close_all_persistent_connections()
+
+        with _registry_lock:
+            assert len(_persistent_connections) == 0
+
+
+class TestAsyncCreateEngineAndSession:
+    """Test async _create_engine and _create_session methods."""
+
+    def test_async_create_session(self):
+        """Test that _create_session returns an AsyncSession."""
+        from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
+
+        mock_engine = MagicMock(spec=AsyncEngine)
+
+        conn = PersistentSQLAlchemyAsyncConnection(
+            connection_key="test://localhost/db",
+            connection_url="postgresql+asyncpg://user:pass@localhost/db",
+        )
+        session = conn._create_session(mock_engine)
+
+        assert isinstance(session, AsyncSession)
 
 
 class TestRetrySettingsIntegration:
@@ -778,16 +1150,16 @@ class TestRetrySettingsIntegration:
         from ddcDatabases.core.settings import PostgreSQLSettings
 
         settings = PostgreSQLSettings()
-        assert hasattr(settings, 'connection_enable_retry')
-        assert hasattr(settings, 'connection_max_retries')
-        assert hasattr(settings, 'connection_initial_retry_delay')
-        assert hasattr(settings, 'connection_max_retry_delay')
-        assert hasattr(settings, 'operation_enable_retry')
-        assert hasattr(settings, 'operation_max_retries')
-        assert hasattr(settings, 'operation_initial_retry_delay')
-        assert hasattr(settings, 'operation_max_retry_delay')
-        assert hasattr(settings, 'operation_jitter')
-        assert hasattr(settings, 'connection_disconnect_idle_timeout')
+        assert hasattr(settings, "connection_enable_retry")
+        assert hasattr(settings, "connection_max_retries")
+        assert hasattr(settings, "connection_initial_retry_delay")
+        assert hasattr(settings, "connection_max_retry_delay")
+        assert hasattr(settings, "operation_enable_retry")
+        assert hasattr(settings, "operation_max_retries")
+        assert hasattr(settings, "operation_initial_retry_delay")
+        assert hasattr(settings, "operation_max_retry_delay")
+        assert hasattr(settings, "operation_jitter")
+        assert hasattr(settings, "connection_disconnect_idle_timeout")
 
         assert settings.connection_enable_retry is True
         assert settings.connection_max_retries == 3
