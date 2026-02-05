@@ -1,3 +1,4 @@
+import dataclasses
 import pytest
 from importlib.util import find_spec
 from unittest.mock import MagicMock, patch
@@ -90,7 +91,7 @@ class TestPostgreSQL:
         assert postgresql.connection_url["database"] == "customdb"
         assert postgresql.connection_url["username"] == "customuser"
         assert postgresql.connection_url["password"] == "custompass"
-        assert postgresql._session_config.echo == True
+        assert postgresql._session_config.echo
 
     @patch('ddcDatabases.postgresql.get_postgresql_settings')
     def test_extra_engine_args(self, mock_get_settings):
@@ -115,7 +116,7 @@ class TestPostgreSQL:
         assert postgresql.engine_args["connect_timeout"] == 30
 
         # Test that default args are still present
-        assert postgresql.engine_args["echo"] == False
+        assert not postgresql.engine_args["echo"]
 
     @patch('ddcDatabases.postgresql.get_postgresql_settings')
     def test_autoflush_and_expire_on_commit(self, mock_get_settings):
@@ -133,8 +134,8 @@ class TestPostgreSQL:
 
         postgresql = PostgreSQL(session_config=PostgreSQLSessionConfig(autoflush=False, expire_on_commit=False))
 
-        assert postgresql._session_config.autoflush == False
-        assert postgresql._session_config.expire_on_commit == False
+        assert not postgresql._session_config.autoflush
+        assert not postgresql._session_config.expire_on_commit
 
     @patch('ddcDatabases.postgresql.get_postgresql_settings')
     def test_autocommit_parameter(self, mock_get_settings):
@@ -153,7 +154,7 @@ class TestPostgreSQL:
 
         postgresql = PostgreSQL(session_config=PostgreSQLSessionConfig(autocommit=True))
 
-        assert postgresql._session_config.autocommit == True
+        assert postgresql._session_config.autocommit
 
     @patch('ddcDatabases.postgresql.get_postgresql_settings')
     def test_connect_args_psycopg_driver(self, mock_get_settings):
@@ -243,7 +244,7 @@ class TestPostgreSQL:
         postgresql = PostgreSQL(extra_engine_args=extra_args)
 
         # Test that extra args are properly included
-        assert postgresql.engine_args['pool_pre_ping'] == True
+        assert postgresql.engine_args['pool_pre_ping']
         assert postgresql.engine_args['pool_recycle'] == 3600
         assert postgresql.engine_args['pool_timeout'] == 60
 
@@ -326,7 +327,7 @@ class TestPostgreSQL:
         assert result["url"] == connection_url
         assert result["pool_size"] == 25
         assert result["max_overflow"] == 50
-        assert result["pool_pre_ping"] == True
+        assert result["pool_pre_ping"]
         assert result["pool_recycle"] == 3600
         assert result["query_cache_size"] == 1000
         assert result["connect_args"]["connect_timeout"] == 30
@@ -548,10 +549,10 @@ class TestPostgreSQL:
 
         # Test get_session_info method (line 161)
         session_config = postgresql.get_session_info()
-        assert session_config.echo == False
-        assert session_config.autoflush == False
-        assert session_config.expire_on_commit == False
-        assert session_config.autocommit == True
+        assert not session_config.echo
+        assert not session_config.autoflush
+        assert not session_config.expire_on_commit
+        assert session_config.autocommit
 
     @patch('ddcDatabases.postgresql.get_postgresql_settings')
     def test_get_engine_method_with_psycopg(self, mock_get_settings):
@@ -871,13 +872,13 @@ class TestPostgreSQL:
         session_config = postgresql.get_session_info()
 
         # Try to modify configurations - should raise FrozenInstanceError
-        with pytest.raises(Exception):  # FrozenInstanceError
+        with pytest.raises(dataclasses.FrozenInstanceError):
             conn_config.host = "modified"  # noqa
 
-        with pytest.raises(Exception):  # FrozenInstanceError
+        with pytest.raises(dataclasses.FrozenInstanceError):
             pool_config.pool_size = 999  # noqa
 
-        with pytest.raises(Exception):  # FrozenInstanceError
+        with pytest.raises(dataclasses.FrozenInstanceError):
             session_config.echo = True  # noqa
 
     @patch('ddcDatabases.postgresql.get_postgresql_settings')
@@ -1225,8 +1226,8 @@ class TestPostgreSQL:
 
         assert session_info is postgresql._session_config
         assert isinstance(session_info, PostgreSQLSessionConfig)
-        assert session_info.echo == True
-        assert session_info.autoflush == False
+        assert session_info.echo
+        assert not session_info.autoflush
 
     @patch('ddcDatabases.postgresql.get_postgresql_settings')
     def test_get_operation_retry_info(self, mock_get_settings):

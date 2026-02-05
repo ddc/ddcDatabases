@@ -10,12 +10,13 @@ from .core.configs import (
 )
 from .core.constants import POSTGRESQL_SSL_MODES
 from .core.settings import get_postgresql_settings
+from collections.abc import AsyncGenerator, Generator
 from contextlib import asynccontextmanager, contextmanager
 from dataclasses import dataclass
 from sqlalchemy import URL
 from sqlalchemy.engine import Engine, create_engine
 from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
-from typing import Any, AsyncGenerator, Generator
+from typing import Any
 
 _logger = logging.getLogger(__name__)
 _logger.addHandler(logging.NullHandler())

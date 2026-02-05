@@ -50,8 +50,8 @@ class TestSQLite:
         sqlite = self.Sqlite()
 
         assert sqlite.filepath == "sqlite.db"
-        assert sqlite.echo == False
-        assert sqlite.is_connected == False
+        assert not sqlite.echo
+        assert not sqlite.is_connected
 
     @patch('ddcDatabases.sqlite.get_sqlite_settings')
     def test_init_with_parameters(self, mock_get_settings):
@@ -75,9 +75,9 @@ class TestSQLite:
         )
 
         assert sqlite.filepath == "custom.db"
-        assert sqlite.echo == True
-        assert sqlite.autoflush == False
-        assert sqlite.expire_on_commit == False
+        assert sqlite.echo
+        assert not sqlite.autoflush
+        assert not sqlite.expire_on_commit
 
     def test_real_operations(self):
         """Test comprehensive SQLite operations"""
@@ -162,12 +162,12 @@ class TestSQLite:
         # Test __enter__
         session = sqlite.__enter__()
         assert session is not None
-        assert sqlite.is_connected == True
+        assert sqlite.is_connected
         assert sqlite.session is session
 
         # Test __exit__
         sqlite.__exit__(None, None, None)
-        assert sqlite.is_connected == False
+        assert not sqlite.is_connected
 
     @patch('ddcDatabases.sqlite.create_engine')
     def test_engine_creation_error(self, mock_create_engine):
@@ -191,9 +191,9 @@ class TestSQLite:
         )
 
         assert sqlite.filepath == "custom.db"
-        assert sqlite.echo == True
-        assert sqlite.autoflush == False
-        assert sqlite.expire_on_commit == False
+        assert sqlite.echo
+        assert not sqlite.autoflush
+        assert not sqlite.expire_on_commit
         assert sqlite.extra_engine_args == extra_args
 
 
@@ -229,7 +229,7 @@ class TestSQLiteRealOperations:
             # Access through the model object returned by ORM select
             assert results[0]['ModelTest'].id == 1
             assert results[0]['ModelTest'].name == "test"
-            assert results[0]['ModelTest'].enabled == True
+            assert results[0]['ModelTest'].enabled
 
     def test_real_fetchvalue(self):
         """Test fetchvalue with real database"""
@@ -287,15 +287,15 @@ class TestSQLiteRealOperations:
         sqlite = self.Sqlite(filepath=db_path)
 
         # Initially not connected
-        assert sqlite.is_connected == False
+        assert not sqlite.is_connected
 
         # Test context manager connection
         with sqlite as session:
-            assert sqlite.is_connected == True
+            assert sqlite.is_connected
             assert session is not None
 
         # After context manager, should be disconnected
-        assert sqlite.is_connected == False
+        assert not sqlite.is_connected
 
     def test_custom_settings_integration(self):
         """Test integration with custom settings"""
@@ -308,9 +308,9 @@ class TestSQLiteRealOperations:
         )
 
         assert sqlite.filepath == db_path
-        assert sqlite.echo == True
-        assert sqlite.autoflush == True
-        assert sqlite.expire_on_commit == True
+        assert sqlite.echo
+        assert sqlite.autoflush
+        assert sqlite.expire_on_commit
 
         # Test that it works with real database
         with sqlite as session:

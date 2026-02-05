@@ -126,7 +126,7 @@ class TestOracle:
         assert oracle.connection_url["username"] == "customuser"
         assert oracle.connection_url["password"] == "custompass"
         assert oracle.connection_url["query"]["service_name"] == "customxe"
-        assert oracle._session_config.echo == True
+        assert oracle._session_config.echo
 
     @patch('ddcDatabases.oracle.get_oracle_settings')
     def test_minimal_init(self, mock_get_settings):
@@ -151,7 +151,7 @@ class TestOracle:
         test_conn = ConnectionTester(sync_session=mock_session)
         result = test_conn.test_connection_sync()
 
-        assert result == True
+        assert result
         mock_session.execute.assert_called_once()
         # Check that Oracle-specific query was used
         call_args = mock_session.execute.call_args[0][0]
@@ -166,7 +166,7 @@ class TestOracle:
         test_conn = ConnectionTester(async_session=mock_session)
         result = await test_conn.test_connection_async()
 
-        assert result == True
+        assert result
         mock_session.execute.assert_called_once()
 
     @patch('ddcDatabases.oracle.get_oracle_settings')
@@ -184,7 +184,7 @@ class TestOracle:
         assert oracle.engine_args["nencoding"] == "UTF-8"
 
         # Test that default args are still present
-        assert oracle.engine_args["echo"] == False
+        assert not oracle.engine_args["echo"]
 
     @patch('ddcDatabases.oracle.get_oracle_settings')
     def test_autoflush_and_expire_on_commit(self, mock_get_settings):
@@ -194,8 +194,8 @@ class TestOracle:
 
         oracle = Oracle(session_config=OracleSessionConfig(autoflush=False, expire_on_commit=False))
 
-        assert oracle._session_config.autoflush == False
-        assert oracle._session_config.expire_on_commit == False
+        assert not oracle._session_config.autoflush
+        assert not oracle._session_config.expire_on_commit
 
     @patch('ddcDatabases.oracle.get_oracle_settings')
     def test_autocommit_parameter(self, mock_get_settings):
@@ -205,7 +205,7 @@ class TestOracle:
 
         oracle = Oracle(session_config=OracleSessionConfig(autocommit=False))
 
-        assert oracle._session_config.autocommit == False
+        assert not oracle._session_config.autocommit
 
     @patch('ddcDatabases.oracle.get_oracle_settings')
     def test_connection_timeout_parameter(self, mock_get_settings):
@@ -225,9 +225,9 @@ class TestOracle:
 
         oracle = Oracle()
 
-        assert oracle._session_config.autoflush == False
-        assert oracle._session_config.expire_on_commit == False
-        assert oracle._session_config.autocommit == False
+        assert not oracle._session_config.autoflush
+        assert not oracle._session_config.expire_on_commit
+        assert not oracle._session_config.autocommit
         assert oracle._pool_config.connection_timeout == 30
 
     @patch('ddcDatabases.oracle.get_oracle_settings')
@@ -286,7 +286,7 @@ class TestOracle:
 
         oracle = Oracle(ssl_config=OracleSSLConfig(ssl_enabled=True, ssl_wallet_path="/path/to/wallet"))
 
-        assert oracle._ssl_config.ssl_enabled == True
+        assert oracle._ssl_config.ssl_enabled
         assert oracle._ssl_config.ssl_wallet_path == "/path/to/wallet"
         assert oracle.engine_args["connect_args"]["wallet_location"] == "/path/to/wallet"
 
@@ -298,7 +298,7 @@ class TestOracle:
 
         oracle = Oracle()
 
-        assert oracle._ssl_config.ssl_enabled == False
+        assert not oracle._ssl_config.ssl_enabled
         assert oracle._ssl_config.ssl_wallet_path is None
         assert "wallet_location" not in oracle.engine_args["connect_args"]
 
@@ -338,8 +338,8 @@ class TestOracle:
 
         assert session_info is oracle._session_config
         assert isinstance(session_info, OracleSessionConfig)
-        assert session_info.echo == True
-        assert session_info.autoflush == False
+        assert session_info.echo
+        assert not session_info.autoflush
 
     @patch('ddcDatabases.oracle.get_oracle_settings')
     def test_get_connection_retry_info(self, mock_get_settings):
@@ -376,5 +376,5 @@ class TestOracle:
 
         assert ssl_info is oracle._ssl_config
         assert isinstance(ssl_info, OracleSSLConfig)
-        assert ssl_info.ssl_enabled == True
+        assert ssl_info.ssl_enabled
         assert ssl_info.ssl_wallet_path == "/path/to/wallet"

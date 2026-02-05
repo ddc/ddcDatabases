@@ -91,7 +91,7 @@ class TestSQLiteSettings:
         settings = SQLiteSettings()
 
         assert settings.file_path == "sqlite.db"
-        assert settings.echo == False
+        assert not settings.echo
 
     def test_env_override(self):
         """Test environment variable overrides"""
@@ -104,7 +104,7 @@ class TestSQLiteSettings:
         ):
             settings = SQLiteSettings()
             assert settings.file_path == 'tests/data/test.db'
-            assert settings.echo == True
+            assert settings.echo
 
 
 class TestPostgreSQLSettings:
@@ -120,7 +120,7 @@ class TestPostgreSQLSettings:
         assert settings.password == "postgres"
         assert settings.database == "postgres"
         assert settings.schema == "public"
-        assert settings.echo == False
+        assert not settings.echo
         assert settings.async_driver == "postgresql+asyncpg"
         assert settings.sync_driver == "postgresql+psycopg"
         assert settings.ssl_mode == "disable"
@@ -160,7 +160,7 @@ class TestPostgreSQLSettings:
             assert settings.user == 'testuser'
             assert settings.password == 'testpass'
             assert settings.database == 'testdb'
-            assert settings.echo == True
+            assert settings.echo
             assert settings.schema == 'custom_schema'
             assert settings.ssl_mode == 'require'
 
@@ -178,14 +178,14 @@ class TestMSSQLSettings:
         assert settings.password == "sa"
         assert settings.schema == "dbo"
         assert settings.database == "master"
-        assert settings.echo == False
+        assert not settings.echo
         assert settings.pool_size == 25
         assert settings.max_overflow == 50
         assert settings.odbcdriver_version == 18
         assert settings.async_driver == "mssql+aioodbc"
         assert settings.sync_driver == "mssql+pyodbc"
-        assert settings.ssl_encrypt == False
-        assert settings.ssl_trust_server_certificate == True
+        assert not settings.ssl_encrypt
+        assert settings.ssl_trust_server_certificate
         assert settings.ssl_ca_cert_path is None
 
     def test_env_override(self):
@@ -226,7 +226,7 @@ class TestMySQLSettings:
         assert settings.user == "root"
         assert settings.password == "root"
         assert settings.database == "dev"
-        assert settings.echo == False
+        assert not settings.echo
         assert settings.async_driver == "mysql+aiomysql"
         assert settings.sync_driver == "mysql+mysqldb"
         assert settings.ssl_mode == "DISABLED"
@@ -284,10 +284,10 @@ class TestMongoDBSettings:
         assert settings.batch_size == 2865
         assert settings.limit == 0
         assert settings.driver == "mongodb"
-        assert settings.tls_enabled == False
+        assert not settings.tls_enabled
         assert settings.tls_ca_cert_path is None
         assert settings.tls_cert_key_path is None
-        assert settings.tls_allow_invalid_certificates == False
+        assert not settings.tls_allow_invalid_certificates
 
     def test_env_override(self):
         """Test environment variable overrides"""
@@ -325,9 +325,9 @@ class TestOracleSettings:
         assert settings.user == "system"
         assert settings.password == "oracle"
         assert settings.servicename == "xe"
-        assert settings.echo == False
+        assert not settings.echo
         assert settings.sync_driver == "oracle+oracledb"
-        assert settings.ssl_enabled == False
+        assert not settings.ssl_enabled
         assert settings.ssl_wallet_path is None
 
     def test_env_override(self):

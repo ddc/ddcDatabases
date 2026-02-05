@@ -1,5 +1,6 @@
 import pytest
 import sqlalchemy as sa
+from collections.abc import AsyncGenerator, Generator
 from contextlib import asynccontextmanager, contextmanager
 from importlib.util import find_spec
 from sqlalchemy import Boolean, Column, Integer, String
@@ -7,7 +8,6 @@ from sqlalchemy.engine import Engine
 from sqlalchemy.engine.url import URL
 from sqlalchemy.ext.asyncio import AsyncEngine
 from sqlalchemy.orm import declarative_base
-from typing import AsyncGenerator, Generator
 from unittest.mock import AsyncMock, MagicMock, patch
 
 POSTGRESQL_AVAILABLE = find_spec("asyncpg") is not None and find_spec("psycopg") is not None
@@ -116,11 +116,11 @@ class TestBaseConnection:
 
         assert conn.connection_url == connection_url
         assert conn.engine_args == engine_args
-        assert conn.autoflush == True
-        assert conn.expire_on_commit == False
+        assert conn.autoflush
+        assert not conn.expire_on_commit
         assert conn.sync_driver == "postgresql+psycopg"
         assert conn.async_driver == "postgresql+asyncpg"
-        assert conn.is_connected == False
+        assert not conn.is_connected
         assert conn.session is None
 
     @pytest.mark.skipif(not POSTGRESQL_AVAILABLE, reason="PostgreSQL drivers not available")
@@ -159,7 +159,7 @@ class TestBaseConnection:
         test_conn = self.ConnectionTester(sync_session=mock_session)
         result = test_conn.test_connection_sync()
 
-        assert result == True
+        assert result
         mock_session.execute.assert_called_once()
         # Check that standard query was used
         call_args = mock_session.execute.call_args[0][0]
@@ -677,11 +677,11 @@ class TestBaseConnectionContextManagers:
 
             with conn as session:
                 assert session is mock_session
-                assert conn.is_connected == True
+                assert conn.is_connected
                 mock_test_conn.assert_called_once_with(mock_session)
 
             # After exiting context, connection should be cleaned up
-            assert conn.is_connected == False
+            assert not conn.is_connected
             mock_session.close.assert_called_once()
             mock_engine.dispose.assert_called_once()
 
@@ -719,11 +719,11 @@ class TestBaseConnectionContextManagers:
 
             async with conn as session:
                 assert session is mock_session
-                assert conn.is_connected == True
+                assert conn.is_connected
                 mock_test_conn.assert_called_once_with(mock_session)
 
             # After exiting context, connection should be cleaned up
-            assert conn.is_connected == False
+            assert not conn.is_connected
             mock_session.close.assert_called_once()
             # Engine dispose is called once in __aexit__ (we mocked _get_async_engine)
             mock_engine.dispose.assert_called_once()
@@ -861,7 +861,7 @@ class TestConnectionTesterCoverage:
         tester = self.ConnectionTester(sync_session=mock_session)
         result = tester.test_connection_sync()
 
-        assert result == True
+        assert result
         mock_session.execute.assert_called_once()
         # Verify Oracle-specific query was used
         call_args = mock_session.execute.call_args[0][0]
@@ -876,7 +876,7 @@ class TestConnectionTesterCoverage:
         tester = self.ConnectionTester(async_session=mock_session)
         result = await tester.test_connection_async()
 
-        assert result == True  # This tests line 185
+        assert result  # This tests line 185
         mock_session.execute.assert_called_once()
         # Verify Oracle-specific query was used (line 181)
         call_args = mock_session.execute.call_args[0][0]

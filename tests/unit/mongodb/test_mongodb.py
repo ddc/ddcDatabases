@@ -109,7 +109,7 @@ class TestMongoDB:
         assert mongodb._connection_config.database == "admin"
         assert mongodb._query_config.batch_size == 2865
         assert mongodb._query_config.limit == 0
-        assert mongodb.is_connected == False
+        assert not mongodb.is_connected
 
     @patch('ddcDatabases.mongodb.get_mongodb_settings')
     def test_init_with_parameters(self, mock_get_settings):
@@ -261,7 +261,7 @@ class TestMongoDB:
 
             with mongodb as mongo_instance:
                 assert mongo_instance is mongodb  # Returns self, not client
-                assert mongodb.is_connected == True
+                assert mongodb.is_connected
                 assert mongodb.client is not None
 
     def test_enter_context_manager_exception_handling(self):
@@ -391,7 +391,7 @@ class TestMongoDB:
             with mongodb:
                 pass
 
-            assert mongodb.is_connected == False
+            assert not mongodb.is_connected
             mongodb.client.close.assert_called_once()
 
     @patch('ddcDatabases.mongodb.get_mongodb_settings')
@@ -429,7 +429,7 @@ class TestMongoDB:
         mongodb.__exit__(None, None, None)
 
         # Verify is_connected was not changed since client was None
-        assert mongodb.is_connected == True
+        assert mongodb.is_connected
 
     def test_missing_collection_runtime_error(self):
         """Test RuntimeError when collection is missing"""
@@ -889,10 +889,10 @@ class TestMongoDB:
             ),
         )
 
-        assert mongodb._tls_config.tls_enabled == True
+        assert mongodb._tls_config.tls_enabled
         assert mongodb._tls_config.tls_ca_cert_path == "/path/to/ca.pem"
         assert mongodb._tls_config.tls_cert_key_path == "/path/to/cert.pem"
-        assert mongodb._tls_config.tls_allow_invalid_certificates == True
+        assert mongodb._tls_config.tls_allow_invalid_certificates
 
     @patch('ddcDatabases.mongodb.get_mongodb_settings')
     def test_tls_disabled(self, mock_get_settings):
@@ -906,10 +906,10 @@ class TestMongoDB:
 
         mongodb = MongoDB(collection="test_collection")
 
-        assert mongodb._tls_config.tls_enabled == False
+        assert not mongodb._tls_config.tls_enabled
         assert mongodb._tls_config.tls_ca_cert_path is None
         assert mongodb._tls_config.tls_cert_key_path is None
-        assert mongodb._tls_config.tls_allow_invalid_certificates == False
+        assert not mongodb._tls_config.tls_allow_invalid_certificates
 
     @patch('ddcDatabases.mongodb.get_mongodb_settings')
     @patch('ddcDatabases.mongodb.MongoClient')
@@ -1010,7 +1010,7 @@ class TestMongoDB:
 
         assert tls_info is mongodb._tls_config
         assert isinstance(tls_info, MongoDBTLSConfig)
-        assert tls_info.tls_enabled == True
+        assert tls_info.tls_enabled
         assert tls_info.tls_ca_cert_path == "/path/to/ca.pem"
 
     @patch('ddcDatabases.mongodb.get_mongodb_settings')
@@ -1113,7 +1113,7 @@ class TestMongoDB:
         await mongodb.__aexit__(None, None, None)
 
         assert mongodb.async_cursor_ref is None
-        assert mongodb.is_connected == False
+        assert not mongodb.is_connected
         mock_client.close.assert_called_once()
 
     @pytest.mark.asyncio
@@ -1131,7 +1131,7 @@ class TestMongoDB:
 
         await mongodb.__aexit__(None, None, None)
 
-        assert mongodb.is_connected == False
+        assert not mongodb.is_connected
         mock_client.close.assert_called_once()
 
     @pytest.mark.asyncio

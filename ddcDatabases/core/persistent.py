@@ -23,13 +23,14 @@ from .settings import (
     get_postgresql_settings,
 )
 from abc import ABC, abstractmethod
+from collections.abc import Callable
 from dataclasses import dataclass
 from sqlalchemy import text
 from sqlalchemy.engine import URL, Engine, create_engine
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
 from sqlalchemy.orm import Session, sessionmaker
-from typing import Any, Callable, Generic, Literal, TypeVar, cast, overload
+from typing import Any, Generic, Literal, TypeVar, cast, overload
 
 _logger = logging.getLogger(__name__)
 _logger.addHandler(logging.NullHandler())
@@ -49,7 +50,7 @@ class PersistentConnectionConfig:
 
 
 # Global registry for persistent connections (weak references to allow cleanup)
-_persistent_connections: weakref.WeakValueDictionary[str, "BasePersistentConnection | PersistentMongoDBConnection"] = (
+_persistent_connections: weakref.WeakValueDictionary[str, BasePersistentConnection | PersistentMongoDBConnection] = (
     weakref.WeakValueDictionary()
 )
 _registry_lock = threading.Lock()

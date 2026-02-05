@@ -105,7 +105,7 @@ class TestMySQL:
         assert mysql.connection_url["database"] == "customdb"
         assert mysql.connection_url["username"] == "customuser"
         assert mysql.connection_url["password"] == "custompass"
-        assert mysql._session_config.echo == True
+        assert mysql._session_config.echo
 
     @patch('ddcDatabases.mysql.get_mysql_settings')
     def test_minimal_init(self, mock_get_settings):
@@ -134,7 +134,7 @@ class TestMySQL:
         assert mysql.engine_args["connect_timeout"] == 30
 
         # Test that default args are still present
-        assert mysql.engine_args["echo"] == False
+        assert not mysql.engine_args["echo"]
 
     @patch('ddcDatabases.mysql.get_mysql_settings')
     def test_autoflush_and_expire_on_commit(self, mock_get_settings):
@@ -144,8 +144,8 @@ class TestMySQL:
 
         mysql = MySQL(session_config=MySQLSessionConfig(autoflush=False, expire_on_commit=False))
 
-        assert mysql._session_config.autoflush == False
-        assert mysql._session_config.expire_on_commit == False
+        assert not mysql._session_config.autoflush
+        assert not mysql._session_config.expire_on_commit
 
     @patch('ddcDatabases.mysql.get_mysql_settings')
     def test_pool_size_parameter(self, mock_get_settings):
@@ -252,8 +252,8 @@ class TestMySQL:
 
         assert session_info is mysql._session_config
         assert isinstance(session_info, MySQLSessionConfig)
-        assert session_info.echo == True
-        assert session_info.autoflush == False
+        assert session_info.echo
+        assert not session_info.autoflush
 
     @patch('ddcDatabases.mysql.get_mysql_settings')
     def test_get_connection_retry_info(self, mock_get_settings):

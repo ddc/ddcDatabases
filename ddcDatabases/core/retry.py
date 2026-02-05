@@ -6,7 +6,8 @@ import random
 import time
 from .configs import BaseRetryConfig
 from .constants import CONNECTION_ERROR_KEYWORDS
-from typing import Any, Awaitable, Callable, TypeVar
+from collections.abc import Awaitable, Callable
+from typing import Any, TypeVar
 
 # Type variable for generic return types
 T = TypeVar('T')

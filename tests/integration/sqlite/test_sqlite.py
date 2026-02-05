@@ -116,6 +116,6 @@ class TestSqliteIntegration:
             assert len(results) == 5
 
             # Filter enabled
-            stmt = sa.select(IntegrationModel.name).where(IntegrationModel.enabled == True)
+            stmt = sa.select(IntegrationModel.name).where(IntegrationModel.enabled.is_(True))
             results = db_utils.fetchall(stmt, as_dict=True)
             assert len(results) == 3  # items 0, 2, 4

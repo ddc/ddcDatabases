@@ -8,12 +8,13 @@ from .core.configs import (
     BaseSessionConfig,
 )
 from .core.settings import get_mssql_settings
+from collections.abc import AsyncGenerator, Generator
 from contextlib import asynccontextmanager, contextmanager
 from dataclasses import dataclass
 from sqlalchemy.engine import URL, Engine, create_engine
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
 from sqlalchemy.orm import Session
-from typing import Any, AsyncGenerator, Generator
+from typing import Any
 
 _logger = logging.getLogger(__name__)
 _logger.addHandler(logging.NullHandler())

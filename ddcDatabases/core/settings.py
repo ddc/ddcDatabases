@@ -1,9 +1,10 @@
 from .constants import SettingsMessages as Msg
+from collections.abc import Callable
 from dotenv import load_dotenv
 from functools import lru_cache
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from typing import Callable, TypeVar
+from typing import TypeVar
 
 # Type variable for generic settings factory
 T = TypeVar('T', bound=BaseSettings)

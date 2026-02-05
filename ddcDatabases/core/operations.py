@@ -12,10 +12,11 @@ from .exceptions import (
     DBInsertSingleException,
 )
 from .retry import retry_operation, retry_operation_async
+from collections.abc import Callable, Sequence
 from sqlalchemy import RowMapping
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
-from typing import Any, Callable, Sequence, TypeVar
+from typing import Any, TypeVar
 
 _logger = logging.getLogger(__name__)
 _logger.addHandler(logging.NullHandler())

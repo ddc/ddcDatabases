@@ -75,7 +75,7 @@ class TestMSSQL:
         assert mssql.connection_url["username"] == "customuser"
         assert mssql.connection_url["password"] == "custompass"
         assert mssql._connection_config.schema == "customschema"
-        assert mssql._session_config.echo == True
+        assert mssql._session_config.echo
         assert mssql._pool_config.pool_size == 30
         assert mssql._pool_config.max_overflow == 20
 
@@ -202,7 +202,7 @@ class TestMSSQL:
         # Test that default args are still present
         assert mssql.engine_args["pool_size"] == 25
         assert mssql.engine_args["max_overflow"] == 50
-        assert mssql.engine_args["echo"] == False
+        assert not mssql.engine_args["echo"]
 
     @patch('ddcDatabases.mssql.get_mssql_settings')
     def test_autoflush_and_expire_on_commit(self, mock_get_settings):
@@ -212,8 +212,8 @@ class TestMSSQL:
 
         mssql = MSSQL(session_config=MSSQLSessionConfig(autoflush=False, expire_on_commit=False))
 
-        assert mssql._session_config.autoflush == False
-        assert mssql._session_config.expire_on_commit == False
+        assert not mssql._session_config.autoflush
+        assert not mssql._session_config.expire_on_commit
 
     @patch('ddcDatabases.mssql.get_mssql_settings')
     def test_autocommit_parameter(self, mock_get_settings):
@@ -223,8 +223,8 @@ class TestMSSQL:
 
         mssql = MSSQL(session_config=MSSQLSessionConfig(autocommit=True))
 
-        assert mssql._session_config.autocommit == True
-        assert mssql.engine_args["connect_args"]["autocommit"] == True
+        assert mssql._session_config.autocommit
+        assert mssql.engine_args["connect_args"]["autocommit"]
 
     @patch('ddcDatabases.mssql.get_mssql_settings')
     def test_connection_timeout_parameter(self, mock_get_settings):
@@ -257,12 +257,12 @@ class TestMSSQL:
 
         mssql = MSSQL()
 
-        assert mssql._session_config.autoflush == False
-        assert mssql._session_config.expire_on_commit == False
-        assert mssql._session_config.autocommit == False
+        assert not mssql._session_config.autoflush
+        assert not mssql._session_config.expire_on_commit
+        assert not mssql._session_config.autocommit
         assert mssql._pool_config.connection_timeout == 30
         assert mssql._pool_config.pool_recycle == 3600
-        assert mssql.engine_args["connect_args"]["autocommit"] == False
+        assert not mssql.engine_args["connect_args"]["autocommit"]
         assert mssql.engine_args["connect_args"]["timeout"] == 30
         assert mssql.engine_args["pool_recycle"] == 3600
 
@@ -390,8 +390,8 @@ class TestMSSQL:
 
         mssql = MSSQL(ssl_config=MSSQLSSLConfig(ssl_encrypt=True, ssl_trust_server_certificate=False))
 
-        assert mssql._ssl_config.ssl_encrypt == True
-        assert mssql._ssl_config.ssl_trust_server_certificate == False
+        assert mssql._ssl_config.ssl_encrypt
+        assert not mssql._ssl_config.ssl_trust_server_certificate
         assert mssql.connection_url["query"]["Encrypt"] == "yes"
         assert mssql.connection_url["query"]["TrustServerCertificate"] == "no"
 
@@ -403,8 +403,8 @@ class TestMSSQL:
 
         mssql = MSSQL()
 
-        assert mssql._ssl_config.ssl_encrypt == False
-        assert mssql._ssl_config.ssl_trust_server_certificate == True
+        assert not mssql._ssl_config.ssl_encrypt
+        assert mssql._ssl_config.ssl_trust_server_certificate
         assert mssql.connection_url["query"]["Encrypt"] == "no"
         assert mssql.connection_url["query"]["TrustServerCertificate"] == "yes"
 
@@ -423,8 +423,8 @@ class TestMSSQL:
         ssl_info = mssql.get_ssl_info()
 
         assert isinstance(ssl_info, MSSQLSSLConfig)
-        assert ssl_info.ssl_encrypt == True
-        assert ssl_info.ssl_trust_server_certificate == False
+        assert ssl_info.ssl_encrypt
+        assert not ssl_info.ssl_trust_server_certificate
         assert ssl_info.ssl_ca_cert_path == "/path/to/ca.pem"
 
     @patch('ddcDatabases.mssql.get_mssql_settings')
@@ -463,8 +463,8 @@ class TestMSSQL:
 
         assert session_info is mssql._session_config
         assert isinstance(session_info, MSSQLSessionConfig)
-        assert session_info.echo == True
-        assert session_info.autoflush == False
+        assert session_info.echo
+        assert not session_info.autoflush
 
     @patch('ddcDatabases.mssql.get_mssql_settings')
     def test_get_operation_retry_info(self, mock_get_settings):

@@ -1,13 +1,13 @@
 import asyncio
 import pytest
 import sqlalchemy as sa
+from collections.abc import AsyncGenerator, Generator
 from contextlib import asynccontextmanager, contextmanager
 from importlib.util import find_spec
 from sqlalchemy import Boolean, Column, Integer, String
 from sqlalchemy.engine import Engine
 from sqlalchemy.ext.asyncio import AsyncEngine
 from sqlalchemy.orm import declarative_base
-from typing import AsyncGenerator, Generator
 from unittest.mock import AsyncMock, MagicMock, patch
 
 POSTGRESQL_AVAILABLE = find_spec("asyncpg") is not None and find_spec("psycopg") is not None
@@ -116,7 +116,7 @@ class TestAsyncBaseConnection:
 
             async with conn as session:
                 assert session is mock_session
-                assert conn.is_connected == True
+                assert conn.is_connected
 
             mock_sessionmaker.assert_called_once()
             mock_test_conn.assert_called_once_with(mock_session)
@@ -149,7 +149,7 @@ class TestAsyncBaseConnection:
 
         mock_session.close.assert_called_once()
         mock_engine.dispose.assert_called_once()
-        assert conn.is_connected == False
+        assert not conn.is_connected
 
     @pytest.mark.skipif(not POSTGRESQL_AVAILABLE, reason="PostgreSQL drivers not available")
     async def test_get_async_engine(self):
@@ -521,5 +521,5 @@ class TestAsyncCompatibility:
         assert inspect.iscoroutinefunction(conn._test_connection_async)
 
         # Check async generator method
-        method = getattr(conn, '_get_async_engine')
+        method = conn._get_async_engine
         assert inspect.ismethod(method) or inspect.isfunction(method)
