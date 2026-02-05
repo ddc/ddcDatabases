@@ -554,7 +554,6 @@ pgsql = [
 dev = [
     { name = "black" },
     { name = "coverage" },
-    { name = "ddcdatabases", extra = ["mongodb", "mssql", "mysql", "oracle", "pgsql"] },
     { name = "poethepoet" },
     { name = "pytest" },
     { name = "pytest-asyncio" },
@@ -582,11 +581,6 @@ provides-extras = ["mongodb", "mssql", "mysql", "oracle", "pgsql"]
 dev = [
     { name = "black", specifier = ">=26.1.0" },
     { name = "coverage", specifier = ">=7.13.3" },
-    { name = "ddcdatabases", extras = ["mongodb"] },
-    { name = "ddcdatabases", extras = ["mssql"] },
-    { name = "ddcdatabases", extras = ["mysql"] },
-    { name = "ddcdatabases", extras = ["oracle"] },
-    { name = "ddcdatabases", extras = ["pgsql"] },
     { name = "poethepoet", specifier = ">=0.40.0" },
     { name = "pytest", specifier = ">=9.0.2" },
     { name = "pytest-asyncio", specifier = ">=1.3.0" },
