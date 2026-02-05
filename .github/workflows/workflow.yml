@@ -49,7 +49,7 @@ jobs:
           uv venv
           if [[ '${{ matrix.os }}' == 'windows-latest' ]]; then
             # Skip MySQL on Windows - mysqlclient requires C compilation with MySQL headers
-            uv sync --group dev --no-install-package mysqlclient --no-install-package aiomysql
+            uv sync --all-extras --group dev --no-install-package mysqlclient --no-install-package aiomysql
           elif [[ '${{ matrix.os }}' == 'macos-latest' ]]; then
             export PKG_CONFIG_PATH="$(brew --prefix mysql-client)/lib/pkgconfig"
             uv sync --all-extras --group dev
