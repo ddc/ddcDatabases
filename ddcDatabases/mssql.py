@@ -113,11 +113,21 @@ class MSSQL(BaseConnection):
                 if _ssl.ssl_trust_server_certificate is not None
                 else _settings.ssl_trust_server_certificate
             ),
-            ssl_ca_cert_path=_ssl.ssl_ca_cert_path,
+            ssl_ca_cert_path=(
+                _ssl.ssl_ca_cert_path if _ssl.ssl_ca_cert_path is not None else _settings.ssl_ca_cert_path
+            ),
         )
 
         self.sync_driver = _settings.sync_driver
         self.async_driver = _settings.async_driver
+
+        _query = {
+            "driver": f"ODBC Driver {self._connection_config.odbcdriver_version} for SQL Server",
+            "Encrypt": "yes" if self._ssl_config.ssl_encrypt else "no",
+            "TrustServerCertificate": "yes" if self._ssl_config.ssl_trust_server_certificate else "no",
+        }
+        if self._ssl_config.ssl_ca_cert_path:
+            _query["ServerCertificate"] = self._ssl_config.ssl_ca_cert_path
 
         self.connection_url = {
             "host": self._connection_config.host,
@@ -125,11 +135,7 @@ class MSSQL(BaseConnection):
             "database": self._connection_config.database,
             "username": self._connection_config.user,
             "password": self._connection_config.password,
-            "query": {
-                "driver": f"ODBC Driver {self._connection_config.odbcdriver_version} for SQL Server",
-                "Encrypt": "yes" if self._ssl_config.ssl_encrypt else "no",
-                "TrustServerCertificate": "yes" if self._ssl_config.ssl_trust_server_certificate else "no",
-            },
+            "query": _query,
         }
 
         self.extra_engine_args = extra_engine_args or {}

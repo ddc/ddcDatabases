@@ -1,4 +1,5 @@
 import logging
+import ssl as _ssl_module
 from .core.base import BaseConnection
 from .core.configs import (
     BaseConnectionConfig,
@@ -281,7 +282,16 @@ class PostgreSQL(BaseConnection):
             if self._connection_config.schema and self._connection_config.schema != "public":
                 async_connect_args["server_settings"] = {"search_path": self._connection_config.schema}
             if self._ssl_config.ssl_mode and self._ssl_config.ssl_mode != "disable":
-                async_connect_args["ssl"] = self._ssl_config.ssl_mode
+                if self._ssl_config.ssl_ca_cert_path:
+                    ssl_context = _ssl_module.create_default_context(cafile=self._ssl_config.ssl_ca_cert_path)
+                    if self._ssl_config.ssl_client_cert_path and self._ssl_config.ssl_client_key_path:
+                        ssl_context.load_cert_chain(
+                            certfile=self._ssl_config.ssl_client_cert_path,
+                            keyfile=self._ssl_config.ssl_client_key_path,
+                        )
+                    async_connect_args["ssl"] = ssl_context
+                else:
+                    async_connect_args["ssl"] = self._ssl_config.ssl_mode
 
         _engine_args = self._get_base_engine_args(_connection_url, async_connect_args, async_engine_args)
         _engine = create_async_engine(**_engine_args)
