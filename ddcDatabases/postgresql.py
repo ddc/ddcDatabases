@@ -283,8 +283,9 @@ class PostgreSQL(BaseConnection):
                 async_connect_args["server_settings"] = {"search_path": self._connection_config.schema}
             if self._ssl_config.ssl_mode and self._ssl_config.ssl_mode != "disable":
                 if self._ssl_config.ssl_ca_cert_path:
-                    ssl_context = _ssl_module.create_default_context(cafile=self._ssl_config.ssl_ca_cert_path)
+                    ssl_context = _ssl_module.SSLContext(_ssl_module.PROTOCOL_TLS_CLIENT)
                     ssl_context.minimum_version = _ssl_module.TLSVersion.TLSv1_3
+                    ssl_context.load_verify_locations(cafile=self._ssl_config.ssl_ca_cert_path)
                     if self._ssl_config.ssl_client_cert_path and self._ssl_config.ssl_client_key_path:
                         ssl_context.load_cert_chain(
                             certfile=self._ssl_config.ssl_client_cert_path,

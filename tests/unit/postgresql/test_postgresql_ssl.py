@@ -175,7 +175,7 @@ class TestPostgreSQLSSLEngine:
 
         with (
             patch("ddcDatabases.postgresql.create_async_engine") as mock_create,
-            patch("ddcDatabases.postgresql._ssl_module.create_default_context", return_value=mock_ssl_context),
+            patch("ddcDatabases.postgresql._ssl_module.SSLContext", return_value=mock_ssl_context),
         ):
             mock_engine = MagicMock()
             mock_engine.dispose = AsyncMock()
@@ -193,6 +193,7 @@ class TestPostgreSQLSSLEngine:
         assert "ssl" in connect_args, "ssl must be in async connect_args when cert paths are set"
         assert connect_args["ssl"] is mock_ssl_context
         assert mock_ssl_context.minimum_version == ssl.TLSVersion.TLSv1_3
+        mock_ssl_context.load_verify_locations.assert_called_once_with(cafile="/path/to/ca.pem")
         mock_ssl_context.load_cert_chain.assert_called_once_with(
             certfile="/path/to/client.pem",
             keyfile="/path/to/client-key.pem",
@@ -304,7 +305,7 @@ class TestPostgreSQLSSLEngine:
 
         with (
             patch("ddcDatabases.postgresql.create_async_engine") as mock_create,
-            patch("ddcDatabases.postgresql._ssl_module.create_default_context", return_value=mock_ssl_context),
+            patch("ddcDatabases.postgresql._ssl_module.SSLContext", return_value=mock_ssl_context),
         ):
             mock_engine = MagicMock()
             mock_engine.dispose = AsyncMock()
@@ -321,6 +322,7 @@ class TestPostgreSQLSSLEngine:
         connect_args = captured_args.get("connect_args", {})
         assert connect_args["ssl"] is mock_ssl_context
         assert mock_ssl_context.minimum_version == ssl.TLSVersion.TLSv1_3
+        mock_ssl_context.load_verify_locations.assert_called_once_with(cafile="/path/to/ca.pem")
         mock_ssl_context.load_cert_chain.assert_not_called()
 
     @patch("ddcDatabases.postgresql.get_postgresql_settings")
@@ -444,7 +446,7 @@ class TestPostgreSQLSSLEnvVars:
 
         with (
             patch("ddcDatabases.postgresql.create_async_engine") as mock_create,
-            patch("ddcDatabases.postgresql._ssl_module.create_default_context", return_value=mock_ssl_context),
+            patch("ddcDatabases.postgresql._ssl_module.SSLContext", return_value=mock_ssl_context),
         ):
             mock_engine = MagicMock()
             mock_engine.dispose = AsyncMock()
@@ -461,6 +463,7 @@ class TestPostgreSQLSSLEnvVars:
         connect_args = captured_args.get("connect_args", {})
         assert connect_args["ssl"] is mock_ssl_context
         assert mock_ssl_context.minimum_version == ssl.TLSVersion.TLSv1_3
+        mock_ssl_context.load_verify_locations.assert_called_once_with(cafile="/env/path/to/ca.pem")
         mock_ssl_context.load_cert_chain.assert_called_once_with(
             certfile="/env/path/to/client.pem",
             keyfile="/env/path/to/client-key.pem",
