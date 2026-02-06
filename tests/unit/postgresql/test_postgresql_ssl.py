@@ -192,6 +192,7 @@ class TestPostgreSQLSSLEngine:
         connect_args = captured_args.get("connect_args", {})
         assert "ssl" in connect_args, "ssl must be in async connect_args when cert paths are set"
         assert connect_args["ssl"] is mock_ssl_context
+        assert mock_ssl_context.minimum_version == ssl.TLSVersion.TLSv1_3
         mock_ssl_context.load_cert_chain.assert_called_once_with(
             certfile="/path/to/client.pem",
             keyfile="/path/to/client-key.pem",
@@ -319,6 +320,7 @@ class TestPostgreSQLSSLEngine:
 
         connect_args = captured_args.get("connect_args", {})
         assert connect_args["ssl"] is mock_ssl_context
+        assert mock_ssl_context.minimum_version == ssl.TLSVersion.TLSv1_3
         mock_ssl_context.load_cert_chain.assert_not_called()
 
     @patch("ddcDatabases.postgresql.get_postgresql_settings")
@@ -458,6 +460,7 @@ class TestPostgreSQLSSLEnvVars:
 
         connect_args = captured_args.get("connect_args", {})
         assert connect_args["ssl"] is mock_ssl_context
+        assert mock_ssl_context.minimum_version == ssl.TLSVersion.TLSv1_3
         mock_ssl_context.load_cert_chain.assert_called_once_with(
             certfile="/env/path/to/client.pem",
             keyfile="/env/path/to/client-key.pem",

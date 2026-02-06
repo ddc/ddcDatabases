@@ -284,6 +284,7 @@ class PostgreSQL(BaseConnection):
             if self._ssl_config.ssl_mode and self._ssl_config.ssl_mode != "disable":
                 if self._ssl_config.ssl_ca_cert_path:
                     ssl_context = _ssl_module.create_default_context(cafile=self._ssl_config.ssl_ca_cert_path)
+                    ssl_context.minimum_version = _ssl_module.TLSVersion.TLSv1_3
                     if self._ssl_config.ssl_client_cert_path and self._ssl_config.ssl_client_key_path:
                         ssl_context.load_cert_chain(
                             certfile=self._ssl_config.ssl_client_cert_path,
