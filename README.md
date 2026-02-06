@@ -49,7 +49,9 @@
   - [Available Methods](#available-methods)
 - [Logging](#logging)
 - [Development](#development)
-  - [Create DEV Environment, Running Tests and Building Wheel](#create-dev-environment-running-tests-and-building-wheel)
+  - [Create DEV Environment and Running Tests](#create-dev-environment-and-running-tests)
+  - [Update DEV Environment Packages](#update-dev-environment-packages)
+  - [Building Wheel](#building-wheel)
   - [Optionals](#optionals)
 - [License](#license)
 - [Support](#support)
@@ -683,15 +685,30 @@ logging.getLogger("ddcDatabases").addHandler(logging.StreamHandler())
 
 # Development
 
-Must have [UV](https://docs.astral.sh/uv/getting-started/installation/) installed.
+Must have [UV](https://uv.run/docs/getting-started/installation) installed.
 
-## Create DEV Environment, Running Tests and Building Wheel
+## Create DEV Environment and Running Tests
+
+> **Note:** All poe tasks automatically run ruff linter along with Black formatting
 
 ```shell
-uv sync --all-extras
-poe linter
+uv sync --all-extras --all-groups
 poe test
 poe test-integration
+```
+
+## Update DEV Environment Packages
+This will update all packages dependencies
+
+```shell
+poe updatedev
+```
+
+
+## Building Wheel
+This will update all packages, run linter, both unit and integration tests and finally build the wheel
+
+```shell
 poe build
 ```
 

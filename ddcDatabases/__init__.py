@@ -1,9 +1,6 @@
 import logging
 from .core.operations import DBUtils, DBUtilsAsync
-from .core.persistent import (
-    PersistentConnectionConfig,
-    close_all_persistent_connections,
-)
+from .core.persistent import PersistentConnectionConfig, close_all_persistent_connections
 from importlib.metadata import version
 
 __all__ = [

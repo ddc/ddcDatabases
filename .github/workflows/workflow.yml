@@ -1,8 +1,8 @@
 name: CI/CD Pipeline
 
 'on':
+  pull_request:
   push:
-    branches: ['**']
     tags: ['v*']
 
 env:
@@ -32,6 +32,8 @@ jobs:
 
       - name: Install uv
         uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
 
       - name: Set up Python ${{ matrix.python-version }}
         run: uv python install ${{ matrix.python-version }}
@@ -49,12 +51,12 @@ jobs:
           uv venv
           if [[ '${{ matrix.os }}' == 'windows-latest' ]]; then
             # Skip MySQL on Windows - mysqlclient requires C compilation with MySQL headers
-            uv sync --all-extras --group dev --no-install-package mysqlclient --no-install-package aiomysql
+            uv sync --locked --all-extras --dev --no-install-package mysqlclient --no-install-package aiomysql
           elif [[ '${{ matrix.os }}' == 'macos-latest' ]]; then
             export PKG_CONFIG_PATH="$(brew --prefix mysql-client)/lib/pkgconfig"
-            uv sync --all-extras --group dev
+            uv sync --locked --all-extras --dev
           else
-            uv sync --all-extras --group dev
+            uv sync --locked --all-extras --dev
           fi
         shell: bash
 
@@ -85,6 +87,8 @@ jobs:
 
       - name: Install uv
         uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
 
       - name: Set up Python ${{ env.LATEST_PYTHON_VERSION }}
         run: uv python install ${{ env.LATEST_PYTHON_VERSION }}
@@ -93,7 +97,7 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y default-libmysqlclient-dev pkg-config
 
       - name: Install dependencies
-        run: uv sync --all-extras --group dev
+        run: uv sync --locked --all-extras --dev
         shell: bash
 
       - name: Install ODBC driver for MSSQL
@@ -124,12 +128,20 @@ jobs:
 
       - name: Install uv
         uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
 
       - name: Set up Python ${{ env.LATEST_PYTHON_VERSION }}
         run: uv python install ${{ env.LATEST_PYTHON_VERSION }}
 
       - name: Build package
         run: uv build
+
+      - name: Smoke test (wheel)
+        run: uv run --isolated --no-project --with dist/*.whl tests/smoke_test.py
+
+      - name: Smoke test (sdist)
+        run: uv run --isolated --no-project --with dist/*.tar.gz tests/smoke_test.py
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v6
