@@ -27,8 +27,8 @@ class BaseConnection(ABC):
         "session",
         "is_connected",
         "_temp_engine",
-        "conn_retry_config",
-        "op_retry_config",
+        "connection_retry_config",
+        "operation_retry_config",
         "logger",
     )
 
@@ -40,9 +40,9 @@ class BaseConnection(ABC):
         expire_on_commit: bool,
         sync_driver: str | None,
         async_driver: str | None,
-        conn_retry_config: BaseRetryConfig | None = None,
-        op_retry_config: BaseOperationRetryConfig | None = None,
-        logger: logging.Logger | None = None,
+        connection_retry_config: BaseRetryConfig | None = None,
+        operation_retry_config: BaseOperationRetryConfig | None = None,
+        logger: Any = None,
     ) -> None:
         self.connection_url = connection_url
         self.engine_args = engine_args
@@ -53,8 +53,8 @@ class BaseConnection(ABC):
         self.session: Session | AsyncSession | None = None
         self.is_connected = False
         self._temp_engine: Engine | AsyncEngine | None = None
-        self.conn_retry_config = conn_retry_config or BaseRetryConfig()
-        self.op_retry_config = op_retry_config or BaseOperationRetryConfig()
+        self.connection_retry_config = connection_retry_config or BaseRetryConfig()
+        self.operation_retry_config = operation_retry_config or BaseOperationRetryConfig()
         self.logger = logger if logger is not None else _logger
 
     def __enter__(self) -> Session:
@@ -71,7 +71,7 @@ class BaseConnection(ABC):
                 self.is_connected = True
                 return self.session
 
-        return retry_operation(connect, self.conn_retry_config, "sync_connect", logger=self.logger)
+        return retry_operation(connect, self.connection_retry_config, "sync_connect", logger=self.logger)
 
     def __exit__(self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: Any) -> None:
         if self.session:
@@ -95,7 +95,7 @@ class BaseConnection(ABC):
                 self.is_connected = True
                 return self.session
 
-        return await retry_operation_async(connect, self.conn_retry_config, "async_connect", logger=self.logger)
+        return await retry_operation_async(connect, self.connection_retry_config, "async_connect", logger=self.logger)
 
     async def __aexit__(
         self,
@@ -155,7 +155,7 @@ class ConnectionTester:
         sync_session: Session | None = None,
         async_session: AsyncSession | None = None,
         host_url: URL | str = "",
-        logger: logging.Logger | None = None,
+        logger: Any = None,
     ) -> None:
         self.sync_session = sync_session
         self.async_session = async_session

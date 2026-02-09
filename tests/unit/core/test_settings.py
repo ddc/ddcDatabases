@@ -91,20 +91,20 @@ class TestSQLiteSettings:
         settings = SQLiteSettings()
 
         assert settings.file_path == "sqlite.db"
-        assert settings.echo == False
+        assert not settings.echo
 
     def test_env_override(self):
         """Test environment variable overrides"""
         with patch.dict(
             os.environ,
             {
-                'SQLITE_FILE_PATH': 'tests/data/test.db',
-                'SQLITE_ECHO': 'true',
+                "SQLITE_FILE_PATH": "tests/data/test.db",
+                "SQLITE_ECHO": "true",
             },
         ):
             settings = SQLiteSettings()
-            assert settings.file_path == 'tests/data/test.db'
-            assert settings.echo == True
+            assert settings.file_path == "tests/data/test.db"
+            assert settings.echo
 
 
 class TestPostgreSQLSettings:
@@ -120,7 +120,7 @@ class TestPostgreSQLSettings:
         assert settings.password == "postgres"
         assert settings.database == "postgres"
         assert settings.schema == "public"
-        assert settings.echo == False
+        assert not settings.echo
         assert settings.async_driver == "postgresql+asyncpg"
         assert settings.sync_driver == "postgresql+psycopg"
         assert settings.ssl_mode == "disable"
@@ -144,25 +144,25 @@ class TestPostgreSQLSettings:
         with patch.dict(
             os.environ,
             {
-                'POSTGRESQL_HOST': 'custom-host',
-                'POSTGRESQL_PORT': '9999',
-                'POSTGRESQL_USER': 'testuser',
-                'POSTGRESQL_PASSWORD': 'testpass',
-                'POSTGRESQL_DATABASE': 'testdb',
-                'POSTGRESQL_ECHO': 'true',
-                'POSTGRESQL_SCHEMA': 'custom_schema',
-                'POSTGRESQL_SSL_MODE': 'require',
+                "POSTGRESQL_HOST": "custom-host",
+                "POSTGRESQL_PORT": "9999",
+                "POSTGRESQL_USER": "testuser",
+                "POSTGRESQL_PASSWORD": "testpass",
+                "POSTGRESQL_DATABASE": "testdb",
+                "POSTGRESQL_ECHO": "true",
+                "POSTGRESQL_SCHEMA": "custom_schema",
+                "POSTGRESQL_SSL_MODE": "require",
             },
         ):
             settings = PostgreSQLSettings()
-            assert settings.host == 'custom-host'
+            assert settings.host == "custom-host"
             assert settings.port == 9999
-            assert settings.user == 'testuser'
-            assert settings.password == 'testpass'
-            assert settings.database == 'testdb'
-            assert settings.echo == True
-            assert settings.schema == 'custom_schema'
-            assert settings.ssl_mode == 'require'
+            assert settings.user == "testuser"
+            assert settings.password == "testpass"
+            assert settings.database == "testdb"
+            assert settings.echo
+            assert settings.schema == "custom_schema"
+            assert settings.ssl_mode == "require"
 
 
 class TestMSSQLSettings:
@@ -178,14 +178,14 @@ class TestMSSQLSettings:
         assert settings.password == "sa"
         assert settings.schema == "dbo"
         assert settings.database == "master"
-        assert settings.echo == False
+        assert not settings.echo
         assert settings.pool_size == 25
         assert settings.max_overflow == 50
         assert settings.odbcdriver_version == 18
         assert settings.async_driver == "mssql+aioodbc"
         assert settings.sync_driver == "mssql+pyodbc"
-        assert settings.ssl_encrypt == False
-        assert settings.ssl_trust_server_certificate == True
+        assert not settings.ssl_encrypt
+        assert settings.ssl_trust_server_certificate
         assert settings.ssl_ca_cert_path is None
 
     def test_env_override(self):
@@ -193,23 +193,23 @@ class TestMSSQLSettings:
         with patch.dict(
             os.environ,
             {
-                'MSSQL_HOST': 'mssql-host',
-                'MSSQL_PORT': '1434',
-                'MSSQL_USER': 'testuser',
-                'MSSQL_PASSWORD': 'testpass',
-                'MSSQL_DATABASE': 'testdb',
-                'MSSQL_SCHEMA': 'custom_schema',
-                'MSSQL_ECHO': 'true',
-                'MSSQL_SSL_ENCRYPT': 'true',
+                "MSSQL_HOST": "mssql-host",
+                "MSSQL_PORT": "1434",
+                "MSSQL_USER": "testuser",
+                "MSSQL_PASSWORD": "testpass",
+                "MSSQL_DATABASE": "testdb",
+                "MSSQL_SCHEMA": "custom_schema",
+                "MSSQL_ECHO": "true",
+                "MSSQL_SSL_ENCRYPT": "true",
             },
         ):
             settings = MSSQLSettings()
-            assert settings.host == 'mssql-host'
+            assert settings.host == "mssql-host"
             assert settings.port == 1434
-            assert settings.user == 'testuser'
-            assert settings.password == 'testpass'
-            assert settings.database == 'testdb'
-            assert settings.schema == 'custom_schema'
+            assert settings.user == "testuser"
+            assert settings.password == "testpass"
+            assert settings.database == "testdb"
+            assert settings.schema == "custom_schema"
             assert settings.echo is True
             assert settings.ssl_encrypt is True
 
@@ -226,7 +226,7 @@ class TestMySQLSettings:
         assert settings.user == "root"
         assert settings.password == "root"
         assert settings.database == "dev"
-        assert settings.echo == False
+        assert not settings.echo
         assert settings.async_driver == "mysql+aiomysql"
         assert settings.sync_driver == "mysql+mysqldb"
         assert settings.ssl_mode == "DISABLED"
@@ -250,23 +250,23 @@ class TestMySQLSettings:
         with patch.dict(
             os.environ,
             {
-                'MYSQL_HOST': 'mysql-host',
-                'MYSQL_PORT': '3307',
-                'MYSQL_USER': 'testuser',
-                'MYSQL_PASSWORD': 'testpass',
-                'MYSQL_DATABASE': 'testdb',
-                'MYSQL_ECHO': 'true',
-                'MYSQL_SSL_MODE': 'REQUIRED',
+                "MYSQL_HOST": "mysql-host",
+                "MYSQL_PORT": "3307",
+                "MYSQL_USER": "testuser",
+                "MYSQL_PASSWORD": "testpass",
+                "MYSQL_DATABASE": "testdb",
+                "MYSQL_ECHO": "true",
+                "MYSQL_SSL_MODE": "REQUIRED",
             },
         ):
             settings = MySQLSettings()
-            assert settings.host == 'mysql-host'
+            assert settings.host == "mysql-host"
             assert settings.port == 3307
-            assert settings.user == 'testuser'
-            assert settings.password == 'testpass'
-            assert settings.database == 'testdb'
+            assert settings.user == "testuser"
+            assert settings.password == "testpass"
+            assert settings.database == "testdb"
             assert settings.echo is True
-            assert settings.ssl_mode == 'REQUIRED'
+            assert settings.ssl_mode == "REQUIRED"
 
 
 class TestMongoDBSettings:
@@ -284,31 +284,31 @@ class TestMongoDBSettings:
         assert settings.batch_size == 2865
         assert settings.limit == 0
         assert settings.driver == "mongodb"
-        assert settings.tls_enabled == False
+        assert not settings.tls_enabled
         assert settings.tls_ca_cert_path is None
         assert settings.tls_cert_key_path is None
-        assert settings.tls_allow_invalid_certificates == False
+        assert not settings.tls_allow_invalid_certificates
 
     def test_env_override(self):
         """Test environment variable overrides"""
         with patch.dict(
             os.environ,
             {
-                'MONGODB_HOST': 'mongo-host',
-                'MONGODB_PORT': '27018',
-                'MONGODB_USER': 'testuser',
-                'MONGODB_PASSWORD': 'testpass',
-                'MONGODB_DATABASE': 'testdb',
-                'MONGODB_BATCH_SIZE': '1000',
-                'MONGODB_TLS_ENABLED': 'true',
+                "MONGODB_HOST": "mongo-host",
+                "MONGODB_PORT": "27018",
+                "MONGODB_USER": "testuser",
+                "MONGODB_PASSWORD": "testpass",
+                "MONGODB_DATABASE": "testdb",
+                "MONGODB_BATCH_SIZE": "1000",
+                "MONGODB_TLS_ENABLED": "true",
             },
         ):
             settings = MongoDBSettings()
-            assert settings.host == 'mongo-host'
+            assert settings.host == "mongo-host"
             assert settings.port == 27018
-            assert settings.user == 'testuser'
-            assert settings.password == 'testpass'
-            assert settings.database == 'testdb'
+            assert settings.user == "testuser"
+            assert settings.password == "testpass"
+            assert settings.database == "testdb"
             assert settings.batch_size == 1000
             assert settings.tls_enabled is True
 
@@ -325,9 +325,9 @@ class TestOracleSettings:
         assert settings.user == "system"
         assert settings.password == "oracle"
         assert settings.servicename == "xe"
-        assert settings.echo == False
+        assert not settings.echo
         assert settings.sync_driver == "oracle+oracledb"
-        assert settings.ssl_enabled == False
+        assert not settings.ssl_enabled
         assert settings.ssl_wallet_path is None
 
     def test_env_override(self):
@@ -335,21 +335,21 @@ class TestOracleSettings:
         with patch.dict(
             os.environ,
             {
-                'ORACLE_HOST': 'oracle-host',
-                'ORACLE_PORT': '1522',
-                'ORACLE_USER': 'testuser',
-                'ORACLE_PASSWORD': 'testpass',
-                'ORACLE_SERVICENAME': 'testservice',
-                'ORACLE_ECHO': 'true',
-                'ORACLE_SSL_ENABLED': 'true',
+                "ORACLE_HOST": "oracle-host",
+                "ORACLE_PORT": "1522",
+                "ORACLE_USER": "testuser",
+                "ORACLE_PASSWORD": "testpass",
+                "ORACLE_SERVICENAME": "testservice",
+                "ORACLE_ECHO": "true",
+                "ORACLE_SSL_ENABLED": "true",
             },
         ):
             settings = OracleSettings()
-            assert settings.host == 'oracle-host'
+            assert settings.host == "oracle-host"
             assert settings.port == 1522
-            assert settings.user == 'testuser'
-            assert settings.password == 'testpass'
-            assert settings.servicename == 'testservice'
+            assert settings.user == "testuser"
+            assert settings.password == "testpass"
+            assert settings.servicename == "testservice"
             assert settings.echo is True
             assert settings.ssl_enabled is True
 
@@ -380,8 +380,8 @@ class TestDotenvLoading:
 
         ddcDatabases.core.settings._dotenv_loaded = False
 
-    @patch('ddcDatabases.core.settings._dotenv_loaded', True)
-    @patch('ddcDatabases.core.settings.load_dotenv')
+    @patch("ddcDatabases.core.settings._dotenv_loaded", True)
+    @patch("ddcDatabases.core.settings.load_dotenv")
     def test_dotenv_not_loaded_if_already_loaded(self, mock_load_dotenv):
         """Test that dotenv is not loaded if already loaded"""
         get_postgresql_settings.cache_clear()
@@ -401,7 +401,7 @@ class TestDotenvLoading:
         import ddcDatabases.core.settings as settings_module
 
         # Patch load_dotenv before reloading to ensure it's mocked
-        with patch.object(settings_module, 'load_dotenv') as mock_load_dotenv:
+        with patch.object(settings_module, "load_dotenv") as mock_load_dotenv:
             # Reset the flag and cache
             settings_module._dotenv_loaded = False
             get_sqlite_settings.cache_clear()

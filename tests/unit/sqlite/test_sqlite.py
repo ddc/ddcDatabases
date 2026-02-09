@@ -30,44 +30,44 @@ class TestSQLite:
         self.Sqlite = Sqlite
         self.DBUtils = DBUtils
 
-    @patch('ddcDatabases.sqlite.get_sqlite_settings')
+    @patch("ddcDatabases.sqlite.get_sqlite_settings")
     def test_init_basic(self, mock_get_settings):
         """Test SQLite basic initialization"""
         mock_settings = MagicMock()
         mock_settings.file_path = "sqlite.db"
         mock_settings.echo = False
-        mock_settings.conn_enable_retry = False
-        mock_settings.conn_max_retries = 1
-        mock_settings.conn_initial_retry_delay = 1.0
-        mock_settings.conn_max_retry_delay = 30.0
-        mock_settings.op_enable_retry = False
-        mock_settings.op_max_retries = 1
-        mock_settings.op_initial_retry_delay = 0.5
-        mock_settings.op_max_retry_delay = 10.0
-        mock_settings.op_jitter = 0.1
+        mock_settings.connection_enable_retry = False
+        mock_settings.connection_max_retries = 1
+        mock_settings.connection_initial_retry_delay = 1.0
+        mock_settings.connection_max_retry_delay = 30.0
+        mock_settings.operation_enable_retry = False
+        mock_settings.operation_max_retries = 1
+        mock_settings.operation_initial_retry_delay = 0.5
+        mock_settings.operation_max_retry_delay = 10.0
+        mock_settings.operation_jitter = 0.1
         mock_get_settings.return_value = mock_settings
 
         sqlite = self.Sqlite()
 
         assert sqlite.filepath == "sqlite.db"
-        assert sqlite.echo == False
-        assert sqlite.is_connected == False
+        assert not sqlite.echo
+        assert not sqlite.is_connected
 
-    @patch('ddcDatabases.sqlite.get_sqlite_settings')
+    @patch("ddcDatabases.sqlite.get_sqlite_settings")
     def test_init_with_parameters(self, mock_get_settings):
         """Test SQLite initialization with parameters"""
         mock_settings = MagicMock()
         mock_settings.file_path = "default.db"
         mock_settings.echo = False
-        mock_settings.conn_enable_retry = False
-        mock_settings.conn_max_retries = 1
-        mock_settings.conn_initial_retry_delay = 1.0
-        mock_settings.conn_max_retry_delay = 30.0
-        mock_settings.op_enable_retry = False
-        mock_settings.op_max_retries = 1
-        mock_settings.op_initial_retry_delay = 0.5
-        mock_settings.op_max_retry_delay = 10.0
-        mock_settings.op_jitter = 0.1
+        mock_settings.connection_enable_retry = False
+        mock_settings.connection_max_retries = 1
+        mock_settings.connection_initial_retry_delay = 1.0
+        mock_settings.connection_max_retry_delay = 30.0
+        mock_settings.operation_enable_retry = False
+        mock_settings.operation_max_retries = 1
+        mock_settings.operation_initial_retry_delay = 0.5
+        mock_settings.operation_max_retry_delay = 10.0
+        mock_settings.operation_jitter = 0.1
         mock_get_settings.return_value = mock_settings
 
         sqlite = self.Sqlite(
@@ -75,13 +75,13 @@ class TestSQLite:
         )
 
         assert sqlite.filepath == "custom.db"
-        assert sqlite.echo == True
-        assert sqlite.autoflush == False
-        assert sqlite.expire_on_commit == False
+        assert sqlite.echo
+        assert not sqlite.autoflush
+        assert not sqlite.expire_on_commit
 
     def test_real_operations(self):
         """Test comprehensive SQLite operations"""
-        with tempfile.NamedTemporaryFile(suffix='.db', delete=False) as tmp:
+        with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as tmp:
             db_path = tmp.name
 
         with self.Sqlite(filepath=db_path) as session:
@@ -100,7 +100,7 @@ class TestSQLite:
             results = db_utils.fetchall(stmt)
             assert len(results) == 1
             # Access through the model object returned by ORM select
-            assert results[0]['ModelTest'].name == "test1"
+            assert results[0]["ModelTest"].name == "test1"
 
             # Test fetchvalue
             stmt = sa.select(ModelTest.name).where(ModelTest.id == 1)
@@ -139,7 +139,7 @@ class TestSQLite:
 
     def test_fetchvalue_none_case(self):
         """Test fetchvalue returning None"""
-        with tempfile.NamedTemporaryFile(suffix='.db', delete=False) as tmp:
+        with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as tmp:
             db_path = tmp.name
 
         with self.Sqlite(filepath=db_path) as session:
@@ -154,7 +154,7 @@ class TestSQLite:
 
     def test_context_manager(self):
         """Test SQLite context manager entry/exit"""
-        with tempfile.NamedTemporaryFile(suffix='.db', delete=False) as tmp:
+        with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as tmp:
             db_path = tmp.name
 
         sqlite = self.Sqlite(filepath=db_path)
@@ -162,14 +162,14 @@ class TestSQLite:
         # Test __enter__
         session = sqlite.__enter__()
         assert session is not None
-        assert sqlite.is_connected == True
+        assert sqlite.is_connected
         assert sqlite.session is session
 
         # Test __exit__
         sqlite.__exit__(None, None, None)
-        assert sqlite.is_connected == False
+        assert not sqlite.is_connected
 
-    @patch('ddcDatabases.sqlite.create_engine')
+    @patch("ddcDatabases.sqlite.create_engine")
     def test_engine_creation_error(self, mock_create_engine):
         """Test SQLite engine creation error handling"""
         mock_create_engine.side_effect = Exception("Engine creation failed")
@@ -191,10 +191,37 @@ class TestSQLite:
         )
 
         assert sqlite.filepath == "custom.db"
-        assert sqlite.echo == True
-        assert sqlite.autoflush == False
-        assert sqlite.expire_on_commit == False
+        assert sqlite.echo
+        assert not sqlite.autoflush
+        assert not sqlite.expire_on_commit
         assert sqlite.extra_engine_args == extra_args
+
+
+class TestSQLiteInfoMethods:
+    """Test SQLite info getter methods"""
+
+    def setup_method(self):
+        from ddcDatabases import Sqlite
+
+        self.Sqlite = Sqlite
+
+    def test_get_session_info(self):
+        """Test get_session_info returns session config."""
+        sqlite = self.Sqlite(filepath="test.db")
+        info = sqlite.get_session_info()
+        assert type(info).__name__ == "SqliteSessionConfig"
+
+    def test_get_connection_retry_info(self):
+        """Test get_connection_retry_info returns connection retry config."""
+        sqlite = self.Sqlite(filepath="test.db")
+        info = sqlite.get_connection_retry_info()
+        assert type(info).__name__ == "SqliteConnectionRetryConfig"
+
+    def test_get_operation_retry_info(self):
+        """Test get_operation_retry_info returns operation retry config."""
+        sqlite = self.Sqlite(filepath="test.db")
+        info = sqlite.get_operation_retry_info()
+        assert type(info).__name__ == "SqliteOperationRetryConfig"
 
 
 class TestSQLiteRealOperations:
@@ -209,7 +236,7 @@ class TestSQLiteRealOperations:
 
     def test_real_fetchall(self):
         """Test fetchall with real database"""
-        with tempfile.NamedTemporaryFile(suffix='.db', delete=False) as tmp:
+        with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as tmp:
             db_path = tmp.name
 
         with self.Sqlite(filepath=db_path) as session:
@@ -227,13 +254,13 @@ class TestSQLiteRealOperations:
 
             assert len(results) == 1
             # Access through the model object returned by ORM select
-            assert results[0]['ModelTest'].id == 1
-            assert results[0]['ModelTest'].name == "test"
-            assert results[0]['ModelTest'].enabled == True
+            assert results[0]["ModelTest"].id == 1
+            assert results[0]["ModelTest"].name == "test"
+            assert results[0]["ModelTest"].enabled
 
     def test_real_fetchvalue(self):
         """Test fetchvalue with real database"""
-        with tempfile.NamedTemporaryFile(suffix='.db', delete=False) as tmp:
+        with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as tmp:
             db_path = tmp.name
 
         with self.Sqlite(filepath=db_path) as session:
@@ -253,7 +280,7 @@ class TestSQLiteRealOperations:
 
     def test_real_insertbulk(self):
         """Test bulk insert with real database"""
-        with tempfile.NamedTemporaryFile(suffix='.db', delete=False) as tmp:
+        with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as tmp:
             db_path = tmp.name
 
         with self.Sqlite(filepath=db_path) as session:
@@ -275,31 +302,31 @@ class TestSQLiteRealOperations:
 
             assert len(results) == 3
             # Access through the model object returned by ORM select
-            assert results[0]['ModelTest'].name == "test1"
-            assert results[1]['ModelTest'].name == "test2"
-            assert results[2]['ModelTest'].name == "test3"
+            assert results[0]["ModelTest"].name == "test1"
+            assert results[1]["ModelTest"].name == "test2"
+            assert results[2]["ModelTest"].name == "test3"
 
     def test_connection_state_management(self):
         """Test connection state management"""
-        with tempfile.NamedTemporaryFile(suffix='.db', delete=False) as tmp:
+        with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as tmp:
             db_path = tmp.name
 
         sqlite = self.Sqlite(filepath=db_path)
 
         # Initially not connected
-        assert sqlite.is_connected == False
+        assert not sqlite.is_connected
 
         # Test context manager connection
         with sqlite as session:
-            assert sqlite.is_connected == True
+            assert sqlite.is_connected
             assert session is not None
 
         # After context manager, should be disconnected
-        assert sqlite.is_connected == False
+        assert not sqlite.is_connected
 
     def test_custom_settings_integration(self):
         """Test integration with custom settings"""
-        with tempfile.NamedTemporaryFile(suffix='.db', delete=False) as tmp:
+        with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as tmp:
             db_path = tmp.name
 
         # Test with custom settings
@@ -308,9 +335,9 @@ class TestSQLiteRealOperations:
         )
 
         assert sqlite.filepath == db_path
-        assert sqlite.echo == True
-        assert sqlite.autoflush == True
-        assert sqlite.expire_on_commit == True
+        assert sqlite.echo
+        assert sqlite.autoflush
+        assert sqlite.expire_on_commit
 
         # Test that it works with real database
         with sqlite as session:

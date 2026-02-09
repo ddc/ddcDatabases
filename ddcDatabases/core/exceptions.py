@@ -9,12 +9,12 @@ _logger.addHandler(logging.NullHandler())
 class CustomBaseException(Exception):
     """Base exception with timestamp generation"""
 
-    __slots__ = ('original_exception',)
+    __slots__ = ("original_exception",)
 
     def __init__(self, msg: Any) -> None:
         self.original_exception = msg
         now = datetime.now(timezone.utc)
-        dt = now.isoformat(timespec='milliseconds')
+        dt = now.isoformat(timespec="milliseconds")
         _logger.error(f"[{dt}]:{repr(msg)}")
         raise msg
 

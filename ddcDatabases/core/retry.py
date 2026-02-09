@@ -6,10 +6,11 @@ import random
 import time
 from .configs import BaseRetryConfig
 from .constants import CONNECTION_ERROR_KEYWORDS
-from typing import Awaitable, Callable, TypeVar
+from collections.abc import Awaitable, Callable
+from typing import Any, TypeVar
 
 # Type variable for generic return types
-T = TypeVar('T')
+T = TypeVar("T")
 
 _logger = logging.getLogger(__name__)
 _logger.addHandler(logging.NullHandler())
@@ -54,7 +55,7 @@ def _calculate_retry_delay(attempt: int, config: BaseRetryConfig) -> float:
     capped_delay = min(base_delay, config.max_retry_delay)
 
     # Add jitter (randomize +/- jitter%)
-    jitter = getattr(config, 'jitter', 0.0) or 0.0
+    jitter = getattr(config, "jitter", 0.0) or 0.0
     jitter_range = capped_delay * jitter
     jitter_offset = random.uniform(-jitter_range, jitter_range)
 
@@ -66,7 +67,7 @@ def _handle_retry_exception(
     attempt: int,
     config: BaseRetryConfig,
     operation_name: str,
-    logger: logging.Logger | None = None,
+    logger: Any = None,
 ) -> float:
     """
     Handle an exception during retry operation.
@@ -97,8 +98,7 @@ def _handle_retry_exception(
 
     delay = _calculate_retry_delay(attempt, config)
     log.warning(
-        f"[{operation_name}] Attempt {attempt + 1}/{config.max_retries + 1} failed: {e!r}. "
-        f"Retrying in {delay:.2f}s..."
+        f"[{operation_name}] Attempt {attempt + 1}/{config.max_retries + 1} failed: {e!r}. Retrying in {delay:.2f}s..."
     )
     return delay
 
@@ -107,7 +107,7 @@ def retry_operation(
     operation: Callable[[], T],
     config: BaseRetryConfig,
     operation_name: str = "operation",
-    logger: logging.Logger | None = None,
+    logger: Any = None,
 ) -> T:
     """
     Execute an operation with retry logic (synchronous).
@@ -147,7 +147,7 @@ async def retry_operation_async(
     operation: Callable[[], Awaitable[T]],
     config: BaseRetryConfig,
     operation_name: str = "operation",
-    logger: logging.Logger | None = None,
+    logger: Any = None,
 ) -> T:
     """
     Execute an operation with retry logic (asynchronous).

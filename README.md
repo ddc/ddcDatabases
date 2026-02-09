@@ -8,9 +8,9 @@
     <a href="https://www.paypal.com/ncp/payment/6G9Z78QHUD4RJ"><img src="https://img.shields.io/badge/Donate-PayPal-brightgreen.svg?style=plastic" alt="Donate"/></a>
     <a href="https://github.com/sponsors/ddc"><img src="https://img.shields.io/static/v1?style=plastic&label=Sponsor&message=%E2%9D%A4&logo=GitHub&color=ff69b4" alt="Sponsor"/></a>
     <br>
+    <a href="https://github.com/psf/black"><img src="https://img.shields.io/badge/code%20style-black-000000.svg?style=plastic" alt="Code style: black"/></a>
     <a href="https://github.com/astral-sh/uv"><img src="https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/uv/main/assets/badge/v0.json?style=plastic" alt="uv"/></a>
     <a href="https://github.com/astral-sh/ruff"><img src="https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json?style=plastic" alt="Ruff"/></a>
-    <a href="https://github.com/psf/black"><img src="https://img.shields.io/badge/code%20style-black-000000.svg?style=plastic" alt="Code style: black"/></a>
     <br>
     <a href="https://www.python.org/downloads"><img src="https://img.shields.io/pypi/pyversions/ddcDatabases.svg?style=plastic&logo=python&cacheSeconds=3600" alt="Python"/></a>
     <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-yellow.svg?style=plastic" alt="License: MIT"/></a>
@@ -49,7 +49,9 @@
   - [Available Methods](#available-methods)
 - [Logging](#logging)
 - [Development](#development)
-  - [Create DEV Environment, Running Tests and Building Wheel](#create-dev-environment-running-tests-and-building-wheel)
+  - [Create DEV Environment and Running Tests](#create-dev-environment-and-running-tests)
+  - [Update DEV Environment Packages](#update-dev-environment-packages)
+  - [Building Wheel](#building-wheel)
   - [Optionals](#optionals)
 - [License](#license)
 - [Support](#support)
@@ -91,8 +93,8 @@ Database classes use structured configuration dataclasses instead of flat keywor
 |------------------------------|---------------------------------|-------------------------------------------------------------------------------------|
 | `{DB}PoolConfig`             | Connection pool settings        | `pool_size`, `max_overflow`, `pool_recycle`, `connection_timeout`                   |
 | `{DB}SessionConfig`          | SQLAlchemy session settings     | `echo`, `autoflush`, `expire_on_commit`, `autocommit`                               |
-| `{DB}ConnRetryConfig`        | Connection-level retry settings | `enable_retry`, `max_retries`, `initial_retry_delay`, `max_retry_delay`             |
-| `{DB}OpRetryConfig`          | Operation-level retry settings  | `enable_retry`, `max_retries`, `initial_retry_delay`, `max_retry_delay`, `jitter`   |
+| `{DB}ConnectionRetryConfig`        | Connection-level retry settings | `enable_retry`, `max_retries`, `initial_retry_delay`, `max_retry_delay`             |
+| `{DB}OperationRetryConfig`          | Operation-level retry settings  | `enable_retry`, `max_retries`, `initial_retry_delay`, `max_retry_delay`, `jitter`   |
 | `PersistentConnectionConfig` | Persistent connection settings  | `idle_timeout`, `health_check_interval`, `auto_reconnect`                           |
 
 **Note:** Replace `{DB}` with the database prefix: `PostgreSQL`, `MySQL`, `MSSQL`, `Oracle`, `MongoDB`, or `Sqlite`.
@@ -120,10 +122,10 @@ Retry with exponential backoff is enabled by default at two levels:
 
 **1. Connection Level** - Retries when establishing database connections:
 ```python
-from ddcDatabases import PostgreSQL, PostgreSQLConnRetryConfig
+from ddcDatabases import PostgreSQL, PostgreSQLConnectionRetryConfig
 
 with PostgreSQL(
-    conn_retry_config=PostgreSQLConnRetryConfig(
+    connection_retry_config=PostgreSQLConnectionRetryConfig(
         enable_retry=True,           # Enable/disable retry (default: True)
         max_retries=3,               # Maximum retry attempts (default: 3)
         initial_retry_delay=1.0,     # Initial delay in seconds (default: 1.0)
@@ -136,10 +138,10 @@ with PostgreSQL(
 
 **2. Operation Level** - Retries individual database operations (fetchall, insert, etc.):
 ```python
-from ddcDatabases import DBUtils, PostgreSQL, PostgreSQLOpRetryConfig
+from ddcDatabases import DBUtils, PostgreSQL, PostgreSQLOperationRetryConfig
 
 with PostgreSQL(
-    op_retry_config=PostgreSQLOpRetryConfig(
+    operation_retry_config=PostgreSQLOperationRetryConfig(
         enable_retry=True,            # Enable/disable (default: True)
         max_retries=3,                # Max attempts (default: 3)
         initial_retry_delay=1.0,      # Initial delay in seconds (default: 1.0)
@@ -174,6 +176,8 @@ from ddcDatabases import (
     MySQLPersistent,
     MongoDBPersistent,
     PersistentConnectionConfig,
+    PostgreSQLConnectionRetryConfig,
+    PostgreSQLOperationRetryConfig,
     close_all_persistent_connections,
 )
 
@@ -187,6 +191,19 @@ conn = PostgreSQLPersistent(
         idle_timeout=300,            # seconds before idle disconnect (default: 300)
         health_check_interval=30,    # seconds between health checks (default: 30)
         auto_reconnect=True,         # auto-reconnect on failure (default: True)
+    ),
+    connection_retry_config=PostgreSQLConnectionRetryConfig(
+        enable_retry=True,           # enable connection retry (default: True)
+        max_retries=5,               # max connection attempts (default: 5)
+        initial_retry_delay=1.0,     # initial delay in seconds (default: 1.0)
+        max_retry_delay=30.0,        # max delay in seconds (default: 30.0)
+    ),
+    operation_retry_config=PostgreSQLOperationRetryConfig(
+        enable_retry=True,           # enable operation retry (default: True)
+        max_retries=3,               # max operation attempts (default: 3)
+        initial_retry_delay=0.5,     # initial delay in seconds (default: 0.5)
+        max_retry_delay=10.0,        # max delay in seconds (default: 10.0)
+        jitter=0.1,                  # randomization factor (default: 0.1)
     ),
 )
 
@@ -207,6 +224,36 @@ async with conn as session:
 # Cleanup all persistent connections on application shutdown
 close_all_persistent_connections()
 ```
+
+### Execute with Retry
+
+The `execute_with_retry` method provides automatic session management with retry logic:
+
+**Synchronous:**
+```python
+from ddcDatabases import PostgreSQLPersistent
+
+db = PostgreSQLPersistent(logger=logger)
+result = db.execute_with_retry(
+    lambda session: MyDal(session).do_something()
+)
+```
+
+**Asynchronous:**
+```python
+from ddcDatabases import PostgreSQLPersistent
+
+db = PostgreSQLPersistent(async_mode=True, logger=logger)
+result = await db.execute_with_retry(
+    lambda session: MyDal(session).do_something()
+)
+```
+
+The method automatically:
+- Connects (or reuses existing connection)
+- Executes the operation with the session
+- Commits on success, rolls back on failure
+- Retries with exponential backoff if `auto_reconnect` is enabled
 
 **Available Persistent Connection Classes:**
 
@@ -605,7 +652,7 @@ async with PostgreSQL() as session:
     results = await db_utils_async.fetchall(stmt)
 ```
 
-**Note:** Retry logic is configured at the database connection level using `op_retry_config` (see [Retry Logic](#retry-logic) section).
+**Note:** Retry logic is configured at the database connection level using `operation_retry_config` (see [Retry Logic](#retry-logic) section).
 
 
 # Logging
@@ -638,27 +685,41 @@ logging.getLogger("ddcDatabases").addHandler(logging.StreamHandler())
 
 # Development
 
-Must have [UV](https://uv.run/docs/getting-started/installation),
-[Black](https://black.readthedocs.io/en/stable/getting_started.html),
-[Ruff](https://docs.astral.sh/ruff/installation/), and
-[Poe the Poet](https://poethepoet.naber.dev/installation) installed.
+Must have [UV](https://uv.run/docs/getting-started/installation) installed.
 
-## Create DEV Environment, Running Tests and Building Wheel
+## Create DEV Environment and Running Tests
+
+> **Note:** All poe tasks automatically run ruff linter along with Black formatting
 
 ```shell
-uv sync --all-extras
-poe linter
+uv sync --all-extras --all-groups
 poe test
 poe test-integration
+```
+
+## Update DEV Environment Packages
+This will update all packages dependencies
+
+```shell
+poe updatedev
+```
+
+
+## Building Wheel
+This will update all packages, run linter, both unit and integration tests and finally build the wheel
+
+```shell
 poe build
 ```
 
 ## Optionals
 
 ```shell
-poe profile (create a cprofile_unit.prof file from unit tests)
-poe profile-integration (create a cprofile_integration.prof file from integration tests)
-```
+# create a cprofile_unit.prof file from unit tests
+poe profile
+# create a cprofile_integration.prof file from integration tests
+poe profile-integration
+`````
 
 
 # License

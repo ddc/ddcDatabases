@@ -310,7 +310,7 @@ class TestRetryOperationSync:
 
         operation.assert_called_once()
 
-    @patch('ddcDatabases.core.retry.time.sleep')
+    @patch("ddcDatabases.core.retry.time.sleep")
     def test_delay_between_retries(self, mock_sleep):
         """Test that delays occur between retries."""
         config = BaseOperationRetryConfig(
@@ -348,7 +348,7 @@ class TestRetryOperationSync:
         """Test that falsy return values (0, False, None, '') are returned correctly."""
         config = BaseOperationRetryConfig()
 
-        for falsy_value in [0, False, None, '', [], {}]:
+        for falsy_value in [0, False, None, "", [], {}]:
             operation = MagicMock(return_value=falsy_value)
             result = retry_operation(operation, config, "test_op")
             assert result == falsy_value
@@ -433,7 +433,7 @@ class TestRetryOperationAsync:
         """Test that falsy return values are returned correctly in async."""
         config = BaseOperationRetryConfig()
 
-        for falsy_value in [0, False, None, '', [], {}]:
+        for falsy_value in [0, False, None, "", [], {}]:
 
             async def operation(val=falsy_value):  # noqa
                 return val
@@ -465,7 +465,7 @@ class TestRetryPolicyInDatabaseClasses:
         from ddcDatabases.postgresql import PostgreSQL
 
         pg = PostgreSQL()
-        retry_info = pg.get_conn_retry_info()
+        retry_info = pg.get_connection_retry_info()
 
         assert retry_info.enable_retry is True
         assert retry_info.max_retries == 3
@@ -477,7 +477,7 @@ class TestRetryPolicyInDatabaseClasses:
         from ddcDatabases.mysql import MySQL
 
         mysql = MySQL()
-        retry_info = mysql.get_conn_retry_info()
+        retry_info = mysql.get_connection_retry_info()
 
         assert retry_info.enable_retry is True
         assert retry_info.max_retries == 3
@@ -487,7 +487,7 @@ class TestRetryPolicyInDatabaseClasses:
         from ddcDatabases.mssql import MSSQL
 
         mssql = MSSQL()
-        retry_info = mssql.get_conn_retry_info()
+        retry_info = mssql.get_connection_retry_info()
 
         assert retry_info.enable_retry is True
         assert retry_info.max_retries == 3
@@ -497,7 +497,7 @@ class TestRetryPolicyInDatabaseClasses:
         from ddcDatabases.oracle import Oracle
 
         oracle = Oracle()
-        retry_info = oracle.get_conn_retry_info()
+        retry_info = oracle.get_connection_retry_info()
 
         assert retry_info.enable_retry is True
         assert retry_info.max_retries == 3
@@ -507,7 +507,7 @@ class TestRetryPolicyInDatabaseClasses:
         from ddcDatabases.sqlite import Sqlite
 
         sqlite = Sqlite()
-        retry_info = sqlite.get_conn_retry_info()
+        retry_info = sqlite.get_connection_retry_info()
 
         # SQLite has retry disabled by default
         assert retry_info.enable_retry is False
@@ -518,24 +518,24 @@ class TestRetryPolicyInDatabaseClasses:
         from ddcDatabases.mongodb import MongoDB
 
         mongodb = MongoDB(collection="test")
-        retry_info = mongodb.get_conn_retry_info()
+        retry_info = mongodb.get_connection_retry_info()
 
         assert retry_info.enable_retry is True
         assert retry_info.max_retries == 3
 
     def test_custom_retry_settings(self):
         """Test passing custom retry settings to database class."""
-        from ddcDatabases.postgresql import PostgreSQL, PostgreSQLConnRetryConfig
+        from ddcDatabases.postgresql import PostgreSQL, PostgreSQLConnectionRetryConfig
 
         pg = PostgreSQL(
-            conn_retry_config=PostgreSQLConnRetryConfig(
+            connection_retry_config=PostgreSQLConnectionRetryConfig(
                 enable_retry=False,
                 max_retries=5,
                 initial_retry_delay=2.0,
                 max_retry_delay=60.0,
             ),
         )
-        retry_info = pg.get_conn_retry_info()
+        retry_info = pg.get_connection_retry_info()
 
         assert retry_info.enable_retry is False
         assert retry_info.max_retries == 5

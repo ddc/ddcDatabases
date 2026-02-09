@@ -1,13 +1,13 @@
 import asyncio
 import pytest
 import sqlalchemy as sa
+from collections.abc import AsyncGenerator, Generator
 from contextlib import asynccontextmanager, contextmanager
 from importlib.util import find_spec
 from sqlalchemy import Boolean, Column, Integer, String
 from sqlalchemy.engine import Engine
 from sqlalchemy.ext.asyncio import AsyncEngine
 from sqlalchemy.orm import declarative_base
-from typing import AsyncGenerator, Generator
 from unittest.mock import AsyncMock, MagicMock, patch
 
 POSTGRESQL_AVAILABLE = find_spec("asyncpg") is not None and find_spec("psycopg") is not None
@@ -17,7 +17,7 @@ Base = declarative_base()
 
 
 class AsyncTestModel(Base):
-    __tablename__ = 'async_test_model'
+    __tablename__ = "async_test_model"
 
     id = Column(Integer, primary_key=True)
     name = Column(String(50))
@@ -101,11 +101,10 @@ class TestAsyncBaseConnection:
         )
 
         with (
-            patch.object(conn, '_get_async_engine') as mock_get_engine,
-            patch('ddcDatabases.core.base.async_sessionmaker') as mock_sessionmaker,
-            patch.object(conn, '_test_connection_async') as mock_test_conn,
+            patch.object(conn, "_get_async_engine") as mock_get_engine,
+            patch("ddcDatabases.core.base.async_sessionmaker") as mock_sessionmaker,
+            patch.object(conn, "_test_connection_async") as mock_test_conn,
         ):
-
             mock_engine = AsyncMock()
             mock_get_engine.return_value.__aenter__.return_value = mock_engine
 
@@ -116,7 +115,7 @@ class TestAsyncBaseConnection:
 
             async with conn as session:
                 assert session is mock_session
-                assert conn.is_connected == True
+                assert conn.is_connected
 
             mock_sessionmaker.assert_called_once()
             mock_test_conn.assert_called_once_with(mock_session)
@@ -149,7 +148,7 @@ class TestAsyncBaseConnection:
 
         mock_session.close.assert_called_once()
         mock_engine.dispose.assert_called_once()
-        assert conn.is_connected == False
+        assert not conn.is_connected
 
     @pytest.mark.skipif(not POSTGRESQL_AVAILABLE, reason="PostgreSQL drivers not available")
     async def test_get_async_engine(self):
@@ -173,8 +172,8 @@ class TestAsyncBaseConnection:
         async with conn._get_async_engine() as engine:
             # Our concrete implementation creates real engines
             assert engine is not None
-            assert hasattr(engine, 'dispose')  # Engine should have disposed method
-            assert hasattr(engine, 'url')  # Should have URL attribute
+            assert hasattr(engine, "dispose")  # Engine should have disposed method
+            assert hasattr(engine, "url")  # Should have URL attribute
 
 
 @pytest.mark.asyncio
@@ -338,7 +337,7 @@ class TestDBUtilsAsync:
         mock_session.execute.assert_called_once()
         # Verify that delete statement was created correctly
         call_args = mock_session.execute.call_args[0][0]
-        assert hasattr(call_args, 'table')  # Should be a delete statement
+        assert hasattr(call_args, "table")  # Should be a delete statement
         mock_session.commit.assert_called_once()
 
     async def test_deleteall_exception_handling(self):
@@ -521,5 +520,5 @@ class TestAsyncCompatibility:
         assert inspect.iscoroutinefunction(conn._test_connection_async)
 
         # Check async generator method
-        method = getattr(conn, '_get_async_engine')
+        method = conn._get_async_engine
         assert inspect.ismethod(method) or inspect.isfunction(method)

@@ -38,12 +38,12 @@ class MongoDBQueryConfig:
 
 
 @dataclass(frozen=True, slots=True)
-class MongoDBConnRetryConfig(BaseRetryConfig):
+class MongoDBConnectionRetryConfig(BaseRetryConfig):
     pass
 
 
 @dataclass(frozen=True, slots=True)
-class MongoDBOpRetryConfig(BaseOperationRetryConfig):
+class MongoDBOperationRetryConfig(BaseOperationRetryConfig):
     pass
 
 
@@ -61,10 +61,10 @@ class MongoDB:
         database: str | None = None,
         collection: str | None = None,
         query_config: MongoDBQueryConfig | None = None,
-        conn_retry_config: MongoDBConnRetryConfig | None = None,
-        op_retry_config: MongoDBOpRetryConfig | None = None,
+        connection_retry_config: MongoDBConnectionRetryConfig | None = None,
+        operation_retry_config: MongoDBOperationRetryConfig | None = None,
         tls_config: MongoDBTLSConfig | None = None,
-        logger: logging.Logger | None = None,
+        logger: Any = None,
     ) -> None:
         _settings = get_mongodb_settings()
 
@@ -108,28 +108,34 @@ class MongoDB:
         self.async_cursor_ref = None
 
         # Create connection retry configuration
-        _crc = conn_retry_config or MongoDBConnRetryConfig()
-        self._conn_retry_config = MongoDBConnRetryConfig(
-            enable_retry=_crc.enable_retry if _crc.enable_retry is not None else _settings.conn_enable_retry,
-            max_retries=_crc.max_retries if _crc.max_retries is not None else _settings.conn_max_retries,
+        _crc = connection_retry_config or MongoDBConnectionRetryConfig()
+        self._connection_retry_config = MongoDBConnectionRetryConfig(
+            enable_retry=_crc.enable_retry if _crc.enable_retry is not None else _settings.connection_enable_retry,
+            max_retries=_crc.max_retries if _crc.max_retries is not None else _settings.connection_max_retries,
             initial_retry_delay=(
-                _crc.initial_retry_delay if _crc.initial_retry_delay is not None else _settings.conn_initial_retry_delay
+                _crc.initial_retry_delay
+                if _crc.initial_retry_delay is not None
+                else _settings.connection_initial_retry_delay
             ),
             max_retry_delay=(
-                _crc.max_retry_delay if _crc.max_retry_delay is not None else _settings.conn_max_retry_delay
+                _crc.max_retry_delay if _crc.max_retry_delay is not None else _settings.connection_max_retry_delay
             ),
         )
 
         # Create operation retry configuration
-        _orc = op_retry_config or MongoDBOpRetryConfig()
-        self._op_retry_config = MongoDBOpRetryConfig(
-            enable_retry=_orc.enable_retry if _orc.enable_retry is not None else _settings.op_enable_retry,
-            max_retries=_orc.max_retries if _orc.max_retries is not None else _settings.op_max_retries,
+        _orc = operation_retry_config or MongoDBOperationRetryConfig()
+        self._operation_retry_config = MongoDBOperationRetryConfig(
+            enable_retry=_orc.enable_retry if _orc.enable_retry is not None else _settings.operation_enable_retry,
+            max_retries=_orc.max_retries if _orc.max_retries is not None else _settings.operation_max_retries,
             initial_retry_delay=(
-                _orc.initial_retry_delay if _orc.initial_retry_delay is not None else _settings.op_initial_retry_delay
+                _orc.initial_retry_delay
+                if _orc.initial_retry_delay is not None
+                else _settings.operation_initial_retry_delay
             ),
-            max_retry_delay=_orc.max_retry_delay if _orc.max_retry_delay is not None else _settings.op_max_retry_delay,
-            jitter=_orc.jitter if _orc.jitter is not None else _settings.op_jitter,
+            max_retry_delay=(
+                _orc.max_retry_delay if _orc.max_retry_delay is not None else _settings.operation_max_retry_delay
+            ),
+            jitter=_orc.jitter if _orc.jitter is not None else _settings.operation_jitter,
         )
 
         self.logger = logger if logger is not None else _logger
@@ -162,11 +168,11 @@ class MongoDB:
     def get_query_info(self) -> MongoDBQueryConfig:
         return self._query_config
 
-    def get_conn_retry_info(self) -> MongoDBConnRetryConfig:
-        return self._conn_retry_config
+    def get_connection_retry_info(self) -> MongoDBConnectionRetryConfig:
+        return self._connection_retry_config
 
-    def get_op_retry_info(self) -> MongoDBOpRetryConfig:
-        return self._op_retry_config
+    def get_operation_retry_info(self) -> MongoDBOperationRetryConfig:
+        return self._operation_retry_config
 
     def get_tls_info(self) -> MongoDBTLSConfig:
         return self._tls_config
@@ -206,7 +212,7 @@ class MongoDB:
                 raise
 
         try:
-            return retry_operation(connect, self._conn_retry_config, "mongodb_connect", logger=self.logger)
+            return retry_operation(connect, self._connection_retry_config, "mongodb_connect", logger=self.logger)
         except (PyMongoError, ConnectionError, RuntimeError, ValueError, TypeError):
             sys.exit(1)
 
@@ -281,7 +287,7 @@ class MongoDB:
 
         try:
             return await retry_operation_async(
-                connect, self._conn_retry_config, "mongodb_async_connect", logger=self.logger
+                connect, self._connection_retry_config, "mongodb_async_connect", logger=self.logger
             )
         except (PyMongoError, ConnectionError, RuntimeError, ValueError, TypeError):
             sys.exit(1)

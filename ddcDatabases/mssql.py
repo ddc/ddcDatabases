@@ -8,12 +8,13 @@ from .core.configs import (
     BaseSessionConfig,
 )
 from .core.settings import get_mssql_settings
+from collections.abc import AsyncGenerator, Generator
 from contextlib import asynccontextmanager, contextmanager
 from dataclasses import dataclass
 from sqlalchemy.engine import URL, Engine, create_engine
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
 from sqlalchemy.orm import Session
-from typing import AsyncGenerator, Generator
+from typing import Any
 
 _logger = logging.getLogger(__name__)
 _logger.addHandler(logging.NullHandler())
@@ -44,12 +45,12 @@ class MSSQLSessionConfig(BaseSessionConfig):
 
 
 @dataclass(frozen=True, slots=True)
-class MSSQLConnRetryConfig(BaseRetryConfig):
+class MSSQLConnectionRetryConfig(BaseRetryConfig):
     pass
 
 
 @dataclass(frozen=True, slots=True)
-class MSSQLOpRetryConfig(BaseOperationRetryConfig):
+class MSSQLOperationRetryConfig(BaseOperationRetryConfig):
     pass
 
 
@@ -68,11 +69,11 @@ class MSSQL(BaseConnection):
         schema: str | None = None,
         pool_config: MSSQLPoolConfig | None = None,
         session_config: MSSQLSessionConfig | None = None,
-        conn_retry_config: MSSQLConnRetryConfig | None = None,
-        op_retry_config: MSSQLOpRetryConfig | None = None,
+        connection_retry_config: MSSQLConnectionRetryConfig | None = None,
+        operation_retry_config: MSSQLOperationRetryConfig | None = None,
         ssl_config: MSSQLSSLConfig | None = None,
         extra_engine_args: dict | None = None,
-        logger: logging.Logger | None = None,
+        logger: Any = None,
     ) -> None:
         _settings = get_mssql_settings()
 
@@ -112,11 +113,21 @@ class MSSQL(BaseConnection):
                 if _ssl.ssl_trust_server_certificate is not None
                 else _settings.ssl_trust_server_certificate
             ),
-            ssl_ca_cert_path=_ssl.ssl_ca_cert_path,
+            ssl_ca_cert_path=(
+                _ssl.ssl_ca_cert_path if _ssl.ssl_ca_cert_path is not None else _settings.ssl_ca_cert_path
+            ),
         )
 
         self.sync_driver = _settings.sync_driver
         self.async_driver = _settings.async_driver
+
+        _query = {
+            "driver": f"ODBC Driver {self._connection_config.odbcdriver_version} for SQL Server",
+            "Encrypt": "yes" if self._ssl_config.ssl_encrypt else "no",
+            "TrustServerCertificate": "yes" if self._ssl_config.ssl_trust_server_certificate else "no",
+        }
+        if self._ssl_config.ssl_ca_cert_path:
+            _query["ServerCertificate"] = self._ssl_config.ssl_ca_cert_path
 
         self.connection_url = {
             "host": self._connection_config.host,
@@ -124,11 +135,7 @@ class MSSQL(BaseConnection):
             "database": self._connection_config.database,
             "username": self._connection_config.user,
             "password": self._connection_config.password,
-            "query": {
-                "driver": f"ODBC Driver {self._connection_config.odbcdriver_version} for SQL Server",
-                "Encrypt": "yes" if self._ssl_config.ssl_encrypt else "no",
-                "TrustServerCertificate": "yes" if self._ssl_config.ssl_trust_server_certificate else "no",
-            },
+            "query": _query,
         }
 
         self.extra_engine_args = extra_engine_args or {}
@@ -147,28 +154,34 @@ class MSSQL(BaseConnection):
         }
 
         # Create connection retry configuration
-        _crc = conn_retry_config or MSSQLConnRetryConfig()
-        self._conn_retry_config = MSSQLConnRetryConfig(
-            enable_retry=_crc.enable_retry if _crc.enable_retry is not None else _settings.conn_enable_retry,
-            max_retries=_crc.max_retries if _crc.max_retries is not None else _settings.conn_max_retries,
+        _crc = connection_retry_config or MSSQLConnectionRetryConfig()
+        self._connection_retry_config = MSSQLConnectionRetryConfig(
+            enable_retry=_crc.enable_retry if _crc.enable_retry is not None else _settings.connection_enable_retry,
+            max_retries=_crc.max_retries if _crc.max_retries is not None else _settings.connection_max_retries,
             initial_retry_delay=(
-                _crc.initial_retry_delay if _crc.initial_retry_delay is not None else _settings.conn_initial_retry_delay
+                _crc.initial_retry_delay
+                if _crc.initial_retry_delay is not None
+                else _settings.connection_initial_retry_delay
             ),
             max_retry_delay=(
-                _crc.max_retry_delay if _crc.max_retry_delay is not None else _settings.conn_max_retry_delay
+                _crc.max_retry_delay if _crc.max_retry_delay is not None else _settings.connection_max_retry_delay
             ),
         )
 
         # Create operation retry configuration
-        _orc = op_retry_config or MSSQLOpRetryConfig()
-        self._op_retry_config = MSSQLOpRetryConfig(
-            enable_retry=_orc.enable_retry if _orc.enable_retry is not None else _settings.op_enable_retry,
-            max_retries=_orc.max_retries if _orc.max_retries is not None else _settings.op_max_retries,
+        _orc = operation_retry_config or MSSQLOperationRetryConfig()
+        self._operation_retry_config = MSSQLOperationRetryConfig(
+            enable_retry=_orc.enable_retry if _orc.enable_retry is not None else _settings.operation_enable_retry,
+            max_retries=_orc.max_retries if _orc.max_retries is not None else _settings.operation_max_retries,
             initial_retry_delay=(
-                _orc.initial_retry_delay if _orc.initial_retry_delay is not None else _settings.op_initial_retry_delay
+                _orc.initial_retry_delay
+                if _orc.initial_retry_delay is not None
+                else _settings.operation_initial_retry_delay
             ),
-            max_retry_delay=_orc.max_retry_delay if _orc.max_retry_delay is not None else _settings.op_max_retry_delay,
-            jitter=_orc.jitter if _orc.jitter is not None else _settings.op_jitter,
+            max_retry_delay=(
+                _orc.max_retry_delay if _orc.max_retry_delay is not None else _settings.operation_max_retry_delay
+            ),
+            jitter=_orc.jitter if _orc.jitter is not None else _settings.operation_jitter,
         )
 
         self.logger = logger if logger is not None else _logger
@@ -180,8 +193,8 @@ class MSSQL(BaseConnection):
             expire_on_commit=self._session_config.expire_on_commit,
             sync_driver=self.sync_driver,
             async_driver=self.async_driver,
-            conn_retry_config=self._conn_retry_config,
-            op_retry_config=self._op_retry_config,
+            connection_retry_config=self._connection_retry_config,
+            operation_retry_config=self._operation_retry_config,
             logger=self.logger,
         )
 
@@ -211,11 +224,11 @@ class MSSQL(BaseConnection):
     def get_session_info(self) -> MSSQLSessionConfig:
         return self._session_config
 
-    def get_conn_retry_info(self) -> MSSQLConnRetryConfig:
-        return self._conn_retry_config
+    def get_connection_retry_info(self) -> MSSQLConnectionRetryConfig:
+        return self._connection_retry_config
 
-    def get_op_retry_info(self) -> MSSQLOpRetryConfig:
-        return self._op_retry_config
+    def get_operation_retry_info(self) -> MSSQLOperationRetryConfig:
+        return self._operation_retry_config
 
     def get_ssl_info(self) -> MSSQLSSLConfig:
         return self._ssl_config

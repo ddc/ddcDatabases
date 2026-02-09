@@ -1,5 +1,6 @@
 import pytest
 import sqlalchemy as sa
+from collections.abc import AsyncGenerator, Generator
 from contextlib import asynccontextmanager, contextmanager
 from importlib.util import find_spec
 from sqlalchemy import Boolean, Column, Integer, String
@@ -7,7 +8,6 @@ from sqlalchemy.engine import Engine
 from sqlalchemy.engine.url import URL
 from sqlalchemy.ext.asyncio import AsyncEngine
 from sqlalchemy.orm import declarative_base
-from typing import AsyncGenerator, Generator
 from unittest.mock import AsyncMock, MagicMock, patch
 
 POSTGRESQL_AVAILABLE = find_spec("asyncpg") is not None and find_spec("psycopg") is not None
@@ -17,7 +17,7 @@ Base = declarative_base()
 
 
 class DatabaseModel(Base):
-    __tablename__ = 'test_model'
+    __tablename__ = "test_model"
 
     id = Column(Integer, primary_key=True)
     name = Column(String(50))
@@ -35,8 +35,8 @@ class ConcreteTestConnection:
         expire_on_commit,
         sync_driver,
         async_driver,
-        conn_retry_config=None,
-        op_retry_config=None,
+        connection_retry_config=None,
+        operation_retry_config=None,
     ):
         """Create a concrete test implementation of BaseConnection"""
         from ddcDatabases.core.base import BaseConnection
@@ -82,8 +82,8 @@ class ConcreteTestConnection:
             expire_on_commit=expire_on_commit,
             sync_driver=sync_driver,
             async_driver=async_driver,
-            conn_retry_config=conn_retry_config,
-            op_retry_config=op_retry_config,
+            connection_retry_config=connection_retry_config,
+            operation_retry_config=operation_retry_config,
         )
 
 
@@ -116,15 +116,15 @@ class TestBaseConnection:
 
         assert conn.connection_url == connection_url
         assert conn.engine_args == engine_args
-        assert conn.autoflush == True
-        assert conn.expire_on_commit == False
+        assert conn.autoflush
+        assert not conn.expire_on_commit
         assert conn.sync_driver == "postgresql+psycopg"
         assert conn.async_driver == "postgresql+asyncpg"
-        assert conn.is_connected == False
+        assert not conn.is_connected
         assert conn.session is None
 
     @pytest.mark.skipif(not POSTGRESQL_AVAILABLE, reason="PostgreSQL drivers not available")
-    @patch('sqlalchemy.engine.create_engine')
+    @patch("sqlalchemy.engine.create_engine")
     def test_get_engine(self, mock_create_engine):
         """Test _get_engine context manager"""
         connection_url = {
@@ -159,7 +159,7 @@ class TestBaseConnection:
         test_conn = self.ConnectionTester(sync_session=mock_session)
         result = test_conn.test_connection_sync()
 
-        assert result == True
+        assert result
         mock_session.execute.assert_called_once()
         # Check that standard query was used
         call_args = mock_session.execute.call_args[0][0]
@@ -586,7 +586,7 @@ class TestDBUtilsAsync:
         mock_session.execute.assert_called_once()
         # Check that delete statement was used
         call_args = mock_session.execute.call_args[0][0]
-        assert hasattr(call_args, 'table')
+        assert hasattr(call_args, "table")
         mock_session.commit.assert_called_once()
 
     @pytest.mark.asyncio
@@ -656,16 +656,16 @@ class TestBaseConnectionContextManagers:
             expire_on_commit=False,
             sync_driver="postgresql+psycopg",
             async_driver=None,
-            conn_retry_config=BaseRetryConfig(enable_retry=False),
+            connection_retry_config=BaseRetryConfig(enable_retry=False),
         )
 
         mock_session = MagicMock()
         mock_engine = MagicMock()
 
         with (
-            patch.object(conn, '_get_engine') as mock_get_engine,
-            patch('ddcDatabases.core.base.sessionmaker') as mock_sessionmaker,
-            patch.object(conn, '_test_connection_sync') as mock_test_conn,
+            patch.object(conn, "_get_engine") as mock_get_engine,
+            patch("ddcDatabases.core.base.sessionmaker") as mock_sessionmaker,
+            patch.object(conn, "_test_connection_sync") as mock_test_conn,
         ):
             mock_get_engine.return_value.__enter__.return_value = mock_engine
             mock_get_engine.return_value.__exit__.return_value = None
@@ -677,11 +677,11 @@ class TestBaseConnectionContextManagers:
 
             with conn as session:
                 assert session is mock_session
-                assert conn.is_connected == True
+                assert conn.is_connected
                 mock_test_conn.assert_called_once_with(mock_session)
 
             # After exiting context, connection should be cleaned up
-            assert conn.is_connected == False
+            assert not conn.is_connected
             mock_session.close.assert_called_once()
             mock_engine.dispose.assert_called_once()
 
@@ -704,11 +704,10 @@ class TestBaseConnectionContextManagers:
         mock_engine = AsyncMock()
 
         with (
-            patch.object(conn, '_get_async_engine') as mock_get_engine,
-            patch('ddcDatabases.core.base.async_sessionmaker') as mock_sessionmaker,
-            patch.object(conn, '_test_connection_async') as mock_test_conn,
+            patch.object(conn, "_get_async_engine") as mock_get_engine,
+            patch("ddcDatabases.core.base.async_sessionmaker") as mock_sessionmaker,
+            patch.object(conn, "_test_connection_async") as mock_test_conn,
         ):
-
             mock_get_engine.return_value.__aenter__.return_value = mock_engine
             mock_get_engine.return_value.__aexit__.return_value = None
 
@@ -719,17 +718,17 @@ class TestBaseConnectionContextManagers:
 
             async with conn as session:
                 assert session is mock_session
-                assert conn.is_connected == True
+                assert conn.is_connected
                 mock_test_conn.assert_called_once_with(mock_session)
 
             # After exiting context, connection should be cleaned up
-            assert conn.is_connected == False
+            assert not conn.is_connected
             mock_session.close.assert_called_once()
             # Engine dispose is called once in __aexit__ (we mocked _get_async_engine)
             mock_engine.dispose.assert_called_once()
 
     @pytest.mark.skipif(not POSTGRESQL_AVAILABLE, reason="PostgreSQL drivers not available")
-    @patch('sqlalchemy.engine.create_engine')
+    @patch("sqlalchemy.engine.create_engine")
     def test_get_engine_context_manager(self, mock_create_engine):
         """Test _get_engine context manager - Lines 86-102"""
         connection_url = {"host": "localhost", "database": "test"}
@@ -774,8 +773,8 @@ class TestBaseConnectionContextManagers:
             # Our concrete implementation creates real engines
             assert engine is not None
             # Check that the engine has the expected configuration
-            assert hasattr(engine, 'dispose')  # Engine should have disposed method
-            assert hasattr(engine, 'url')  # Should have URL attribute
+            assert hasattr(engine, "dispose")  # Engine should have disposed method
+            assert hasattr(engine, "url")  # Should have URL attribute
 
     def test_test_connection_sync_method(self):
         """Test _test_connection_sync method - Lines 122-132"""
@@ -792,7 +791,7 @@ class TestBaseConnectionContextManagers:
 
         mock_session = MagicMock()
 
-        with patch('ddcDatabases.core.base.ConnectionTester') as mock_tester_class:
+        with patch("ddcDatabases.core.base.ConnectionTester") as mock_tester_class:
             mock_tester = MagicMock()
             mock_tester_class.return_value = mock_tester
 
@@ -802,10 +801,10 @@ class TestBaseConnectionContextManagers:
             mock_tester_class.assert_called_once()
             call_kwargs = mock_tester_class.call_args[1]
 
-            assert call_kwargs['sync_session'] is mock_session
-            assert isinstance(call_kwargs['host_url'], URL)
+            assert call_kwargs["sync_session"] is mock_session
+            assert isinstance(call_kwargs["host_url"], URL)
             # Verify password was removed from connection URL
-            assert 'password' not in str(call_kwargs['host_url'])
+            assert "password" not in str(call_kwargs["host_url"])
 
             mock_tester.test_connection_sync.assert_called_once()
 
@@ -825,7 +824,7 @@ class TestBaseConnectionContextManagers:
 
         mock_session = AsyncMock()
 
-        with patch('ddcDatabases.core.base.ConnectionTester') as mock_tester_class:
+        with patch("ddcDatabases.core.base.ConnectionTester") as mock_tester_class:
             mock_tester = MagicMock()
             mock_tester.test_connection_async = AsyncMock()
             mock_tester_class.return_value = mock_tester
@@ -836,10 +835,10 @@ class TestBaseConnectionContextManagers:
             mock_tester_class.assert_called_once()
             call_kwargs = mock_tester_class.call_args[1]
 
-            assert call_kwargs['async_session'] is mock_session
-            assert isinstance(call_kwargs['host_url'], URL)
+            assert call_kwargs["async_session"] is mock_session
+            assert isinstance(call_kwargs["host_url"], URL)
             # Verify password was removed from connection URL
-            assert 'password' not in str(call_kwargs['host_url'])
+            assert "password" not in str(call_kwargs["host_url"])
 
             mock_tester.test_connection_async.assert_called_once()
 
@@ -861,7 +860,7 @@ class TestConnectionTesterCoverage:
         tester = self.ConnectionTester(sync_session=mock_session)
         result = tester.test_connection_sync()
 
-        assert result == True
+        assert result
         mock_session.execute.assert_called_once()
         # Verify Oracle-specific query was used
         call_args = mock_session.execute.call_args[0][0]
@@ -876,7 +875,7 @@ class TestConnectionTesterCoverage:
         tester = self.ConnectionTester(async_session=mock_session)
         result = await tester.test_connection_async()
 
-        assert result == True  # This tests line 185
+        assert result  # This tests line 185
         mock_session.execute.assert_called_once()
         # Verify Oracle-specific query was used (line 181)
         call_args = mock_session.execute.call_args[0][0]

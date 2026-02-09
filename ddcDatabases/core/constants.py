@@ -56,7 +56,8 @@ CONNECTION_ERROR_KEYWORDS: frozenset[str] = frozenset(
 
 
 class SettingsMessages:
-    # Field description strings for settings
+    """Field description strings for settings"""
+
     ECHO_DESCRIPTION = "Enable SQLAlchemy query logging"
     AUTOFLUSH_DESCRIPTION = "Enable autoflush"
     EXPIRE_ON_COMMIT_DESCRIPTION = "Enable expire on commit"
@@ -88,6 +89,11 @@ class SettingsMessages:
     MAX_RETRY_DELAY_DESCRIPTION = "Maximum delay between retries in seconds"
     JITTER_DESCRIPTION = "Jitter factor for retry delays (0.0-1.0)"
     DISCONNECT_IDLE_TIMEOUT_DESCRIPTION = "Disconnect idle timeout in seconds for persistent connections"
+
+    # Persistent connection settings descriptions
+    PERSISTENT_IDLE_TIMEOUT_DESCRIPTION = "Seconds before idle persistent connection is closed"
+    PERSISTENT_HEALTH_CHECK_INTERVAL_DESCRIPTION = "Seconds between health checks for persistent connections"
+    PERSISTENT_AUTO_RECONNECT_DESCRIPTION = "Enable automatic reconnection for persistent connections"
 
     # SQLite specific
     SQLITE_FILE_PATH_DESCRIPTION = "Path to SQLite database file"

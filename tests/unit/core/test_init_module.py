@@ -2,7 +2,6 @@ from unittest.mock import patch
 
 
 class TestInitModule:
-
     def test_logging_configuration(self):
         """Test that logging is properly configured with NullHandler"""
         import logging
@@ -24,11 +23,11 @@ class TestInitModule:
 
         try:
             # Create a test scenario that will trigger ModuleNotFoundError
-            if 'ddcDatabases' in sys.modules:
-                del sys.modules['ddcDatabases']
+            if "ddcDatabases" in sys.modules:
+                del sys.modules["ddcDatabases"]
 
             # Mock the version function to raise ModuleNotFoundError
-            with patch('importlib.metadata.version') as mock_version:
+            with patch("importlib.metadata.version") as mock_version:
                 mock_version.side_effect = ModuleNotFoundError("No module named 'ddcDatabases'")
 
                 # This should trigger the exception handling code
@@ -51,32 +50,39 @@ class TestInitModule:
         """Test the actual exception path in the module initialization"""
         import sys
 
-        # Force a re-import with mocked version to test the exception path
-        with patch('importlib.metadata.version') as mock_version:
-            mock_version.side_effect = ModuleNotFoundError("No module named 'ddcDatabases'")
+        original_modules = sys.modules.copy()
 
-            # Remove the module from cache if it exists
-            modules_to_remove = [name for name in sys.modules.keys() if name.startswith('ddcDatabases')]
-            for module_name in modules_to_remove:
-                del sys.modules[module_name]
+        try:
+            # Force a re-import with mocked version to test the exception path
+            with patch("importlib.metadata.version") as mock_version:
+                mock_version.side_effect = ModuleNotFoundError("No module named 'ddcDatabases'")
 
-            # Import the module, which should trigger the exception path
+                # Remove the module from cache if it exists
+                modules_to_remove = [name for name in sys.modules.keys() if name.startswith("ddcDatabases")]
+                for module_name in modules_to_remove:
+                    del sys.modules[module_name]
 
-            # The module should have the fallback version
-            # Note: This might not work as expected due to module caching,
-            # but it demonstrates the intended test case
+                # Import the module, which should trigger the exception path
+
+                # The module should have the fallback version
+                # Note: This might not work as expected due to module caching,
+                # but it demonstrates the intended test case
+        finally:
+            # Restore original modules to prevent contamination of subsequent tests
+            sys.modules.clear()
+            sys.modules.update(original_modules)
 
     def test_constants_accessibility(self):
         """Test that all module constants are accessible"""
         import ddcDatabases
 
         constants = [
-            '__title__',
-            '__author__',
-            '__email__',
-            '__license__',
-            '__copyright__',
-            '__version__',
+            "__title__",
+            "__author__",
+            "__email__",
+            "__license__",
+            "__copyright__",
+            "__version__",
         ]
 
         for const in constants:
@@ -181,16 +187,16 @@ class TestInitModule:
         from ddcDatabases import (
             MariaDB,
             MariaDBConnectionConfig,
-            MariaDBConnRetryConfig,
-            MariaDBOpRetryConfig,
+            MariaDBConnectionRetryConfig,
+            MariaDBOperationRetryConfig,
             MariaDBPersistent,
             MariaDBPoolConfig,
             MariaDBSessionConfig,
             MariaDBSSLConfig,
             MySQL,
             MySQLConnectionConfig,
-            MySQLConnRetryConfig,
-            MySQLOpRetryConfig,
+            MySQLConnectionRetryConfig,
+            MySQLOperationRetryConfig,
             MySQLPersistent,
             MySQLPoolConfig,
             MySQLSessionConfig,
@@ -200,8 +206,8 @@ class TestInitModule:
         # Verify all MariaDB aliases point to their MySQL equivalents
         assert MariaDB is MySQL
         assert MariaDBConnectionConfig is MySQLConnectionConfig
-        assert MariaDBConnRetryConfig is MySQLConnRetryConfig
-        assert MariaDBOpRetryConfig is MySQLOpRetryConfig
+        assert MariaDBConnectionRetryConfig is MySQLConnectionRetryConfig
+        assert MariaDBOperationRetryConfig is MySQLOperationRetryConfig
         assert MariaDBPersistent is MySQLPersistent
         assert MariaDBPoolConfig is MySQLPoolConfig
         assert MariaDBSessionConfig is MySQLSessionConfig
