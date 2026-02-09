@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import ssl as _ssl_module
 import threading
 import time
 import weakref
@@ -780,6 +781,12 @@ class PostgreSQLPersistent:
             ),
         )
 
+        # Build SSL connect_args from settings
+        ssl_mode = _settings.ssl_mode
+        ssl_ca_cert_path = _settings.ssl_ca_cert_path
+        ssl_client_cert_path = _settings.ssl_client_cert_path
+        ssl_client_key_path = _settings.ssl_client_key_path
+
         with _registry_lock:
             if connection_key in _persistent_connections:
                 return cast(
@@ -796,10 +803,32 @@ class PostgreSQLPersistent:
                     port=port,
                     database=database,
                 )
+
+                # Build asyncpg SSL connect_args
+                async_connect_args = {}
+                if ssl_mode and ssl_mode != "disable":
+                    if ssl_ca_cert_path:
+                        ssl_context = _ssl_module.SSLContext(_ssl_module.PROTOCOL_TLS_CLIENT)
+                        ssl_context.minimum_version = _ssl_module.TLSVersion.TLSv1_3
+                        ssl_context.load_verify_locations(cafile=ssl_ca_cert_path)
+                        if ssl_client_cert_path and ssl_client_key_path:
+                            ssl_context.load_cert_chain(
+                                certfile=ssl_client_cert_path,
+                                keyfile=ssl_client_key_path,
+                            )
+                        async_connect_args["ssl"] = ssl_context
+                    else:
+                        async_connect_args["ssl"] = ssl_mode
+
+                merged_kwargs = {**engine_kwargs}
+                if async_connect_args:
+                    existing_connect_args = merged_kwargs.get("connect_args", {})
+                    merged_kwargs["connect_args"] = {**existing_connect_args, **async_connect_args}
+
                 conn = PersistentSQLAlchemyAsyncConnection(
                     connection_key=connection_key,
                     connection_url=connection_url,
-                    engine_args=engine_kwargs,
+                    engine_args=merged_kwargs,
                     config=config,
                     connection_retry_config=connection_retry_config,
                     operation_retry_config=operation_retry_config,
@@ -814,10 +843,27 @@ class PostgreSQLPersistent:
                     port=port,
                     database=database,
                 )
+
+                # Build psycopg SSL connect_args
+                sync_connect_args = {}
+                if ssl_mode and ssl_mode != "disable":
+                    sync_connect_args["sslmode"] = ssl_mode
+                    if ssl_ca_cert_path:
+                        sync_connect_args["sslrootcert"] = ssl_ca_cert_path
+                    if ssl_client_cert_path:
+                        sync_connect_args["sslcert"] = ssl_client_cert_path
+                    if ssl_client_key_path:
+                        sync_connect_args["sslkey"] = ssl_client_key_path
+
+                merged_kwargs = {**engine_kwargs}
+                if sync_connect_args:
+                    existing_connect_args = merged_kwargs.get("connect_args", {})
+                    merged_kwargs["connect_args"] = {**existing_connect_args, **sync_connect_args}
+
                 conn = PersistentSQLAlchemyConnection(
                     connection_key=connection_key,
                     connection_url=connection_url,
-                    engine_args=engine_kwargs,
+                    engine_args=merged_kwargs,
                     config=config,
                     connection_retry_config=connection_retry_config,
                     operation_retry_config=operation_retry_config,
@@ -917,12 +963,36 @@ class MySQLPersistent:
             ),
         )
 
+        # Build SSL connect_args from settings
+        ssl_mode = _settings.ssl_mode
+        ssl_ca_cert_path = _settings.ssl_ca_cert_path
+        ssl_client_cert_path = _settings.ssl_client_cert_path
+        ssl_client_key_path = _settings.ssl_client_key_path
+
         with _registry_lock:
             if connection_key in _persistent_connections:
                 return cast(
                     PersistentSQLAlchemyConnection | PersistentSQLAlchemyAsyncConnection,
                     _persistent_connections[connection_key],
                 )
+
+            # Build MySQL SSL connect_args (same format for both pymysql and aiomysql)
+            ssl_connect_args = {}
+            if ssl_mode and ssl_mode != "DISABLED":
+                ssl_dict: dict[str, str] = {}
+                if ssl_ca_cert_path:
+                    ssl_dict["ca"] = ssl_ca_cert_path
+                if ssl_client_cert_path:
+                    ssl_dict["cert"] = ssl_client_cert_path
+                if ssl_client_key_path:
+                    ssl_dict["key"] = ssl_client_key_path
+                if ssl_dict:
+                    ssl_connect_args["ssl"] = ssl_dict
+
+            merged_kwargs = {**engine_kwargs}
+            if ssl_connect_args:
+                existing_connect_args = merged_kwargs.get("connect_args", {})
+                merged_kwargs["connect_args"] = {**existing_connect_args, **ssl_connect_args}
 
             if async_mode:
                 connection_url = URL.create(
@@ -936,7 +1006,7 @@ class MySQLPersistent:
                 conn = PersistentSQLAlchemyAsyncConnection(
                     connection_key=connection_key,
                     connection_url=connection_url,
-                    engine_args=engine_kwargs,
+                    engine_args=merged_kwargs,
                     config=config,
                     connection_retry_config=connection_retry_config,
                     operation_retry_config=operation_retry_config,
@@ -954,7 +1024,7 @@ class MySQLPersistent:
                 conn = PersistentSQLAlchemyConnection(
                     connection_key=connection_key,
                     connection_url=connection_url,
-                    engine_args=engine_kwargs,
+                    engine_args=merged_kwargs,
                     config=config,
                     connection_retry_config=connection_retry_config,
                     operation_retry_config=operation_retry_config,
@@ -1054,6 +1124,13 @@ class MSSQLPersistent:
             ),
         )
 
+        # Build SSL query params from settings
+        _query: dict[str, str] = {"driver": "ODBC Driver 18 for SQL Server"}
+        _query["Encrypt"] = "yes" if _settings.ssl_encrypt else "no"
+        _query["TrustServerCertificate"] = "yes" if _settings.ssl_trust_server_certificate else "no"
+        if _settings.ssl_ca_cert_path:
+            _query["ServerCertificate"] = _settings.ssl_ca_cert_path
+
         with _registry_lock:
             if connection_key in _persistent_connections:
                 return cast(
@@ -1069,7 +1146,7 @@ class MSSQLPersistent:
                     host=host,
                     port=port,
                     database=database,
-                    query={"driver": "ODBC Driver 18 for SQL Server", "TrustServerCertificate": "yes"},
+                    query=_query,
                 )
                 conn = PersistentSQLAlchemyAsyncConnection(
                     connection_key=connection_key,
@@ -1088,7 +1165,7 @@ class MSSQLPersistent:
                     host=host,
                     port=port,
                     database=database,
-                    query={"driver": "ODBC Driver 18 for SQL Server", "TrustServerCertificate": "yes"},
+                    query=_query,
                 )
                 conn = PersistentSQLAlchemyConnection(
                     connection_key=connection_key,

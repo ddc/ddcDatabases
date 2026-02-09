@@ -50,20 +50,27 @@ class TestInitModule:
         """Test the actual exception path in the module initialization"""
         import sys
 
-        # Force a re-import with mocked version to test the exception path
-        with patch("importlib.metadata.version") as mock_version:
-            mock_version.side_effect = ModuleNotFoundError("No module named 'ddcDatabases'")
+        original_modules = sys.modules.copy()
 
-            # Remove the module from cache if it exists
-            modules_to_remove = [name for name in sys.modules.keys() if name.startswith("ddcDatabases")]
-            for module_name in modules_to_remove:
-                del sys.modules[module_name]
+        try:
+            # Force a re-import with mocked version to test the exception path
+            with patch("importlib.metadata.version") as mock_version:
+                mock_version.side_effect = ModuleNotFoundError("No module named 'ddcDatabases'")
 
-            # Import the module, which should trigger the exception path
+                # Remove the module from cache if it exists
+                modules_to_remove = [name for name in sys.modules.keys() if name.startswith("ddcDatabases")]
+                for module_name in modules_to_remove:
+                    del sys.modules[module_name]
 
-            # The module should have the fallback version
-            # Note: This might not work as expected due to module caching,
-            # but it demonstrates the intended test case
+                # Import the module, which should trigger the exception path
+
+                # The module should have the fallback version
+                # Note: This might not work as expected due to module caching,
+                # but it demonstrates the intended test case
+        finally:
+            # Restore original modules to prevent contamination of subsequent tests
+            sys.modules.clear()
+            sys.modules.update(original_modules)
 
     def test_constants_accessibility(self):
         """Test that all module constants are accessible"""
