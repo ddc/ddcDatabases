@@ -13,7 +13,7 @@ packages = ["ddcDatabases"]
 
 [project]
 name = "ddcDatabases"
-version = "3.0.9"
+version = "3.0.10"
 description = "Simplified database ORM connections with support for multiple database engines"
 urls.Repository = "https://github.com/ddc/ddcDatabases"
 urls.Homepage = "https://pypi.org/project/ddcDatabases"
@@ -27,14 +27,15 @@ maintainers = [
 ]
 keywords = [
     "python", "python3", "python-3",
-    "databases", "database", "ddcDatabases",
+    "ORM", "ORM-connection", "sqlalchemy",
+    "database", "databases", "ddcDatabase", "ddcDatabases",
     "mssql", "mssql-database",
     "mysql", "mysql-database",
     "oracle", "oracle-database",
     "mariadb", "mariadb-database",
     "mongodb", "mongodb-database",
     "sqlite", "sqlite3", "sqlite3-database",
-    "pgsql", "postgres", "postgresql", "postgresql-database",
+    "postgres", "postgres-database", "postgresql", "postgresql-database", "pgsql", "pgsql-database",
 ]
 classifiers = [
     "Topic :: Software Development :: Libraries :: Python Modules",
@@ -59,10 +60,12 @@ dependencies = [
 
 [project.optional-dependencies]
 mongodb = ["motor>=3.7.1"]
-mssql = ["pyodbc>=5.3.0", "aioodbc>=0.5.0"]
-mysql = ["mysqlclient>=2.2.7", "aiomysql>=0.3.2"]
 oracle = ["oracledb>=3.4.2"]
-pgsql = ["psycopg[binary]>=3.3.2", "asyncpg>=0.31.0"]
+mssql = ["pyodbc>=5.3.0", "aioodbc>=0.5.0"]
+mysql = ["mysqlclient>=2.2.8", "aiomysql>=0.3.2"]
+postgres = ["psycopg[binary]>=3.3.2", "asyncpg>=0.31.0"]
+pgsql = ["ddcDatabases[postgres]"]
+mariadb = ["ddcDatabases[mysql]"]
 
 [dependency-groups]
 dev = [
