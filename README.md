@@ -286,8 +286,12 @@ pip install "ddcDatabases[mssql]"
 
 # MySQL/MariaDB
 pip install "ddcDatabases[mysql]"
+# or
+pip install "ddcDatabases[mariadb]"
 
 # PostgreSQL
+pip install "ddcDatabases[postgres]"
+# or
 pip install "ddcDatabases[pgsql]"
 
 # Oracle Database
@@ -297,7 +301,7 @@ pip install "ddcDatabases[oracle]"
 pip install "ddcDatabases[mongodb]"
 
 # Multiple databases (example)
-pip install "ddcDatabases[mysql,pgsql,mongodb]"
+pip install "ddcDatabases[mysql,postgres,mongodb]"
 ```
 
 **Available Database Extras:**
@@ -305,7 +309,9 @@ pip install "ddcDatabases[mysql,pgsql,mongodb]"
 - `all` - All database drivers
 - `mssql` - Microsoft SQL Server (pyodbc, aioodbc)
 - `mysql` - MySQL and MariaDB (mysqlclient, aiomysql)
-- `pgsql` - PostgreSQL (psycopg, asyncpg)
+- `mariadb` - Alias for `mysql`
+- `postgres` - PostgreSQL (psycopg, asyncpg)
+- `pgsql` - Alias for `postgres`
 - `oracle` - Oracle Database (oracledb)
 - `mongodb` - MongoDB (motor)
 
