@@ -3,12 +3,12 @@ from sqlalchemy import Boolean, Identity, String
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 # Testcontainer image versions
-POSTGRES_IMAGE = "postgres:18-alpine"
-MYSQL_IMAGE = "mysql:9"
+POSTGRES_IMAGE = "postgres:latest"
+MYSQL_IMAGE = "mysql:latest"
+MONGODB_IMAGE = "mongo:latest"
+MARIADB_IMAGE = "mariadb:latest"
+ORACLE_IMAGE = "gvenzl/oracle-free:slim-faststart"
 MSSQL_IMAGE = "mcr.microsoft.com/mssql/server:2022-latest"
-MONGODB_IMAGE = "mongo:8"
-MARIADB_IMAGE = "mariadb:12"
-ORACLE_IMAGE = "gvenzl/oracle-free:23-slim"
 
 
 class Base(DeclarativeBase):
