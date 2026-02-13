@@ -48,7 +48,7 @@
 - [Database Utilities](#database-utilities)
   - [Available Methods](#available-methods)
 - [Logging](#logging)
-- [Development](#development)
+- [Development and Testing](#development-and-testing)
   - [Create DEV Environment and Running Tests](#create-dev-environment-and-running-tests)
   - [Update DEV Environment Packages](#update-dev-environment-packages)
   - [Building Wheel](#building-wheel)
@@ -89,13 +89,13 @@
 
 Database classes use structured configuration dataclasses instead of flat keyword arguments:
 
-| Class                        | Purpose                         | Fields                                                                              |
-|------------------------------|---------------------------------|-------------------------------------------------------------------------------------|
-| `{DB}PoolConfig`             | Connection pool settings        | `pool_size`, `max_overflow`, `pool_recycle`, `connection_timeout`                   |
-| `{DB}SessionConfig`          | SQLAlchemy session settings     | `echo`, `autoflush`, `expire_on_commit`, `autocommit`                               |
-| `{DB}ConnectionRetryConfig`        | Connection-level retry settings | `enable_retry`, `max_retries`, `initial_retry_delay`, `max_retry_delay`             |
-| `{DB}OperationRetryConfig`          | Operation-level retry settings  | `enable_retry`, `max_retries`, `initial_retry_delay`, `max_retry_delay`, `jitter`   |
-| `PersistentConnectionConfig` | Persistent connection settings  | `idle_timeout`, `health_check_interval`, `auto_reconnect`                           |
+| Class                        | Purpose                         | Fields                                                                            |
+|------------------------------|---------------------------------|-----------------------------------------------------------------------------------|
+| `{DB}PoolConfig`             | Connection pool settings        | `pool_size`, `max_overflow`, `pool_recycle`, `connection_timeout`                 |
+| `{DB}SessionConfig`          | SQLAlchemy session settings     | `echo`, `autoflush`, `expire_on_commit`, `autocommit`                             |
+| `{DB}ConnectionRetryConfig`  | Connection-level retry settings | `enable_retry`, `max_retries`, `initial_retry_delay`, `max_retry_delay`           |
+| `{DB}OperationRetryConfig`   | Operation-level retry settings  | `enable_retry`, `max_retries`, `initial_retry_delay`, `max_retry_delay`, `jitter` |
+| `PersistentConnectionConfig` | Persistent connection settings  | `idle_timeout`, `health_check_interval`, `auto_reconnect`                         |
 
 **Note:** Replace `{DB}` with the database prefix: `PostgreSQL`, `MySQL`, `MSSQL`, `Oracle`, `MongoDB`, or `Sqlite`.
 
@@ -689,18 +689,15 @@ logging.getLogger("ddcDatabases").addHandler(logging.StreamHandler())
 ```
 
 
-# Development
+# Development and Testing
 
 Must have [UV](https://uv.run/docs/getting-started/installation) installed.
 
 ## Create DEV Environment and Running Tests
 
-> **Note:** All poe tasks automatically run ruff linter along with Black formatting
-
 ```shell
 uv sync --all-extras --all-groups
-poe test
-poe test-integration
+poe tests
 ```
 
 ## Update DEV Environment Packages

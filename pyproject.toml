@@ -13,7 +13,7 @@ packages = ["ddcDatabases"]
 
 [project]
 name = "ddcDatabases"
-version = "3.0.10"
+version = "3.0.11"
 description = "Simplified database ORM connections with support for multiple database engines"
 urls.Repository = "https://github.com/ddc/ddcDatabases"
 urls.Homepage = "https://pypi.org/project/ddcDatabases"
@@ -73,18 +73,19 @@ dev = [
     "pytest-cov>=7.0.0",
     "testcontainers[postgres,mysql,mssql,mongodb,oracle]>=4.14.1",
     "poethepoet>=0.41.0",
-    "ruff>=0.15.0",
+    "ruff>=0.15.1",
     "black>=26.1.0",
 ]
 
 [tool.poe.tasks]
 linter.shell = "uv run ruff check --fix . && uv run black ."
-profile.sequence = ["linter", {shell = "uv run python -m cProfile -o cprofile_unit.prof -m pytest tests/unit --no-cov"}]
-profile-integration.sequence = ["linter", {shell = "uv run python -m cProfile -o cprofile_integration.prof -m pytest tests/integration --no-cov"}]
-test.sequence = ["linter", {shell = "uv run pytest"}]
-test-integration.sequence = ["linter", {shell = "uv run pytest tests/integration --no-cov"}]
+profile = "uv run python -m cProfile -o cprofile_unit.prof -m pytest tests/unit --no-cov"
+profile-integration = "uv run python -m cProfile -o cprofile_integration.prof -m pytest tests/integration --no-cov"
+test = "uv run pytest tests/unit"
+test-integration = "uv run pytest tests/integration --no-cov"
+tests.sequence = ["test", "test-integration"]
 updatedev.sequence = ["linter", {shell = "uv lock --upgrade && uv sync --all-extras --group dev"}]
-build.sequence = ["updatedev", "test", "test-integration", {shell = "uv build --wheel"}]
+build.sequence = ["updatedev", "tests", {shell = "uv build --wheel"}]
 
 [tool.pytest.ini_options]
 addopts = "-v --cov --cov-report=term --cov-report=xml --junitxml=junit.xml"
