@@ -74,11 +74,10 @@ dev = [
     "testcontainers[postgres,mysql,mssql,mongodb,oracle]>=4.14.1",
     "poethepoet>=0.41.0",
     "ruff>=0.15.1",
-    "black>=26.1.0",
 ]
 
 [tool.poe.tasks]
-linter.shell = "uv run ruff check --fix . && uv run black ."
+linter.shell = "uv run ruff check --fix . && uv run ruff format ."
 profile = "uv run python -m cProfile -o cprofile_unit.prof -m pytest tests/unit --no-cov"
 profile-integration = "uv run python -m cProfile -o cprofile_integration.prof -m pytest tests/integration --no-cov"
 test = "uv run pytest tests/unit"
@@ -120,10 +119,6 @@ exclude_lines = [
     "class .*\\bProtocol\\):",
     "@(abc\\.)?abstractmethod",
 ]
-
-[tool.black]
-line-length = 120
-skip-string-normalization = true
 
 [tool.ruff]
 line-length = 120
