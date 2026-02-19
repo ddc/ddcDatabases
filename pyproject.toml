@@ -63,7 +63,7 @@ mongodb = ["motor>=3.7.1"]
 oracle = ["oracledb>=3.4.2"]
 mssql = ["pyodbc>=5.3.0", "aioodbc>=0.5.0"]
 mysql = ["mysqlclient>=2.2.8", "aiomysql>=0.3.2"]
-postgres = ["psycopg[binary]>=3.3.2", "asyncpg>=0.31.0"]
+postgres = ["psycopg[binary]>=3.3.3", "asyncpg>=0.31.0"]
 pgsql = ["ddcDatabases[postgres]"]
 mariadb = ["ddcDatabases[mysql]"]
 
@@ -82,7 +82,7 @@ profile = "uv run python -m cProfile -o cprofile_unit.prof -m pytest tests/unit 
 profile-integration = "uv run python -m cProfile -o cprofile_integration.prof -m pytest tests/integration --no-cov"
 test = "uv run pytest tests/unit"
 test-integration = "uv run pytest tests/integration --no-cov"
-tests.sequence = ["test", "test-integration"]
+tests.sequence = ["linter", "test", "test-integration"]
 updatedev.sequence = ["linter", {shell = "uv lock --upgrade && uv sync --all-extras --group dev"}]
 build.sequence = ["updatedev", "tests", {shell = "uv build --wheel"}]
 
