@@ -87,6 +87,7 @@ updatedev.sequence = ["linter", {shell = "uv lock --upgrade && uv sync --all-ext
 build.sequence = ["updatedev", "tests", {shell = "uv build --wheel"}]
 
 [tool.pytest.ini_options]
+import_mode = "importlib"
 addopts = "-v --junitxml=junit.xml"
 junit_family = "legacy"
 asyncio_mode = "strict"
