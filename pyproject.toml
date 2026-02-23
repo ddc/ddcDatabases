@@ -69,27 +69,26 @@ mariadb = ["ddcDatabases[mysql]"]
 
 [dependency-groups]
 dev = [
-    "pytest-asyncio>=1.3.0",
-    "pytest-cov>=7.0.0",
-    "testcontainers[postgres,mysql,mssql,mongodb,oracle]>=4.14.1",
+    "coverage>=7.13.4",
     "poethepoet>=0.42.0",
+    "pytest-asyncio>=1.3.0",
     "ruff>=0.15.2",
+    "testcontainers[postgres,mysql,mssql,mongodb,oracle]>=4.14.1",
 ]
 
 [tool.poe.tasks]
 linter.shell = "uv run ruff check --fix . && uv run ruff format ."
-profile = "uv run python -m cProfile -o cprofile_unit.prof -m pytest tests/unit --no-cov"
-profile-integration = "uv run python -m cProfile -o cprofile_integration.prof -m pytest tests/integration --no-cov"
-test = "uv run pytest tests/unit"
-test-integration = "uv run pytest tests/integration --no-cov"
+profile = "uv run python -m cProfile -o cprofile_unit.prof -m pytest tests/unit"
+profile-integration = "uv run python -m cProfile -o cprofile_integration.prof -m pytest tests/integration"
+test.sequence = [{ shell = "uv run coverage run -m pytest tests/unit" }, { shell = "uv run coverage report" }, { shell = "uv run coverage xml" }]
+test-integration = "uv run pytest tests/integration"
 tests.sequence = ["linter", "test", "test-integration"]
 updatedev.sequence = ["linter", {shell = "uv lock --upgrade && uv sync --all-extras --group dev"}]
 build.sequence = ["updatedev", "tests", {shell = "uv build --wheel"}]
 
 [tool.pytest.ini_options]
-addopts = "-v --cov --cov-report=term --cov-report=xml --junitxml=junit.xml"
+addopts = "-v --junitxml=junit.xml"
 junit_family = "legacy"
-testpaths = ["tests/unit"]
 asyncio_mode = "strict"
 asyncio_default_fixture_loop_scope = "function"
 markers = [
