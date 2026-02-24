@@ -55,7 +55,7 @@ classifiers = [
 requires-python = ">=3.10"
 dependencies = [
     "pydantic-settings>=2.11.0",
-    "sqlalchemy[asyncio]>=2.0.46",
+    "sqlalchemy[asyncio]>=2.0.47",
 ]
 
 [project.optional-dependencies]
@@ -87,8 +87,7 @@ updatedev.sequence = ["linter", {shell = "uv lock --upgrade && uv sync --all-ext
 build.sequence = ["updatedev", "tests", {shell = "uv build --wheel"}]
 
 [tool.pytest.ini_options]
-import_mode = "importlib"
-addopts = "-v --junitxml=junit.xml"
+addopts = "-v --import-mode=importlib --junitxml=junit.xml"
 junit_family = "legacy"
 asyncio_mode = "strict"
 asyncio_default_fixture_loop_scope = "function"
