@@ -183,3 +183,44 @@ class TestPostgreSQLPersistentIntegration:
             stmt = sa.delete(IntegrationModel).where(IntegrationModel.name == "async_persistent")
             await session.execute(stmt)
             await session.commit()
+
+    def test_persistent_schema_support(self, postgres_container):
+        """Test persistent connection with multi-schema search_path."""
+        port = postgres_container.get_exposed_port(5432)
+        host = postgres_container.get_container_host_ip()
+
+        # Create a custom schema first
+        conn_setup = PostgreSQLPersistent(
+            host=host,
+            port=int(port),
+            user=postgres_container.username,
+            password=postgres_container.password,
+            database=postgres_container.dbname,
+            async_mode=False,
+        )
+        with conn_setup as session:
+            session.execute(sa.text("CREATE SCHEMA IF NOT EXISTS persistent_test_schema"))
+            session.commit()
+        conn_setup.shutdown()
+        close_all_persistent_connections()
+
+        # Connect with multi-schema
+        conn = PostgreSQLPersistent(
+            host=host,
+            port=int(port),
+            user=postgres_container.username,
+            password=postgres_container.password,
+            database=postgres_container.dbname,
+            schema="persistent_test_schema,public",
+            async_mode=False,
+        )
+        with conn as session:
+            result = session.execute(sa.text("SHOW search_path"))
+            search_path = result.scalar()
+            assert "persistent_test_schema" in search_path
+            assert "public" in search_path
+
+            # Cleanup
+            session.execute(sa.text("DROP SCHEMA IF EXISTS persistent_test_schema CASCADE"))
+            session.commit()
+        conn.shutdown()
