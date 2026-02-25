@@ -71,7 +71,7 @@ class SettingsMessages:
     USERNAME_DESCRIPTION = "Database username"
     PASSWORD_DESCRIPTION = "Database password"
     NAME_DESCRIPTION = "Database name"
-    SCHEMA_DESCRIPTION = "Database schema"
+    SCHEMA_DESCRIPTION = "Database schema (comma-separated for multiple schemas, e.g. 'gw2,public')"
     ASYNC_DATABASE_DRIVER_DESCRIPTION = "Async database driver"
     SYNC_DATABASE_DRIVER_DESCRIPTION = "Sync database driver"
 

@@ -1,14 +1,15 @@
 import pytest
+import time
 from sqlalchemy import Boolean, Identity, String
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 # Testcontainer image versions
-POSTGRES_IMAGE = "postgres:18-alpine"
-MYSQL_IMAGE = "mysql:9"
+POSTGRES_IMAGE = "postgres:latest"
+MYSQL_IMAGE = "mysql:latest"
+MONGODB_IMAGE = "mongo:8.0"
+MARIADB_IMAGE = "mariadb:latest"
+ORACLE_IMAGE = "gvenzl/oracle-free:slim-faststart"
 MSSQL_IMAGE = "mcr.microsoft.com/mssql/server:2022-latest"
-MONGODB_IMAGE = "mongo:8"
-MARIADB_IMAGE = "mariadb:12"
-ORACLE_IMAGE = "gvenzl/oracle-free:23-slim"
 
 
 class Base(DeclarativeBase):
@@ -50,8 +51,21 @@ def mssql_container():
 def mongodb_container():
     from testcontainers.mongodb import MongoDbContainer
 
-    with MongoDbContainer(MONGODB_IMAGE) as mongo:
-        yield mongo
+    max_attempts = 3
+    last_exc = None
+    for attempt in range(max_attempts):
+        try:
+            container = MongoDbContainer(MONGODB_IMAGE)
+            container.start()
+            break
+        except Exception as exc:
+            last_exc = exc
+            if attempt < max_attempts - 1:
+                time.sleep(2)
+    else:
+        raise last_exc
+    yield container
+    container.stop()
 
 
 @pytest.fixture(scope="session")

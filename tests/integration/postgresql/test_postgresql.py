@@ -150,3 +150,91 @@ class TestPostgreSQLIntegration:
             # Cleanup
             stmt = sa.delete(IntegrationModel).where(IntegrationModel.name == "fetchvalue_test")
             db_utils.execute(stmt)
+
+    def test_multi_schema_search_path(self, postgres_container):
+        """Test PostgreSQL with comma-separated schemas in search_path."""
+        from ddcDatabases import PostgreSQL
+
+        port = postgres_container.get_exposed_port(5432)
+        host = postgres_container.get_container_host_ip()
+
+        # First, create a custom schema using default connection
+        with PostgreSQL(
+            host=host,
+            port=int(port),
+            user=postgres_container.username,
+            password=postgres_container.password,
+            database=postgres_container.dbname,
+        ) as session:
+            session.execute(sa.text("CREATE SCHEMA IF NOT EXISTS test_schema"))
+            session.commit()
+
+        # Connect with multi-schema search_path
+        with PostgreSQL(
+            host=host,
+            port=int(port),
+            user=postgres_container.username,
+            password=postgres_container.password,
+            database=postgres_container.dbname,
+            schema="test_schema,public",
+        ) as session:
+            result = session.execute(sa.text("SHOW search_path"))
+            search_path = result.scalar()
+            # PostgreSQL normalizes the search_path string
+            assert "test_schema" in search_path
+            assert "public" in search_path
+
+        # Cleanup
+        with PostgreSQL(
+            host=host,
+            port=int(port),
+            user=postgres_container.username,
+            password=postgres_container.password,
+            database=postgres_container.dbname,
+        ) as session:
+            session.execute(sa.text("DROP SCHEMA IF EXISTS test_schema CASCADE"))
+            session.commit()
+
+    @pytest.mark.asyncio
+    async def test_multi_schema_search_path_async(self, postgres_container):
+        """Test async PostgreSQL with comma-separated schemas in search_path."""
+        from ddcDatabases import PostgreSQL
+
+        port = postgres_container.get_exposed_port(5432)
+        host = postgres_container.get_container_host_ip()
+
+        # Create custom schema with sync connection
+        with PostgreSQL(
+            host=host,
+            port=int(port),
+            user=postgres_container.username,
+            password=postgres_container.password,
+            database=postgres_container.dbname,
+        ) as session:
+            session.execute(sa.text("CREATE SCHEMA IF NOT EXISTS test_schema_async"))
+            session.commit()
+
+        # Connect async with multi-schema search_path
+        async with PostgreSQL(
+            host=host,
+            port=int(port),
+            user=postgres_container.username,
+            password=postgres_container.password,
+            database=postgres_container.dbname,
+            schema="test_schema_async,public",
+        ) as session:
+            result = await session.execute(sa.text("SHOW search_path"))
+            search_path = result.scalar()
+            assert "test_schema_async" in search_path
+            assert "public" in search_path
+
+        # Cleanup
+        with PostgreSQL(
+            host=host,
+            port=int(port),
+            user=postgres_container.username,
+            password=postgres_container.password,
+            database=postgres_container.dbname,
+        ) as session:
+            session.execute(sa.text("DROP SCHEMA IF EXISTS test_schema_async CASCADE"))
+            session.commit()

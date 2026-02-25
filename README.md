@@ -8,14 +8,13 @@
     <a href="https://www.paypal.com/ncp/payment/6G9Z78QHUD4RJ"><img src="https://img.shields.io/badge/Donate-PayPal-brightgreen.svg?style=plastic" alt="Donate"/></a>
     <a href="https://github.com/sponsors/ddc"><img src="https://img.shields.io/static/v1?style=plastic&label=Sponsor&message=%E2%9D%A4&logo=GitHub&color=ff69b4" alt="Sponsor"/></a>
     <br>
-    <a href="https://github.com/psf/black"><img src="https://img.shields.io/badge/code%20style-black-000000.svg?style=plastic" alt="Code style: black"/></a>
-    <a href="https://github.com/astral-sh/uv"><img src="https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/uv/main/assets/badge/v0.json?style=plastic" alt="uv"/></a>
-    <a href="https://github.com/astral-sh/ruff"><img src="https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json?style=plastic" alt="Ruff"/></a>
-    <br>
-    <a href="https://www.python.org/downloads"><img src="https://img.shields.io/pypi/pyversions/ddcDatabases.svg?style=plastic&logo=python&cacheSeconds=3600" alt="Python"/></a>
     <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-yellow.svg?style=plastic" alt="License: MIT"/></a>
     <a href="https://pepy.tech/projects/ddcDatabases"><img src="https://static.pepy.tech/badge/ddcDatabases?style=plastic" alt="PyPI Downloads"/></a>
     <a href="https://pypi.python.org/pypi/ddcDatabases"><img src="https://img.shields.io/pypi/v/ddcDatabases.svg?style=plastic&logo=python&cacheSeconds=3600" alt="PyPi"/></a>
+    <br>
+    <a href="https://www.python.org/downloads"><img src="https://img.shields.io/pypi/pyversions/ddcDatabases.svg?style=plastic&logo=python&cacheSeconds=3600" alt="Python"/></a>
+    <a href="https://github.com/astral-sh/uv"><img src="https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/uv/main/assets/badge/v0.json?style=plastic" alt="uv"/></a>
+    <a href="https://github.com/astral-sh/ruff"><img src="https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json?style=plastic" alt="Ruff"/></a>
     <br>
     <a href="https://github.com/ddc/ddcDatabases/issues"><img src="https://img.shields.io/github/issues/ddc/ddcDatabases?style=plastic" alt="issues"/></a>
     <a href="https://codecov.io/gh/ddc/ddcDatabases"><img src="https://codecov.io/gh/ddc/ddcDatabases/graph/badge.svg?token=XWB53034GI&style=plastic" alt="codecov"/></a>
@@ -48,7 +47,7 @@
 - [Database Utilities](#database-utilities)
   - [Available Methods](#available-methods)
 - [Logging](#logging)
-- [Development](#development)
+- [Development and Testing](#development-and-testing)
   - [Create DEV Environment and Running Tests](#create-dev-environment-and-running-tests)
   - [Update DEV Environment Packages](#update-dev-environment-packages)
   - [Building Wheel](#building-wheel)
@@ -89,13 +88,13 @@
 
 Database classes use structured configuration dataclasses instead of flat keyword arguments:
 
-| Class                        | Purpose                         | Fields                                                                              |
-|------------------------------|---------------------------------|-------------------------------------------------------------------------------------|
-| `{DB}PoolConfig`             | Connection pool settings        | `pool_size`, `max_overflow`, `pool_recycle`, `connection_timeout`                   |
-| `{DB}SessionConfig`          | SQLAlchemy session settings     | `echo`, `autoflush`, `expire_on_commit`, `autocommit`                               |
-| `{DB}ConnectionRetryConfig`        | Connection-level retry settings | `enable_retry`, `max_retries`, `initial_retry_delay`, `max_retry_delay`             |
-| `{DB}OperationRetryConfig`          | Operation-level retry settings  | `enable_retry`, `max_retries`, `initial_retry_delay`, `max_retry_delay`, `jitter`   |
-| `PersistentConnectionConfig` | Persistent connection settings  | `idle_timeout`, `health_check_interval`, `auto_reconnect`                           |
+| Class                        | Purpose                         | Fields                                                                            |
+|------------------------------|---------------------------------|-----------------------------------------------------------------------------------|
+| `{DB}PoolConfig`             | Connection pool settings        | `pool_size`, `max_overflow`, `pool_recycle`, `connection_timeout`                 |
+| `{DB}SessionConfig`          | SQLAlchemy session settings     | `echo`, `autoflush`, `expire_on_commit`, `autocommit`                             |
+| `{DB}ConnectionRetryConfig`  | Connection-level retry settings | `enable_retry`, `max_retries`, `initial_retry_delay`, `max_retry_delay`           |
+| `{DB}OperationRetryConfig`   | Operation-level retry settings  | `enable_retry`, `max_retries`, `initial_retry_delay`, `max_retry_delay`, `jitter` |
+| `PersistentConnectionConfig` | Persistent connection settings  | `idle_timeout`, `health_check_interval`, `auto_reconnect`                         |
 
 **Note:** Replace `{DB}` with the database prefix: `PostgreSQL`, `MySQL`, `MSSQL`, `Oracle`, `MongoDB`, or `Sqlite`.
 
@@ -689,18 +688,15 @@ logging.getLogger("ddcDatabases").addHandler(logging.StreamHandler())
 ```
 
 
-# Development
+# Development and Testing
 
 Must have [UV](https://uv.run/docs/getting-started/installation) installed.
 
 ## Create DEV Environment and Running Tests
 
-> **Note:** All poe tasks automatically run ruff linter along with Black formatting
-
 ```shell
 uv sync --all-extras --all-groups
-poe test
-poe test-integration
+poe tests
 ```
 
 ## Update DEV Environment Packages

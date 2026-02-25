@@ -7,7 +7,7 @@ from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from typing import TypeVar
 
-warnings.filterwarnings("ignore", message="Field name \"schema\".*shadows an attribute in parent")
+warnings.filterwarnings("ignore", message='Field name "schema".*shadows an attribute in parent')
 
 # Type variable for generic settings factory
 T = TypeVar("T", bound=BaseSettings)

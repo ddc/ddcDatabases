@@ -719,6 +719,7 @@ class PostgreSQLPersistent:
         user: str | None = None,
         password: str | None = None,
         database: str | None = None,
+        schema: str | None = None,
         async_mode: Literal[False] = False,
         config: PersistentConnectionConfig | None = None,
         connection_retry_config: BaseRetryConfig | None = None,
@@ -735,6 +736,7 @@ class PostgreSQLPersistent:
         user: str | None = None,
         password: str | None = None,
         database: str | None = None,
+        schema: str | None = None,
         *,
         async_mode: Literal[True],
         config: PersistentConnectionConfig | None = None,
@@ -751,6 +753,7 @@ class PostgreSQLPersistent:
         user: str | None = None,
         password: str | None = None,
         database: str | None = None,
+        schema: str | None = None,
         async_mode: bool = False,
         config: PersistentConnectionConfig | None = None,
         connection_retry_config: BaseRetryConfig | None = None,
@@ -765,7 +768,10 @@ class PostgreSQLPersistent:
         user = user or _settings.user
         password = password or _settings.password
         database = database or _settings.database
+        schema = schema if schema is not None else _settings.schema
         connection_key = f"postgresql://{user}@{host}:{port}/{database}"  # NOSONAR
+        if schema and schema != "public":
+            connection_key += f"?schema={schema}"
 
         # Build config from settings, allowing partial overrides
         _cfg = config or PersistentConnectionConfig()
@@ -820,6 +826,9 @@ class PostgreSQLPersistent:
                     else:
                         async_connect_args["ssl"] = ssl_mode
 
+                if schema and schema != "public":
+                    async_connect_args["server_settings"] = {"search_path": schema}
+
                 merged_kwargs = {**engine_kwargs}
                 if async_connect_args:
                     existing_connect_args = merged_kwargs.get("connect_args", {})
@@ -854,6 +863,9 @@ class PostgreSQLPersistent:
                         sync_connect_args["sslcert"] = ssl_client_cert_path
                     if ssl_client_key_path:
                         sync_connect_args["sslkey"] = ssl_client_key_path
+
+                if schema and schema != "public":
+                    sync_connect_args["options"] = f"-c search_path={schema}"
 
                 merged_kwargs = {**engine_kwargs}
                 if sync_connect_args:

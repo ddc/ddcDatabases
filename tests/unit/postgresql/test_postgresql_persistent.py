@@ -181,3 +181,62 @@ class TestPostgreSQLPersistent:
             database="mydb",
         )
         assert conn.connection_key == "postgresql://myuser@myhost:5432/mydb"
+
+    def test_schema_in_connection_key(self):
+        """Test that schema is included in the persistent connection key."""
+        conn = PostgreSQLPersistent(
+            host="myhost",
+            port=5432,
+            user="myuser",
+            password="mypass",
+            database="mydb",
+            schema="gw2,public",
+        )
+        assert conn.connection_key == "postgresql://myuser@myhost:5432/mydb?schema=gw2,public"
+
+    def test_schema_default_not_in_connection_key(self):
+        """Test that default public schema does not add query param to key."""
+        conn = PostgreSQLPersistent(
+            host="myhost",
+            port=5432,
+            user="myuser",
+            password="mypass",
+            database="mydb",
+        )
+        assert conn.connection_key == "postgresql://myuser@myhost:5432/mydb"
+
+    def test_different_schemas_return_different_instances(self):
+        """Test that different schemas return different singleton instances."""
+        conn1 = PostgreSQLPersistent(
+            host="localhost",
+            user="test",
+            password="test",
+            database="testdb",
+            schema="schema_a",
+        )
+        conn2 = PostgreSQLPersistent(
+            host="localhost",
+            user="test",
+            password="test",
+            database="testdb",
+            schema="schema_b",
+        )
+        assert conn1 is not conn2
+
+    def test_same_schema_returns_same_instance(self):
+        """Test that same schema returns same singleton instance."""
+        conn1 = PostgreSQLPersistent(
+            host="localhost",
+            user="test",
+            password="test",
+            database="testdb",
+            schema="gw2,public",
+        )
+        conn2 = PostgreSQLPersistent(
+            host="localhost",
+            user="test",
+            password="test",
+            database="testdb",
+            schema="gw2,public",
+        )
+        assert conn1 is conn2

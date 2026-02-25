@@ -726,6 +726,33 @@ class TestPostgreSQL:
         assert "options" not in sync_connect_args
 
     @patch("ddcDatabases.postgresql.get_postgresql_settings")
+    def test_schema_comma_separated(self, mock_get_settings):
+        """Test PostgreSQL with comma-separated schemas sets correct search_path."""
+        mock_settings = _make_pg_mock_settings()
+        mock_get_settings.return_value = mock_settings
+
+        postgresql = PostgreSQL(schema="gw2,public")
+
+        assert postgresql._connection_config.schema == "gw2,public"
+
+        # Sync: should set options with comma-separated search_path
+        sync_connect_args = {}
+        if "psycopg" in postgresql.sync_driver:
+            sync_connect_args["connect_timeout"] = postgresql._pool_config.connection_timeout
+            if postgresql._connection_config.schema and postgresql._connection_config.schema != "public":
+                sync_connect_args["options"] = f"-c search_path={postgresql._connection_config.schema}"
+
+        assert sync_connect_args["options"] == "-c search_path=gw2,public"
+
+        # Async: should set server_settings with comma-separated search_path
+        async_connect_args = {}
+        if "asyncpg" in postgresql.async_driver:
+            if postgresql._connection_config.schema and postgresql._connection_config.schema != "public":
+                async_connect_args["server_settings"] = {"search_path": postgresql._connection_config.schema}
+
+        assert async_connect_args["server_settings"] == {"search_path": "gw2,public"}
+
+    @patch("ddcDatabases.postgresql.get_postgresql_settings")
     def test_ssl_enabled_with_options(self, mock_get_settings):
         """Test PostgreSQL SSL configuration"""
         mock_settings = _make_pg_mock_settings()
