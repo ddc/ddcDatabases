@@ -13,7 +13,7 @@ packages = ["ddcDatabases"]
 
 [project]
 name = "ddcDatabases"
-version = "3.0.11"
+version = "3.0.12"
 description = "Simplified database ORM connections with support for multiple database engines"
 urls.Repository = "https://github.com/ddc/ddcDatabases"
 urls.Homepage = "https://pypi.org/project/ddcDatabases"
@@ -70,9 +70,9 @@ mariadb = ["ddcDatabases[mysql]"]
 [dependency-groups]
 dev = [
     "coverage>=7.13.4",
-    "poethepoet>=0.42.0",
+    "poethepoet>=0.42.1",
     "pytest-asyncio>=1.3.0",
-    "ruff>=0.15.2",
+    "ruff>=0.15.4",
     "testcontainers[postgres,mysql,mssql,mongodb,oracle]>=4.14.1",
 ]
 
