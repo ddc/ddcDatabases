@@ -5,25 +5,27 @@
 </h1>
 
 <p align="center">
-    <a href="https://www.paypal.com/ncp/payment/6G9Z78QHUD4RJ"><img src="https://img.shields.io/badge/Donate-PayPal-brightgreen.svg?style=plastic" alt="Donate"/></a>
     <a href="https://github.com/sponsors/ddc"><img src="https://img.shields.io/static/v1?style=plastic&label=Sponsor&message=%E2%9D%A4&logo=GitHub&color=ff69b4" alt="Sponsor"/></a>
     <br>
-    <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-yellow.svg?style=plastic" alt="License: MIT"/></a>
-    <a href="https://pepy.tech/projects/ddcDatabases"><img src="https://static.pepy.tech/badge/ddcDatabases?style=plastic" alt="PyPI Downloads"/></a>
+    <a href="https://ko-fi.com/ddcsta"><img src="https://img.shields.io/badge/Ko--fi-ddcsta-FF5E5B?style=plastic&logo=kofi&logoColor=white&color=brightgreen" alt="Ko-fi"/></a>
+    <a href="https://www.paypal.com/ncp/payment/6G9Z78QHUD4RJ"><img src="https://img.shields.io/badge/Donate-PayPal-brightgreen.svg?style=plastic&logo=paypal&logoColor=white" alt="Donate"/></a>
+    <br>
     <a href="https://pypi.python.org/pypi/ddcDatabases"><img src="https://img.shields.io/pypi/v/ddcDatabases.svg?style=plastic&logo=python&cacheSeconds=3600" alt="PyPi"/></a>
+    <a href="https://pepy.tech/projects/ddcDatabases"><img src="https://img.shields.io/pepy/dt/ddcDatabases?style=plastic&logo=pypi&logoColor=3776AB" alt="PyPI Downloads"/></a>
+    <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-yellow.svg?style=plastic&logo=creativecommons&logoColor=white" alt="License: MIT"/></a>
     <br>
     <a href="https://www.python.org/downloads"><img src="https://img.shields.io/pypi/pyversions/ddcDatabases.svg?style=plastic&logo=python&cacheSeconds=3600" alt="Python"/></a>
-    <a href="https://github.com/astral-sh/uv"><img src="https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/uv/main/assets/badge/v0.json?style=plastic" alt="uv"/></a>
-    <a href="https://github.com/astral-sh/ruff"><img src="https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json?style=plastic" alt="Ruff"/></a>
+    <a href="https://github.com/astral-sh/uv"><img src="https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/uv/main/assets/badge/v0.json&style=plastic" alt="uv"/></a>
+    <a href="https://github.com/astral-sh/ruff"><img src="https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json&style=plastic" alt="Ruff"/></a>
     <br>
-    <a href="https://github.com/ddc/ddcDatabases/issues"><img src="https://img.shields.io/github/issues/ddc/ddcDatabases?style=plastic" alt="issues"/></a>
-    <a href="https://codecov.io/gh/ddc/ddcDatabases"><img src="https://codecov.io/gh/ddc/ddcDatabases/graph/badge.svg?token=XWB53034GI&style=plastic" alt="codecov"/></a>
-    <a href="https://sonarcloud.io/dashboard?id=ddc_ddcDatabases"><img src="https://sonarcloud.io/api/project_badges/measure?project=ddc_ddcDatabases&metric=alert_status&style=plastic" alt="Quality Gate Status"/></a>
-    <a href="https://github.com/ddc/ddcDatabases/actions/workflows/workflow.yml"><img src="https://github.com/ddc/ddcDatabases/actions/workflows/workflow.yml/badge.svg?style=plastic" alt="CI/CD Pipeline"/></a>
-    <a href="https://actions-badge.atrox.dev/ddc/ddcDatabases/goto?ref=main"><img src="https://img.shields.io/endpoint.svg?url=https%3A//actions-badge.atrox.dev/ddc/ddcDatabases/badge?ref=main&label=build&logo=none&style=plastic" alt="Build Status"/></a>
+    <a href="https://github.com/ddc/ddcDatabases/issues"><img src="https://img.shields.io/github/issues/ddc/ddcDatabases?style=plastic&logo=github&logoColor=white" alt="issues"/></a>
+    <a href="https://codecov.io/gh/ddc/ddcDatabases"><img src="https://img.shields.io/codecov/c/github/ddc/ddcDatabases?token=XWB53034GI&style=plastic&logo=codecov" alt="codecov"/></a>
+    <a href="https://sonarcloud.io/dashboard?id=ddc_ddcDatabases"><img src="https://img.shields.io/sonar/quality_gate/ddc_ddcDatabases?server=https%3A%2F%2Fsonarcloud.io&style=plastic&logo=sonarqubecloud&logoColor=white" alt="Quality Gate Status"/></a>
+    <a href="https://github.com/ddc/ddcDatabases/actions/workflows/workflow.yml"><img src="https://img.shields.io/github/actions/workflow/status/ddc/ddcDatabases/workflow.yml?style=plastic&logo=github&logoColor=white&label=CI%2FCD%20Pipeline" alt="CI/CD Pipeline"/></a>
+    <a href="https://actions-badge.atrox.dev/ddc/ddcDatabases/goto?ref=main"><img src="https://img.shields.io/endpoint.svg?url=https%3A//actions-badge.atrox.dev/ddc/ddcDatabases/badge?ref=main&label=build&logo=github&style=plastic" alt="Build Status"/></a>
 </p>
 
-<p align="center">A Python library for database connections and ORM queries with support for multiple database engines including SQLite, PostgreSQL, MySQL, MariaDB, MSSQL, Oracle, and MongoDB</p>
+<p align="center">A Python library for database connections and ORM queries with support for multiple database engines. <br> Includes SQLite, PostgreSQL, MySQL/MariaDB, MSSQL, Oracle, and MongoDB</p>
 
 
 # Table of Contents
