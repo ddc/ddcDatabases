@@ -13,7 +13,7 @@ import ssl as _ssl_module
 import threading
 import time
 import weakref
-from .configs import BaseOperationRetryConfig, BaseRetryConfig
+from .configs import BaseOperationRetryConfig, BaseRetryConfig, merge_config_with_settings
 from .retry import retry_operation, retry_operation_async
 from .settings import (
     get_mongodb_settings,
@@ -47,6 +47,13 @@ class PersistentConnectionConfig:
     idle_timeout: int | None = None
     health_check_interval: int | None = None
     auto_reconnect: bool | None = None
+
+
+_PERSISTENT_CONFIG_FIELD_MAP: dict[str, str] = {
+    "idle_timeout": "persistent_idle_timeout",
+    "health_check_interval": "persistent_health_check_interval",
+    "auto_reconnect": "persistent_auto_reconnect",
+}
 
 
 # Global registry for persistent connections (weak references to allow cleanup)
@@ -772,19 +779,7 @@ class PostgreSQLPersistent:
         if schema and schema != "public":
             connection_key += f"?schema={schema}"
 
-        # Build config from settings, allowing partial overrides
-        _cfg = config or PersistentConnectionConfig()
-        config = PersistentConnectionConfig(
-            idle_timeout=_cfg.idle_timeout if _cfg.idle_timeout is not None else _settings.persistent_idle_timeout,
-            health_check_interval=(
-                _cfg.health_check_interval
-                if _cfg.health_check_interval is not None
-                else _settings.persistent_health_check_interval
-            ),
-            auto_reconnect=(
-                _cfg.auto_reconnect if _cfg.auto_reconnect is not None else _settings.persistent_auto_reconnect
-            ),
-        )
+        config = merge_config_with_settings(PersistentConnectionConfig, config, _settings, _PERSISTENT_CONFIG_FIELD_MAP)
 
         # Build SSL connect_args from settings
         ssl_mode = _settings.ssl_mode
@@ -960,19 +955,7 @@ class MySQLPersistent:
         database = database or _settings.database
         connection_key = f"mysql://{user}@{host}:{port}/{database}"  # NOSONAR
 
-        # Build config from settings, allowing partial overrides
-        _cfg = config or PersistentConnectionConfig()
-        config = PersistentConnectionConfig(
-            idle_timeout=_cfg.idle_timeout if _cfg.idle_timeout is not None else _settings.persistent_idle_timeout,
-            health_check_interval=(
-                _cfg.health_check_interval
-                if _cfg.health_check_interval is not None
-                else _settings.persistent_health_check_interval
-            ),
-            auto_reconnect=(
-                _cfg.auto_reconnect if _cfg.auto_reconnect is not None else _settings.persistent_auto_reconnect
-            ),
-        )
+        config = merge_config_with_settings(PersistentConnectionConfig, config, _settings, _PERSISTENT_CONFIG_FIELD_MAP)
 
         # Build SSL connect_args from settings
         ssl_mode = _settings.ssl_mode
@@ -1121,19 +1104,7 @@ class MSSQLPersistent:
         database = database or _settings.database
         connection_key = f"mssql://{user}@{host}:{port}/{database}"  # NOSONAR
 
-        # Build config from settings, allowing partial overrides
-        _cfg = config or PersistentConnectionConfig()
-        config = PersistentConnectionConfig(
-            idle_timeout=_cfg.idle_timeout if _cfg.idle_timeout is not None else _settings.persistent_idle_timeout,
-            health_check_interval=(
-                _cfg.health_check_interval
-                if _cfg.health_check_interval is not None
-                else _settings.persistent_health_check_interval
-            ),
-            auto_reconnect=(
-                _cfg.auto_reconnect if _cfg.auto_reconnect is not None else _settings.persistent_auto_reconnect
-            ),
-        )
+        config = merge_config_with_settings(PersistentConnectionConfig, config, _settings, _PERSISTENT_CONFIG_FIELD_MAP)
 
         # Build SSL query params from settings
         _query: dict[str, str] = {"driver": "ODBC Driver 18 for SQL Server"}
@@ -1227,19 +1198,7 @@ class OraclePersistent:
         servicename = servicename or _settings.servicename
         connection_key = f"oracle://{user}@{host}:{port}/{servicename}"  # NOSONAR
 
-        # Build config from settings, allowing partial overrides
-        _cfg = config or PersistentConnectionConfig()
-        config = PersistentConnectionConfig(
-            idle_timeout=_cfg.idle_timeout if _cfg.idle_timeout is not None else _settings.persistent_idle_timeout,
-            health_check_interval=(
-                _cfg.health_check_interval
-                if _cfg.health_check_interval is not None
-                else _settings.persistent_health_check_interval
-            ),
-            auto_reconnect=(
-                _cfg.auto_reconnect if _cfg.auto_reconnect is not None else _settings.persistent_auto_reconnect
-            ),
-        )
+        config = merge_config_with_settings(PersistentConnectionConfig, config, _settings, _PERSISTENT_CONFIG_FIELD_MAP)
 
         with _registry_lock:
             if connection_key in _persistent_connections:
@@ -1301,19 +1260,7 @@ class MongoDBPersistent:
         database = database or _settings.database
         connection_key = f"mongodb://{user}@{host}:{port}/{database}"  # NOSONAR
 
-        # Build config from settings, allowing partial overrides
-        _cfg = config or PersistentConnectionConfig()
-        config = PersistentConnectionConfig(
-            idle_timeout=_cfg.idle_timeout if _cfg.idle_timeout is not None else _settings.persistent_idle_timeout,
-            health_check_interval=(
-                _cfg.health_check_interval
-                if _cfg.health_check_interval is not None
-                else _settings.persistent_health_check_interval
-            ),
-            auto_reconnect=(
-                _cfg.auto_reconnect if _cfg.auto_reconnect is not None else _settings.persistent_auto_reconnect
-            ),
-        )
+        config = merge_config_with_settings(PersistentConnectionConfig, config, _settings, _PERSISTENT_CONFIG_FIELD_MAP)
 
         with _registry_lock:
             if connection_key in _persistent_connections:

@@ -1,5 +1,12 @@
 import logging
-from .core.configs import BaseOperationRetryConfig, BaseRetryConfig, BaseSessionConfig
+from .core.configs import (
+    CONNECTION_RETRY_FIELD_MAP,
+    OPERATION_RETRY_FIELD_MAP,
+    BaseOperationRetryConfig,
+    BaseRetryConfig,
+    BaseSessionConfig,
+    merge_config_with_settings,
+)
 from .core.retry import retry_operation
 from .core.settings import get_sqlite_settings
 from dataclasses import dataclass
@@ -59,35 +66,11 @@ class Sqlite:
         self.session: Session | None = None
         self._temp_engine: Engine | None = None
 
-        # Create connection retry configuration
-        _crc = connection_retry_config or SqliteConnectionRetryConfig()
-        self._connection_retry_config = SqliteConnectionRetryConfig(
-            enable_retry=_crc.enable_retry if _crc.enable_retry is not None else _settings.connection_enable_retry,
-            max_retries=_crc.max_retries if _crc.max_retries is not None else _settings.connection_max_retries,
-            initial_retry_delay=(
-                _crc.initial_retry_delay
-                if _crc.initial_retry_delay is not None
-                else _settings.connection_initial_retry_delay
-            ),
-            max_retry_delay=(
-                _crc.max_retry_delay if _crc.max_retry_delay is not None else _settings.connection_max_retry_delay
-            ),
+        self._connection_retry_config = merge_config_with_settings(
+            SqliteConnectionRetryConfig, connection_retry_config, _settings, CONNECTION_RETRY_FIELD_MAP
         )
-
-        # Create operation retry configuration
-        _orc = operation_retry_config or SqliteOperationRetryConfig()
-        self._operation_retry_config = SqliteOperationRetryConfig(
-            enable_retry=_orc.enable_retry if _orc.enable_retry is not None else _settings.operation_enable_retry,
-            max_retries=_orc.max_retries if _orc.max_retries is not None else _settings.operation_max_retries,
-            initial_retry_delay=(
-                _orc.initial_retry_delay
-                if _orc.initial_retry_delay is not None
-                else _settings.operation_initial_retry_delay
-            ),
-            max_retry_delay=(
-                _orc.max_retry_delay if _orc.max_retry_delay is not None else _settings.operation_max_retry_delay
-            ),
-            jitter=_orc.jitter if _orc.jitter is not None else _settings.operation_jitter,
+        self._operation_retry_config = merge_config_with_settings(
+            SqliteOperationRetryConfig, operation_retry_config, _settings, OPERATION_RETRY_FIELD_MAP
         )
 
         self.logger = logger if logger is not None else _logger

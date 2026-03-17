@@ -1,4 +1,50 @@
+import dataclasses
 from dataclasses import dataclass
+from typing import Any, TypeVar
+
+_C = TypeVar("_C")
+
+# Field maps for merging retry configs with settings
+CONNECTION_RETRY_FIELD_MAP: dict[str, str] = {
+    "enable_retry": "connection_enable_retry",
+    "max_retries": "connection_max_retries",
+    "initial_retry_delay": "connection_initial_retry_delay",
+    "max_retry_delay": "connection_max_retry_delay",
+}
+
+OPERATION_RETRY_FIELD_MAP: dict[str, str] = {
+    "enable_retry": "operation_enable_retry",
+    "max_retries": "operation_max_retries",
+    "initial_retry_delay": "operation_initial_retry_delay",
+    "max_retry_delay": "operation_max_retry_delay",
+    "jitter": "operation_jitter",
+}
+
+
+def merge_config_with_settings(
+    config_cls: type[_C],
+    override: _C | None,
+    settings: Any,
+    field_map: dict[str, str] | None = None,
+) -> _C:
+    """Create config instance, using override values when not None, else settings defaults.
+
+    Args:
+        config_cls: The dataclass class to instantiate
+        override: Optional override instance (or None to use all defaults)
+        settings: Settings object with default values
+        field_map: Dict mapping config field names to settings attribute names.
+                   If None, config field names must match settings attribute names.
+    """
+    override = override or config_cls()
+    field_map = field_map or {}
+    kwargs = {}
+    for field in dataclasses.fields(config_cls):  # type: ignore[arg-type]
+        name = field.name
+        settings_attr = field_map.get(name, name)
+        val = getattr(override, name)
+        kwargs[name] = val if val is not None else getattr(settings, settings_attr)
+    return config_cls(**kwargs)
 
 
 def _validate_retry_config(

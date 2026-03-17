@@ -2,12 +2,15 @@ import logging
 import ssl as _ssl_module
 from .core.base import BaseConnection
 from .core.configs import (
+    CONNECTION_RETRY_FIELD_MAP,
+    OPERATION_RETRY_FIELD_MAP,
     BaseConnectionConfig,
     BaseOperationRetryConfig,
     BasePoolConfig,
     BaseRetryConfig,
     BaseSessionConfig,
     BaseSSLConfig,
+    merge_config_with_settings,
 )
 from .core.constants import POSTGRESQL_SSL_MODES
 from .core.settings import get_postgresql_settings
@@ -88,23 +91,8 @@ class PostgreSQL(BaseConnection):
             schema=schema if schema is not None else _settings.schema,
         )
 
-        _pc = pool_config or PostgreSQLPoolConfig()
-        self._pool_config = PostgreSQLPoolConfig(
-            pool_size=_pc.pool_size if _pc.pool_size is not None else _settings.pool_size,
-            max_overflow=_pc.max_overflow if _pc.max_overflow is not None else _settings.max_overflow,
-            pool_recycle=_pc.pool_recycle if _pc.pool_recycle is not None else _settings.pool_recycle,
-            connection_timeout=(
-                _pc.connection_timeout if _pc.connection_timeout is not None else _settings.connection_timeout
-            ),
-        )
-
-        _sc = session_config or PostgreSQLSessionConfig()
-        self._session_config = PostgreSQLSessionConfig(
-            echo=_sc.echo if _sc.echo is not None else _settings.echo,
-            autoflush=_sc.autoflush if _sc.autoflush is not None else _settings.autoflush,
-            expire_on_commit=_sc.expire_on_commit if _sc.expire_on_commit is not None else _settings.expire_on_commit,
-            autocommit=_sc.autocommit if _sc.autocommit is not None else _settings.autocommit,
-        )
+        self._pool_config = merge_config_with_settings(PostgreSQLPoolConfig, pool_config, _settings)
+        self._session_config = merge_config_with_settings(PostgreSQLSessionConfig, session_config, _settings)
 
         _ssl = ssl_config or PostgreSQLSSLConfig()
         self._ssl_config = PostgreSQLSSLConfig(
@@ -137,35 +125,11 @@ class PostgreSQL(BaseConnection):
             **self.extra_engine_args,
         }
 
-        # Create connection retry configuration
-        _crc = connection_retry_config or PostgreSQLConnectionRetryConfig()
-        self._connection_retry_config = PostgreSQLConnectionRetryConfig(
-            enable_retry=_crc.enable_retry if _crc.enable_retry is not None else _settings.connection_enable_retry,
-            max_retries=_crc.max_retries if _crc.max_retries is not None else _settings.connection_max_retries,
-            initial_retry_delay=(
-                _crc.initial_retry_delay
-                if _crc.initial_retry_delay is not None
-                else _settings.connection_initial_retry_delay
-            ),
-            max_retry_delay=(
-                _crc.max_retry_delay if _crc.max_retry_delay is not None else _settings.connection_max_retry_delay
-            ),
+        self._connection_retry_config = merge_config_with_settings(
+            PostgreSQLConnectionRetryConfig, connection_retry_config, _settings, CONNECTION_RETRY_FIELD_MAP
         )
-
-        # Create operation retry configuration
-        _orc = operation_retry_config or PostgreSQLOperationRetryConfig()
-        self._operation_retry_config = PostgreSQLOperationRetryConfig(
-            enable_retry=_orc.enable_retry if _orc.enable_retry is not None else _settings.operation_enable_retry,
-            max_retries=_orc.max_retries if _orc.max_retries is not None else _settings.operation_max_retries,
-            initial_retry_delay=(
-                _orc.initial_retry_delay
-                if _orc.initial_retry_delay is not None
-                else _settings.operation_initial_retry_delay
-            ),
-            max_retry_delay=(
-                _orc.max_retry_delay if _orc.max_retry_delay is not None else _settings.operation_max_retry_delay
-            ),
-            jitter=_orc.jitter if _orc.jitter is not None else _settings.operation_jitter,
+        self._operation_retry_config = merge_config_with_settings(
+            PostgreSQLOperationRetryConfig, operation_retry_config, _settings, OPERATION_RETRY_FIELD_MAP
         )
 
         self.logger = logger if logger is not None else _logger
