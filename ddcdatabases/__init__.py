@@ -193,7 +193,7 @@ except ImportError:
     pass
 
 __all__ = tuple(__all__)
-__title__ = "ddcDatabases"
+__title__ = "ddcdatabases"
 __author__ = "Daniel Costa"
 __email__ = "daniel@ddcsoftwares.com"
 __license__ = "MIT"
