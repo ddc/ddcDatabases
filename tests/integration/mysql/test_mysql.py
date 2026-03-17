@@ -10,7 +10,7 @@ class TestMySQLIntegration:
 
     def test_sync_connection(self, mysql_container):
         """Test synchronous MySQL connection and CRUD operations."""
-        from ddcDatabases import DBUtils, MySQL
+        from ddcdatabases import DBUtils, MySQL
 
         port = mysql_container.get_exposed_port(3306)
         host = mysql_container.get_container_host_ip()
@@ -61,7 +61,7 @@ class TestMySQLIntegration:
     @pytest.mark.asyncio
     async def test_async_connection(self, mysql_container):
         """Test asynchronous MySQL connection and CRUD operations."""
-        from ddcDatabases import DBUtilsAsync, MySQL
+        from ddcdatabases import DBUtilsAsync, MySQL
 
         port = mysql_container.get_exposed_port(3306)
         host = mysql_container.get_container_host_ip()
@@ -104,12 +104,12 @@ class TestMySQLIntegration:
 
     def test_pool_size_configuration(self, mysql_container):
         """Test MySQL pool size configuration works with real connection."""
-        from ddcDatabases import MySQL
+        from ddcdatabases import MySQL
 
         port = mysql_container.get_exposed_port(3306)
         host = mysql_container.get_container_host_ip()
 
-        from ddcDatabases.mysql import MySQLPoolConfig
+        from ddcdatabases.mysql import MySQLPoolConfig
 
         with MySQL(
             host=host,
@@ -124,7 +124,7 @@ class TestMySQLIntegration:
 
     def test_fetchvalue(self, mysql_container):
         """Test fetchvalue utility method."""
-        from ddcDatabases import DBUtils, MySQL
+        from ddcdatabases import DBUtils, MySQL
 
         port = mysql_container.get_exposed_port(3306)
         host = mysql_container.get_container_host_ip()

@@ -1,5 +1,4 @@
 from __future__ import annotations
-
 import asyncio
 import logging
 import random
@@ -57,7 +56,7 @@ def _calculate_retry_delay(attempt: int, config: BaseRetryConfig) -> float:
     # Add jitter (randomize +/- jitter%)
     jitter = getattr(config, "jitter", 0.0) or 0.0
     jitter_range = capped_delay * jitter
-    jitter_offset = random.uniform(-jitter_range, jitter_range)
+    jitter_offset = random.uniform(-jitter_range, jitter_range)  # noqa: S311
 
     return max(0, capped_delay + jitter_offset)
 

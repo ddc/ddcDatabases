@@ -1,7 +1,7 @@
 """Tests for Oracle persistent connections."""
 
 # noinspection PyProtectedMember
-from ddcDatabases.core.persistent import (
+from ddcdatabases.core.persistent import (
     OraclePersistent,
     PersistentSQLAlchemyConnection,
     close_all_persistent_connections,

@@ -12,14 +12,14 @@ class TestMariaDBSSLConfig:
 
     def test_mariadb_ssl_config_is_mysql_alias(self):
         """Test that MariaDBSSLConfig is an alias for MySQLSSLConfig."""
-        from ddcDatabases import MariaDBSSLConfig
-        from ddcDatabases.mysql import MySQLSSLConfig
+        from ddcdatabases import MariaDBSSLConfig
+        from ddcdatabases.mysql import MySQLSSLConfig
 
         assert MariaDBSSLConfig is MySQLSSLConfig
 
     def test_valid_ssl_modes(self):
         """Test all valid MariaDB SSL modes."""
-        from ddcDatabases import MariaDBSSLConfig
+        from ddcdatabases import MariaDBSSLConfig
 
         valid_modes = ["DISABLED", "PREFERRED", "REQUIRED", "VERIFY_CA", "VERIFY_IDENTITY"]
         for mode in valid_modes:
@@ -28,14 +28,14 @@ class TestMariaDBSSLConfig:
 
     def test_invalid_ssl_mode_raises_error(self):
         """Test that invalid SSL mode raises ValueError."""
-        from ddcDatabases import MariaDBSSLConfig
+        from ddcdatabases import MariaDBSSLConfig
 
         with pytest.raises(ValueError, match="ssl_mode must be one of"):
             MariaDBSSLConfig(ssl_mode="invalid_mode")
 
     def test_ssl_config_with_all_paths(self):
         """Test SSL config with all certificate paths."""
-        from ddcDatabases import MariaDBSSLConfig
+        from ddcdatabases import MariaDBSSLConfig
 
         config = MariaDBSSLConfig(
             ssl_mode="VERIFY_IDENTITY",
@@ -50,7 +50,7 @@ class TestMariaDBSSLConfig:
 
     def test_ssl_config_immutability(self):
         """Test that SSL config is immutable (frozen)."""
-        from ddcDatabases import MariaDBSSLConfig
+        from ddcdatabases import MariaDBSSLConfig
 
         config = MariaDBSSLConfig(ssl_mode="REQUIRED")
         with pytest.raises(AttributeError):
@@ -58,7 +58,7 @@ class TestMariaDBSSLConfig:
 
     def test_default_values_are_none(self):
         """Test MariaDB SSL config default values are None."""
-        from ddcDatabases import MariaDBSSLConfig
+        from ddcdatabases import MariaDBSSLConfig
 
         config = MariaDBSSLConfig()
         assert config.ssl_mode is None

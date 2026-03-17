@@ -10,7 +10,7 @@ class TestMSSQLSSLConfig:
 
     def test_default_values_are_none(self):
         """Test MSSQL SSL config default values are None."""
-        from ddcDatabases.mssql import MSSQLSSLConfig
+        from ddcdatabases.mssql import MSSQLSSLConfig
 
         config = MSSQLSSLConfig()
         assert config.ssl_encrypt is None
@@ -19,7 +19,7 @@ class TestMSSQLSSLConfig:
 
     def test_ssl_encrypt_enabled(self):
         """Test MSSQL SSL encryption enabled."""
-        from ddcDatabases.mssql import MSSQLSSLConfig
+        from ddcdatabases.mssql import MSSQLSSLConfig
 
         config = MSSQLSSLConfig(ssl_encrypt=True, ssl_trust_server_certificate=False)
         assert config.ssl_encrypt is True
@@ -27,7 +27,7 @@ class TestMSSQLSSLConfig:
 
     def test_ssl_config_with_ca_cert(self):
         """Test MSSQL SSL config with CA certificate."""
-        from ddcDatabases.mssql import MSSQLSSLConfig
+        from ddcdatabases.mssql import MSSQLSSLConfig
 
         config = MSSQLSSLConfig(
             ssl_encrypt=True,
@@ -38,7 +38,7 @@ class TestMSSQLSSLConfig:
 
     def test_ssl_config_immutability(self):
         """Test that SSL config is immutable (frozen)."""
-        from ddcDatabases.mssql import MSSQLSSLConfig
+        from ddcdatabases.mssql import MSSQLSSLConfig
 
         config = MSSQLSSLConfig(ssl_encrypt=True)
         with pytest.raises(AttributeError):
@@ -46,7 +46,7 @@ class TestMSSQLSSLConfig:
 
     def test_ssl_encrypt_disabled(self):
         """Test MSSQL SSL encryption disabled."""
-        from ddcDatabases.mssql import MSSQLSSLConfig
+        from ddcdatabases.mssql import MSSQLSSLConfig
 
         config = MSSQLSSLConfig(ssl_encrypt=False, ssl_trust_server_certificate=True)
         assert config.ssl_encrypt is False
@@ -54,7 +54,7 @@ class TestMSSQLSSLConfig:
 
     def test_trust_server_certificate_only(self):
         """Test MSSQL SSL config with trust server certificate only."""
-        from ddcDatabases.mssql import MSSQLSSLConfig
+        from ddcdatabases.mssql import MSSQLSSLConfig
 
         config = MSSQLSSLConfig(ssl_trust_server_certificate=True)
         assert config.ssl_trust_server_certificate is True
@@ -62,7 +62,7 @@ class TestMSSQLSSLConfig:
 
     def test_ssl_encrypt_with_trust_cert(self):
         """Test MSSQL SSL encrypt with trust certificate combination."""
-        from ddcDatabases.mssql import MSSQLSSLConfig
+        from ddcdatabases.mssql import MSSQLSSLConfig
 
         config = MSSQLSSLConfig(ssl_encrypt=True, ssl_trust_server_certificate=True)
         assert config.ssl_encrypt is True
@@ -75,18 +75,18 @@ class TestMSSQLSSLConnectionURL:
     # noinspection PyMethodMayBeStatic
     def setup_method(self):
         """Clear cache before each test."""
-        from ddcDatabases.core.settings import get_mssql_settings
+        from ddcdatabases.core.settings import get_mssql_settings
 
         get_mssql_settings.cache_clear()
 
-        import ddcDatabases.core.settings
+        import ddcdatabases.core.settings
 
-        ddcDatabases.core.settings._dotenv_loaded = False
+        ddcdatabases.core.settings._dotenv_loaded = False
 
-    @patch("ddcDatabases.mssql.get_mssql_settings")
+    @patch("ddcdatabases.mssql.get_mssql_settings")
     def test_ssl_ca_cert_path_in_connection_url(self, mock_get_settings):
         """Test that ssl_ca_cert_path is added to connection URL query as ServerCertificate."""
-        from ddcDatabases.mssql import MSSQL, MSSQLSSLConfig
+        from ddcdatabases.mssql import MSSQL, MSSQLSSLConfig
 
         mock_settings = MagicMock()
         mock_settings.host = "localhost"
@@ -132,10 +132,10 @@ class TestMSSQLSSLConnectionURL:
         assert mssql.connection_url["query"]["Encrypt"] == "yes"
         assert mssql.connection_url["query"]["TrustServerCertificate"] == "no"
 
-    @patch("ddcDatabases.mssql.get_mssql_settings")
+    @patch("ddcdatabases.mssql.get_mssql_settings")
     def test_ssl_no_ca_cert_path_no_server_certificate_key(self, mock_get_settings):
         """Test that ServerCertificate is not in query when ssl_ca_cert_path is None."""
-        from ddcDatabases.mssql import MSSQL
+        from ddcdatabases.mssql import MSSQL
 
         mock_settings = MagicMock()
         mock_settings.host = "localhost"
@@ -173,10 +173,10 @@ class TestMSSQLSSLConnectionURL:
 
         assert "ServerCertificate" not in mssql.connection_url["query"]
 
-    @patch("ddcDatabases.mssql.get_mssql_settings")
+    @patch("ddcdatabases.mssql.get_mssql_settings")
     def test_ssl_ca_cert_path_falls_back_to_settings(self, mock_get_settings):
         """Test that ssl_ca_cert_path falls back to settings when not provided in ssl_config."""
-        from ddcDatabases.mssql import MSSQL
+        from ddcdatabases.mssql import MSSQL
 
         mock_settings = MagicMock()
         mock_settings.host = "localhost"
@@ -222,17 +222,17 @@ class TestMSSQLSSLEnvVars:
     # noinspection PyMethodMayBeStatic
     def setup_method(self):
         """Clear cache before each test."""
-        from ddcDatabases.core.settings import get_mssql_settings
+        from ddcdatabases.core.settings import get_mssql_settings
 
         get_mssql_settings.cache_clear()
 
-        import ddcDatabases.core.settings
+        import ddcdatabases.core.settings
 
-        ddcDatabases.core.settings._dotenv_loaded = False
+        ddcdatabases.core.settings._dotenv_loaded = False
 
     def test_ssl_ca_cert_path_from_env_var(self):
         """Test that MSSQL_SSL_CA_CERT_PATH env var is read by settings."""
-        from ddcDatabases.core.settings import MSSQLSettings
+        from ddcdatabases.core.settings import MSSQLSettings
 
         with patch.dict(
             os.environ,

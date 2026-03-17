@@ -15,7 +15,7 @@ class TestMariaDBSSLIntegration:
 
     def test_connection_with_ssl_disabled(self, mariadb_container):
         """Test MariaDB connection with SSL explicitly disabled."""
-        from ddcDatabases import MariaDB, MariaDBSSLConfig
+        from ddcdatabases import MariaDB, MariaDBSSLConfig
 
         port = mariadb_container.get_exposed_port(3306)
         host = mariadb_container.get_container_host_ip()
@@ -33,7 +33,7 @@ class TestMariaDBSSLIntegration:
 
     def test_connection_with_ssl_preferred(self, mariadb_container):
         """Test MariaDB connection with SSL preferred mode."""
-        from ddcDatabases import MariaDB, MariaDBSSLConfig
+        from ddcdatabases import MariaDB, MariaDBSSLConfig
 
         port = mariadb_container.get_exposed_port(3306)
         host = mariadb_container.get_container_host_ip()
@@ -51,7 +51,7 @@ class TestMariaDBSSLIntegration:
 
     def test_ssl_config_is_accessible(self, mariadb_container):
         """Test that MariaDB SSL config is accessible."""
-        from ddcDatabases import MariaDB, MariaDBSSLConfig
+        from ddcdatabases import MariaDB, MariaDBSSLConfig
 
         port = mariadb_container.get_exposed_port(3306)
         host = mariadb_container.get_container_host_ip()
@@ -74,7 +74,7 @@ class TestMariaDBSSLIntegration:
 
     def test_ssl_config_immutable(self, mariadb_container):
         """Test that MariaDB SSL config is immutable."""
-        from ddcDatabases import MariaDB, MariaDBSSLConfig
+        from ddcdatabases import MariaDB, MariaDBSSLConfig
 
         port = mariadb_container.get_exposed_port(3306)
         host = mariadb_container.get_container_host_ip()

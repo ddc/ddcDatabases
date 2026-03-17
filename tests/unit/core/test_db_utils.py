@@ -39,7 +39,7 @@ class ConcreteTestConnection:
         operation_retry_config=None,
     ):
         """Create a concrete test implementation of BaseConnection"""
-        from ddcDatabases.core.base import BaseConnection
+        from ddcdatabases.core.base import BaseConnection
 
         class TestableBaseConnection(BaseConnection):
             @contextmanager
@@ -92,7 +92,7 @@ class TestBaseConnection:
 
     def setup_method(self):
         """Import dependencies when needed"""
-        from ddcDatabases.core.base import BaseConnection, ConnectionTester
+        from ddcdatabases.core.base import BaseConnection, ConnectionTester
 
         self.BaseConnection = BaseConnection
         self.ConnectionTester = ConnectionTester
@@ -198,7 +198,7 @@ class TestDBUtils:
 
     def setup_method(self):
         """Import dependencies when needed"""
-        from ddcDatabases import DBUtils
+        from ddcdatabases import DBUtils
 
         self.DBUtils = DBUtils
 
@@ -442,7 +442,7 @@ class TestDBUtilsAsync:
 
     def setup_method(self):
         """Import dependencies when needed"""
-        from ddcDatabases import DBUtilsAsync
+        from ddcdatabases import DBUtilsAsync
 
         self.DBUtilsAsync = DBUtilsAsync
 
@@ -637,14 +637,14 @@ class TestBaseConnectionContextManagers:
 
     def setup_method(self):
         """Import dependencies when needed"""
-        from ddcDatabases.core.base import BaseConnection, ConnectionTester
+        from ddcdatabases.core.base import BaseConnection, ConnectionTester
 
         self.BaseConnection = BaseConnection
         self.ConnectionTester = ConnectionTester
 
     def test_sync_context_manager(self):
         """Test sync context manager __enter__ and __exit__ methods"""
-        from ddcDatabases.core.configs import BaseRetryConfig
+        from ddcdatabases.core.configs import BaseRetryConfig
 
         connection_url = {"host": "localhost", "database": "test"}
         engine_args = {"echo": False}
@@ -664,7 +664,7 @@ class TestBaseConnectionContextManagers:
 
         with (
             patch.object(conn, "_get_engine") as mock_get_engine,
-            patch("ddcDatabases.core.base.sessionmaker") as mock_sessionmaker,
+            patch("ddcdatabases.core.base.sessionmaker") as mock_sessionmaker,
             patch.object(conn, "_test_connection_sync") as mock_test_conn,
         ):
             mock_get_engine.return_value.__enter__.return_value = mock_engine
@@ -705,7 +705,7 @@ class TestBaseConnectionContextManagers:
 
         with (
             patch.object(conn, "_get_async_engine") as mock_get_engine,
-            patch("ddcDatabases.core.base.async_sessionmaker") as mock_sessionmaker,
+            patch("ddcdatabases.core.base.async_sessionmaker") as mock_sessionmaker,
             patch.object(conn, "_test_connection_async") as mock_test_conn,
         ):
             mock_get_engine.return_value.__aenter__.return_value = mock_engine
@@ -791,7 +791,7 @@ class TestBaseConnectionContextManagers:
 
         mock_session = MagicMock()
 
-        with patch("ddcDatabases.core.base.ConnectionTester") as mock_tester_class:
+        with patch("ddcdatabases.core.base.ConnectionTester") as mock_tester_class:
             mock_tester = MagicMock()
             mock_tester_class.return_value = mock_tester
 
@@ -824,7 +824,7 @@ class TestBaseConnectionContextManagers:
 
         mock_session = AsyncMock()
 
-        with patch("ddcDatabases.core.base.ConnectionTester") as mock_tester_class:
+        with patch("ddcdatabases.core.base.ConnectionTester") as mock_tester_class:
             mock_tester = MagicMock()
             mock_tester.test_connection_async = AsyncMock()
             mock_tester_class.return_value = mock_tester
@@ -848,7 +848,7 @@ class TestConnectionTesterCoverage:
 
     def setup_method(self):
         """Import dependencies when needed"""
-        from ddcDatabases.core.base import ConnectionTester
+        from ddcdatabases.core.base import ConnectionTester
 
         self.ConnectionTester = ConnectionTester
 
@@ -887,7 +887,7 @@ class TestDBUtilsAsyncInsertBulk:
 
     def setup_method(self):
         """Import dependencies when needed"""
-        from ddcDatabases import DBUtilsAsync
+        from ddcdatabases import DBUtilsAsync
 
         self.DBUtilsAsync = DBUtilsAsync
 

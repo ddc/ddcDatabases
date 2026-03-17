@@ -8,8 +8,8 @@ import pytest
 import sqlalchemy as sa
 
 # noinspection PyProtectedMember
-from ddcDatabases import MariaDBPersistent
-from ddcDatabases.core.persistent import close_all_persistent_connections
+from ddcdatabases import MariaDBPersistent
+from ddcdatabases.core.persistent import close_all_persistent_connections
 from tests.integration.conftest import Base, IntegrationModel
 
 pytestmark = pytest.mark.integration

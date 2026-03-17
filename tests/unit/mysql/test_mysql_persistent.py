@@ -1,9 +1,9 @@
 """Tests for MySQL persistent connections."""
 
-from ddcDatabases.core.configs import BaseRetryConfig as RetryConfig
+from ddcdatabases.core.configs import BaseRetryConfig as RetryConfig
 
 # noinspection PyProtectedMember
-from ddcDatabases.core.persistent import (
+from ddcdatabases.core.persistent import (
     MySQLPersistent,
     PersistentConnectionConfig,
     PersistentSQLAlchemyAsyncConnection,

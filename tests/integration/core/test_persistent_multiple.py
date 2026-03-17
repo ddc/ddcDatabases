@@ -4,7 +4,7 @@ import pytest
 import sqlalchemy as sa
 
 # noinspection PyProtectedMember
-from ddcDatabases.core.persistent import (
+from ddcdatabases.core.persistent import (
     MySQLPersistent,
     PostgreSQLPersistent,
     close_all_persistent_connections,

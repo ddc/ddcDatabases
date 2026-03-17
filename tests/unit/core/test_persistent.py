@@ -3,11 +3,11 @@
 import pytest
 import ssl as _ssl_module
 import time
-from ddcDatabases.core.configs import BaseOperationRetryConfig as OperationRetryConfig
-from ddcDatabases.core.configs import BaseRetryConfig as RetryConfig
+from ddcdatabases.core.configs import BaseOperationRetryConfig as OperationRetryConfig
+from ddcdatabases.core.configs import BaseRetryConfig as RetryConfig
 
 # noinspection PyProtectedMember
-from ddcDatabases.core.persistent import (
+from ddcdatabases.core.persistent import (
     MongoDBPersistent,
     MSSQLPersistent,
     MySQLPersistent,
@@ -1148,7 +1148,7 @@ class TestRetrySettingsIntegration:
 
     def test_postgresql_retry_settings(self):
         """Test PostgreSQL settings include retry fields."""
-        from ddcDatabases.core.settings import PostgreSQLSettings
+        from ddcdatabases.core.settings import PostgreSQLSettings
 
         settings = PostgreSQLSettings()
         assert hasattr(settings, "connection_enable_retry")
@@ -1175,7 +1175,7 @@ class TestRetrySettingsIntegration:
 
     def test_mysql_retry_settings(self):
         """Test MySQL settings include retry fields."""
-        from ddcDatabases.core.settings import MySQLSettings
+        from ddcdatabases.core.settings import MySQLSettings
 
         settings = MySQLSettings()
         assert settings.connection_enable_retry is True
@@ -1186,7 +1186,7 @@ class TestRetrySettingsIntegration:
 
     def test_mssql_retry_settings(self):
         """Test MSSQL settings include retry fields."""
-        from ddcDatabases.core.settings import MSSQLSettings
+        from ddcdatabases.core.settings import MSSQLSettings
 
         settings = MSSQLSettings()
         assert settings.connection_enable_retry is True
@@ -1197,7 +1197,7 @@ class TestRetrySettingsIntegration:
 
     def test_oracle_retry_settings(self):
         """Test Oracle settings include retry fields."""
-        from ddcDatabases.core.settings import OracleSettings
+        from ddcdatabases.core.settings import OracleSettings
 
         settings = OracleSettings()
         assert settings.connection_enable_retry is True
@@ -1208,7 +1208,7 @@ class TestRetrySettingsIntegration:
 
     def test_mongodb_retry_settings(self):
         """Test MongoDB settings include retry fields."""
-        from ddcDatabases.core.settings import MongoDBSettings
+        from ddcdatabases.core.settings import MongoDBSettings
 
         settings = MongoDBSettings()
         assert settings.connection_enable_retry is True
@@ -1219,7 +1219,7 @@ class TestRetrySettingsIntegration:
 
     def test_sqlite_retry_settings(self):
         """Test SQLite settings include retry fields (minimal)."""
-        from ddcDatabases.core.settings import SQLiteSettings
+        from ddcdatabases.core.settings import SQLiteSettings
 
         settings = SQLiteSettings()
         assert settings.connection_enable_retry is False  # SQLite disabled by default
@@ -1284,7 +1284,7 @@ def _mock_mssql_settings(**overrides):
 class TestAsyncCreateEngine:
     """Test PersistentSQLAlchemyAsyncConnection._create_engine."""
 
-    @patch("ddcDatabases.core.persistent.create_async_engine")
+    @patch("ddcdatabases.core.persistent.create_async_engine")
     def test_create_async_engine_called(self, mock_create_async_engine):
         """Test that _create_engine calls create_async_engine with correct args."""
         mock_engine = MagicMock()
@@ -1314,7 +1314,7 @@ class TestPostgreSQLSSLAsync:
     def teardown_method(self):
         close_all_persistent_connections()
 
-    @patch("ddcDatabases.core.persistent.get_postgresql_settings")
+    @patch("ddcdatabases.core.persistent.get_postgresql_settings")
     def test_ssl_verify_full_with_ca_cert_creates_ssl_context(self, mock_get_settings):
         """Test async ssl_mode=verify-full with CA cert creates SSLContext."""
         mock_get_settings.return_value = _mock_pg_settings(
@@ -1336,7 +1336,7 @@ class TestPostgreSQLSSLAsync:
         assert "ssl" in connect_args
         assert isinstance(connect_args["ssl"], _ssl_module.SSLContext)
 
-    @patch("ddcDatabases.core.persistent.get_postgresql_settings")
+    @patch("ddcdatabases.core.persistent.get_postgresql_settings")
     def test_ssl_verify_full_with_client_certs_loads_cert_chain(self, mock_get_settings):
         """Test async ssl_mode=verify-full with client certs calls load_cert_chain."""
         mock_get_settings.return_value = _mock_pg_settings(
@@ -1364,7 +1364,7 @@ class TestPostgreSQLSSLAsync:
             keyfile="/path/to/client.key",
         )
 
-    @patch("ddcDatabases.core.persistent.get_postgresql_settings")
+    @patch("ddcdatabases.core.persistent.get_postgresql_settings")
     def test_ssl_verify_full_no_ca_cert_passes_ssl_mode_directly(self, mock_get_settings):
         """Test async ssl_mode=verify-full with no CA cert passes ssl_mode string."""
         mock_get_settings.return_value = _mock_pg_settings(
@@ -1393,7 +1393,7 @@ class TestPostgreSQLSSLSync:
     def teardown_method(self):
         close_all_persistent_connections()
 
-    @patch("ddcDatabases.core.persistent.get_postgresql_settings")
+    @patch("ddcdatabases.core.persistent.get_postgresql_settings")
     def test_ssl_verify_full_with_all_certs_populates_connect_args(self, mock_get_settings):
         """Test sync ssl_mode=verify-full with CA/client certs populates connect_args."""
         mock_get_settings.return_value = _mock_pg_settings(
@@ -1418,7 +1418,7 @@ class TestPostgreSQLSSLSync:
         assert connect_args["sslcert"] == "/path/to/client.crt"
         assert connect_args["sslkey"] == "/path/to/client.key"
 
-    @patch("ddcDatabases.core.persistent.get_postgresql_settings")
+    @patch("ddcdatabases.core.persistent.get_postgresql_settings")
     def test_ssl_verify_full_no_certs_only_sslmode(self, mock_get_settings):
         """Test sync ssl_mode=verify-full with no certs only sets sslmode."""
         mock_get_settings.return_value = _mock_pg_settings(
@@ -1450,7 +1450,7 @@ class TestMySQLSSL:
     def teardown_method(self):
         close_all_persistent_connections()
 
-    @patch("ddcDatabases.core.persistent.get_mysql_settings")
+    @patch("ddcdatabases.core.persistent.get_mysql_settings")
     def test_ssl_with_all_certs_populates_connect_args(self, mock_get_settings):
         """Test MySQL SSL with CA/client certs populates connect_args."""
         mock_get_settings.return_value = _mock_mysql_settings(
@@ -1475,7 +1475,7 @@ class TestMySQLSSL:
         assert ssl_dict["cert"] == "/path/to/client.crt"
         assert ssl_dict["key"] == "/path/to/client.key"
 
-    @patch("ddcDatabases.core.persistent.get_mysql_settings")
+    @patch("ddcdatabases.core.persistent.get_mysql_settings")
     def test_ssl_with_ca_only(self, mock_get_settings):
         """Test MySQL SSL with only CA cert."""
         mock_get_settings.return_value = _mock_mysql_settings(
@@ -1508,7 +1508,7 @@ class TestMSSQLSSLCACert:
     def teardown_method(self):
         close_all_persistent_connections()
 
-    @patch("ddcDatabases.core.persistent.get_mssql_settings")
+    @patch("ddcdatabases.core.persistent.get_mssql_settings")
     def test_ssl_ca_cert_path_sets_server_certificate(self, mock_get_settings):
         """Test with ssl_ca_cert_path set puts ServerCertificate in connection URL query."""
         mock_get_settings.return_value = _mock_mssql_settings(

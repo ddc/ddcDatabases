@@ -7,7 +7,6 @@ on failure and idle timeout for resource management.
 """
 
 from __future__ import annotations
-
 import asyncio
 import logging
 import ssl as _ssl_module

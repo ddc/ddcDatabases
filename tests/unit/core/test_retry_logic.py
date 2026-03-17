@@ -1,11 +1,11 @@
 """Tests for retry logic functionality."""
 
 import pytest
-from ddcDatabases.core.configs import BaseOperationRetryConfig, BaseRetryConfig
-from ddcDatabases.core.constants import CONNECTION_ERROR_KEYWORDS
+from ddcdatabases.core.configs import BaseOperationRetryConfig, BaseRetryConfig
+from ddcdatabases.core.constants import CONNECTION_ERROR_KEYWORDS
 
 # noinspection PyProtectedMember
-from ddcDatabases.core.retry import (
+from ddcdatabases.core.retry import (
     _calculate_retry_delay,
     _handle_retry_exception,
     _is_connection_error,
@@ -310,7 +310,7 @@ class TestRetryOperationSync:
 
         operation.assert_called_once()
 
-    @patch("ddcDatabases.core.retry.time.sleep")
+    @patch("ddcdatabases.core.retry.time.sleep")
     def test_delay_between_retries(self, mock_sleep):
         """Test that delays occur between retries."""
         config = BaseOperationRetryConfig(
@@ -462,7 +462,7 @@ class TestRetryPolicyInDatabaseClasses:
 
     def test_postgresql_retry_config(self):
         """Test PostgreSQL includes retry config."""
-        from ddcDatabases.postgresql import PostgreSQL
+        from ddcdatabases.postgresql import PostgreSQL
 
         pg = PostgreSQL()
         retry_info = pg.get_connection_retry_info()
@@ -474,7 +474,7 @@ class TestRetryPolicyInDatabaseClasses:
 
     def test_mysql_retry_config(self):
         """Test MySQL includes retry config."""
-        from ddcDatabases.mysql import MySQL
+        from ddcdatabases.mysql import MySQL
 
         mysql = MySQL()
         retry_info = mysql.get_connection_retry_info()
@@ -484,7 +484,7 @@ class TestRetryPolicyInDatabaseClasses:
 
     def test_mssql_retry_config(self):
         """Test MSSQL includes retry config."""
-        from ddcDatabases.mssql import MSSQL
+        from ddcdatabases.mssql import MSSQL
 
         mssql = MSSQL()
         retry_info = mssql.get_connection_retry_info()
@@ -494,7 +494,7 @@ class TestRetryPolicyInDatabaseClasses:
 
     def test_oracle_retry_config(self):
         """Test Oracle includes retry config."""
-        from ddcDatabases.oracle import Oracle
+        from ddcdatabases.oracle import Oracle
 
         oracle = Oracle()
         retry_info = oracle.get_connection_retry_info()
@@ -504,7 +504,7 @@ class TestRetryPolicyInDatabaseClasses:
 
     def test_sqlite_retry_config(self):
         """Test SQLite includes retry config."""
-        from ddcDatabases.sqlite import Sqlite
+        from ddcdatabases.sqlite import Sqlite
 
         sqlite = Sqlite()
         retry_info = sqlite.get_connection_retry_info()
@@ -515,7 +515,7 @@ class TestRetryPolicyInDatabaseClasses:
 
     def test_mongodb_retry_config(self):
         """Test MongoDB includes retry config."""
-        from ddcDatabases.mongodb import MongoDB
+        from ddcdatabases.mongodb import MongoDB
 
         mongodb = MongoDB(collection="test")
         retry_info = mongodb.get_connection_retry_info()
@@ -525,7 +525,7 @@ class TestRetryPolicyInDatabaseClasses:
 
     def test_custom_retry_settings(self):
         """Test passing custom retry settings to database class."""
-        from ddcDatabases.postgresql import PostgreSQL, PostgreSQLConnectionRetryConfig
+        from ddcdatabases.postgresql import PostgreSQL, PostgreSQLConnectionRetryConfig
 
         pg = PostgreSQL(
             connection_retry_config=PostgreSQLConnectionRetryConfig(

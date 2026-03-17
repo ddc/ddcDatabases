@@ -3,7 +3,7 @@
 import pytest
 
 # noinspection PyProtectedMember
-from ddcDatabases.core.persistent import (
+from ddcdatabases.core.persistent import (
     MongoDBPersistent,
     close_all_persistent_connections,
 )

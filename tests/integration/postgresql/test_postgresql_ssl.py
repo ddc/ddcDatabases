@@ -11,8 +11,8 @@ class TestPostgreSQLSSLIntegration:
 
     def test_connection_with_ssl_disabled(self, postgres_container):
         """Test PostgreSQL connection with SSL explicitly disabled."""
-        from ddcDatabases import PostgreSQL
-        from ddcDatabases.postgresql import PostgreSQLSSLConfig
+        from ddcdatabases import PostgreSQL
+        from ddcdatabases.postgresql import PostgreSQLSSLConfig
 
         port = postgres_container.get_exposed_port(5432)
         host = postgres_container.get_container_host_ip()
@@ -30,8 +30,8 @@ class TestPostgreSQLSSLIntegration:
 
     def test_connection_with_ssl_prefer(self, postgres_container):
         """Test PostgreSQL connection with SSL prefer mode (falls back to no SSL)."""
-        from ddcDatabases import PostgreSQL
-        from ddcDatabases.postgresql import PostgreSQLSSLConfig
+        from ddcdatabases import PostgreSQL
+        from ddcdatabases.postgresql import PostgreSQLSSLConfig
 
         port = postgres_container.get_exposed_port(5432)
         host = postgres_container.get_container_host_ip()
@@ -49,8 +49,8 @@ class TestPostgreSQLSSLIntegration:
 
     def test_connection_with_ssl_allow(self, postgres_container):
         """Test PostgreSQL connection with SSL allow mode."""
-        from ddcDatabases import PostgreSQL
-        from ddcDatabases.postgresql import PostgreSQLSSLConfig
+        from ddcdatabases import PostgreSQL
+        from ddcdatabases.postgresql import PostgreSQLSSLConfig
 
         port = postgres_container.get_exposed_port(5432)
         host = postgres_container.get_container_host_ip()
@@ -68,8 +68,8 @@ class TestPostgreSQLSSLIntegration:
 
     def test_ssl_config_is_accessible(self, postgres_container):
         """Test that SSL config is accessible through getter method."""
-        from ddcDatabases import PostgreSQL
-        from ddcDatabases.postgresql import PostgreSQLSSLConfig
+        from ddcdatabases import PostgreSQL
+        from ddcdatabases.postgresql import PostgreSQLSSLConfig
 
         port = postgres_container.get_exposed_port(5432)
         host = postgres_container.get_container_host_ip()
@@ -92,8 +92,8 @@ class TestPostgreSQLSSLIntegration:
 
     def test_ssl_config_immutable(self, postgres_container):
         """Test that SSL config is immutable."""
-        from ddcDatabases import PostgreSQL
-        from ddcDatabases.postgresql import PostgreSQLSSLConfig
+        from ddcdatabases import PostgreSQL
+        from ddcdatabases.postgresql import PostgreSQLSSLConfig
 
         port = postgres_container.get_exposed_port(5432)
         host = postgres_container.get_container_host_ip()
@@ -113,14 +113,14 @@ class TestPostgreSQLSSLIntegration:
 
     def test_invalid_ssl_mode(self):
         """Test PostgreSQL rejects invalid SSL mode."""
-        from ddcDatabases.postgresql import PostgreSQLSSLConfig
+        from ddcdatabases.postgresql import PostgreSQLSSLConfig
 
         with pytest.raises(ValueError, match="ssl_mode must be one of"):
             PostgreSQLSSLConfig(ssl_mode="invalid_mode")
 
     def test_valid_ssl_modes(self):
         """Test PostgreSQL accepts all valid SSL modes."""
-        from ddcDatabases.postgresql import PostgreSQLSSLConfig
+        from ddcdatabases.postgresql import PostgreSQLSSLConfig
 
         valid_modes = ["disable", "allow", "prefer", "require", "verify-ca", "verify-full"]
         for mode in valid_modes:

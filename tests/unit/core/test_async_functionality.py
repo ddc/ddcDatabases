@@ -30,7 +30,7 @@ class ConcreteAsyncTestConnection:
     @staticmethod
     def create_test_connection(connection_url, engine_args, autoflush, expire_on_commit, sync_driver, async_driver):
         """Create a concrete test implementation of BaseConnection"""
-        from ddcDatabases.core.base import BaseConnection
+        from ddcdatabases.core.base import BaseConnection
 
         class TestableAsyncBaseConnection(BaseConnection):
             @contextmanager
@@ -82,7 +82,7 @@ class TestAsyncBaseConnection:
 
     def setup_method(self):
         """Import dependencies when needed"""
-        from ddcDatabases.core.base import BaseConnection
+        from ddcdatabases.core.base import BaseConnection
 
         self.BaseConnection = BaseConnection
 
@@ -102,7 +102,7 @@ class TestAsyncBaseConnection:
 
         with (
             patch.object(conn, "_get_async_engine") as mock_get_engine,
-            patch("ddcDatabases.core.base.async_sessionmaker") as mock_sessionmaker,
+            patch("ddcdatabases.core.base.async_sessionmaker") as mock_sessionmaker,
             patch.object(conn, "_test_connection_async") as mock_test_conn,
         ):
             mock_engine = AsyncMock()
@@ -182,7 +182,7 @@ class TestDBUtilsAsync:
 
     def setup_method(self):
         """Import dependencies when needed"""
-        from ddcDatabases import DBUtilsAsync
+        from ddcdatabases import DBUtilsAsync
 
         self.DBUtilsAsync = DBUtilsAsync
 
@@ -386,7 +386,7 @@ class TestAsyncIntegration:
 
     def setup_method(self):
         """Import dependencies when needed"""
-        from ddcDatabases import DBUtilsAsync
+        from ddcdatabases import DBUtilsAsync
 
         self.DBUtilsAsync = DBUtilsAsync
 
@@ -488,8 +488,8 @@ class TestAsyncCompatibility:
 
     def setup_method(self):
         """Import dependencies when needed"""
-        from ddcDatabases import DBUtilsAsync
-        from ddcDatabases.core.base import BaseConnection
+        from ddcdatabases import DBUtilsAsync
+        from ddcdatabases.core.base import BaseConnection
 
         self.DBUtilsAsync = DBUtilsAsync
         self.BaseConnection = BaseConnection

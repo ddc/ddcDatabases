@@ -5,8 +5,8 @@ the MariaDB aliases work correctly.
 """
 
 # noinspection PyProtectedMember
-from ddcDatabases import MariaDBPersistent
-from ddcDatabases.core.persistent import (
+from ddcdatabases import MariaDBPersistent
+from ddcdatabases.core.persistent import (
     MySQLPersistent,
     PersistentSQLAlchemyAsyncConnection,
     PersistentSQLAlchemyConnection,

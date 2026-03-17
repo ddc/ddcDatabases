@@ -1,5 +1,5 @@
 import pytest
-from ddcDatabases.core.exceptions import (
+from ddcdatabases.core.exceptions import (
     CustomBaseException,
     DBDeleteAllDataException,
     DBExecuteException,

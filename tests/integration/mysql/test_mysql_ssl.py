@@ -11,8 +11,8 @@ class TestMySQLSSLIntegration:
 
     def test_connection_with_ssl_disabled(self, mysql_container):
         """Test MySQL connection with SSL explicitly disabled."""
-        from ddcDatabases import MySQL
-        from ddcDatabases.mysql import MySQLSSLConfig
+        from ddcdatabases import MySQL
+        from ddcdatabases.mysql import MySQLSSLConfig
 
         port = mysql_container.get_exposed_port(3306)
         host = mysql_container.get_container_host_ip()
@@ -30,8 +30,8 @@ class TestMySQLSSLIntegration:
 
     def test_connection_with_ssl_preferred(self, mysql_container):
         """Test MySQL connection with SSL preferred mode."""
-        from ddcDatabases import MySQL
-        from ddcDatabases.mysql import MySQLSSLConfig
+        from ddcdatabases import MySQL
+        from ddcdatabases.mysql import MySQLSSLConfig
 
         port = mysql_container.get_exposed_port(3306)
         host = mysql_container.get_container_host_ip()
@@ -49,8 +49,8 @@ class TestMySQLSSLIntegration:
 
     def test_ssl_config_is_accessible(self, mysql_container):
         """Test that MySQL SSL config is accessible."""
-        from ddcDatabases import MySQL
-        from ddcDatabases.mysql import MySQLSSLConfig
+        from ddcdatabases import MySQL
+        from ddcdatabases.mysql import MySQLSSLConfig
 
         port = mysql_container.get_exposed_port(3306)
         host = mysql_container.get_container_host_ip()
@@ -73,8 +73,8 @@ class TestMySQLSSLIntegration:
 
     def test_ssl_config_immutable(self, mysql_container):
         """Test that MySQL SSL config is immutable."""
-        from ddcDatabases import MySQL
-        from ddcDatabases.mysql import MySQLSSLConfig
+        from ddcdatabases import MySQL
+        from ddcdatabases.mysql import MySQLSSLConfig
 
         port = mysql_container.get_exposed_port(3306)
         host = mysql_container.get_container_host_ip()
@@ -94,14 +94,14 @@ class TestMySQLSSLIntegration:
 
     def test_invalid_ssl_mode(self):
         """Test MySQL rejects invalid SSL mode."""
-        from ddcDatabases.mysql import MySQLSSLConfig
+        from ddcdatabases.mysql import MySQLSSLConfig
 
         with pytest.raises(ValueError, match="ssl_mode must be one of"):
             MySQLSSLConfig(ssl_mode="invalid_mode")
 
     def test_valid_ssl_modes(self):
         """Test MySQL accepts all valid SSL modes."""
-        from ddcDatabases.mysql import MySQLSSLConfig
+        from ddcdatabases.mysql import MySQLSSLConfig
 
         valid_modes = ["DISABLED", "PREFERRED", "REQUIRED", "VERIFY_CA", "VERIFY_IDENTITY"]
         for mode in valid_modes:
