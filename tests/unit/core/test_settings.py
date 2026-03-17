@@ -1,6 +1,6 @@
 import os
 import pytest
-from ddcDatabases.core.settings import (
+from ddcdatabases.core.settings import (
     MongoDBSettings,
     MSSQLSettings,
     MySQLSettings,
@@ -360,7 +360,7 @@ class TestDotenvLoading:
     # noinspection PyMethodMayBeStatic
     def setup_method(self):
         """Clear all settings caches before each test to ensure isolation"""
-        from ddcDatabases.core.settings import (
+        from ddcdatabases.core.settings import (
             get_mongodb_settings,
             get_mssql_settings,
             get_mysql_settings,
@@ -376,12 +376,12 @@ class TestDotenvLoading:
         get_mongodb_settings.cache_clear()
         get_oracle_settings.cache_clear()
         # Reset dotenv flag to ensure clean state
-        import ddcDatabases.core.settings
+        import ddcdatabases.core.settings
 
-        ddcDatabases.core.settings._dotenv_loaded = False
+        ddcdatabases.core.settings._dotenv_loaded = False
 
-    @patch("ddcDatabases.core.settings._dotenv_loaded", True)
-    @patch("ddcDatabases.core.settings.load_dotenv")
+    @patch("ddcdatabases.core.settings._dotenv_loaded", True)
+    @patch("ddcdatabases.core.settings.load_dotenv")
     def test_dotenv_not_loaded_if_already_loaded(self, mock_load_dotenv):
         """Test that dotenv is not loaded if already loaded"""
         get_postgresql_settings.cache_clear()
@@ -398,7 +398,7 @@ class TestDotenvLoading:
         Note: This test is skipped due to test isolation issues. The dotenv loading
         behavior is indirectly verified by other tests that successfully use settings.
         """
-        import ddcDatabases.core.settings as settings_module
+        import ddcdatabases.core.settings as settings_module
 
         # Patch load_dotenv before reloading to ensure it's mocked
         with patch.object(settings_module, "load_dotenv") as mock_load_dotenv:

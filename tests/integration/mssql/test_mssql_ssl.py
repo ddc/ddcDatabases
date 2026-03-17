@@ -11,8 +11,8 @@ class TestMSSQLSSLIntegration:
 
     def test_connection_with_ssl_disabled(self, mssql_container):
         """Test MSSQL connection with SSL/encryption disabled."""
-        from ddcDatabases import MSSQL
-        from ddcDatabases.mssql import MSSQLSSLConfig
+        from ddcdatabases import MSSQL
+        from ddcdatabases.mssql import MSSQLSSLConfig
 
         port = mssql_container.get_exposed_port(1433)
         host = mssql_container.get_container_host_ip()
@@ -30,8 +30,8 @@ class TestMSSQLSSLIntegration:
 
     def test_ssl_config_is_accessible(self, mssql_container):
         """Test that MSSQL SSL config is accessible."""
-        from ddcDatabases import MSSQL
-        from ddcDatabases.mssql import MSSQLSSLConfig
+        from ddcdatabases import MSSQL
+        from ddcdatabases.mssql import MSSQLSSLConfig
 
         port = mssql_container.get_exposed_port(1433)
         host = mssql_container.get_container_host_ip()
@@ -51,8 +51,8 @@ class TestMSSQLSSLIntegration:
 
     def test_ssl_config_immutable(self, mssql_container):
         """Test that MSSQL SSL config is immutable."""
-        from ddcDatabases import MSSQL
-        from ddcDatabases.mssql import MSSQLSSLConfig
+        from ddcdatabases import MSSQL
+        from ddcdatabases.mssql import MSSQLSSLConfig
 
         port = mssql_container.get_exposed_port(1433)
         host = mssql_container.get_container_host_ip()
@@ -72,8 +72,8 @@ class TestMSSQLSSLIntegration:
 
     def test_connection_with_trust_certificate(self, mssql_container):
         """Test MSSQL connection with trust server certificate enabled."""
-        from ddcDatabases import MSSQL
-        from ddcDatabases.mssql import MSSQLSSLConfig
+        from ddcdatabases import MSSQL
+        from ddcdatabases.mssql import MSSQLSSLConfig
 
         port = mssql_container.get_exposed_port(1433)
         host = mssql_container.get_container_host_ip()

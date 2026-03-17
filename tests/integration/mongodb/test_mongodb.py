@@ -8,12 +8,12 @@ class TestMongoDBIntegration:
 
     def test_connection_and_query(self, mongodb_container):
         """Test MongoDB connection and basic query operations."""
-        from ddcDatabases import MongoDB
+        from ddcdatabases import MongoDB
 
         port = mongodb_container.get_exposed_port(27017)
         host = f"{mongodb_container.get_container_host_ip()}:{port}"
 
-        from ddcDatabases.mongodb import MongoDBQueryConfig
+        from ddcdatabases.mongodb import MongoDBQueryConfig
 
         mongo = MongoDB(
             host=host,
@@ -46,7 +46,7 @@ class TestMongoDBIntegration:
 
     def test_query_with_sort(self, mongodb_container):
         """Test MongoDB query with sort parameters."""
-        from ddcDatabases import MongoDB
+        from ddcdatabases import MongoDB
 
         port = mongodb_container.get_exposed_port(27017)
         host = f"{mongodb_container.get_container_host_ip()}:{port}"
@@ -86,12 +86,12 @@ class TestMongoDBIntegration:
 
     def test_batch_size_and_limit(self, mongodb_container):
         """Test MongoDB batch_size and limit parameters."""
-        from ddcDatabases import MongoDB
+        from ddcdatabases import MongoDB
 
         port = mongodb_container.get_exposed_port(27017)
         host = f"{mongodb_container.get_container_host_ip()}:{port}"
 
-        from ddcDatabases.mongodb import MongoDBQueryConfig
+        from ddcdatabases.mongodb import MongoDBQueryConfig
 
         mongo = MongoDB(
             host=host,
@@ -116,7 +116,7 @@ class TestMongoDBIntegration:
 
     def test_empty_query_returns_all(self, mongodb_container):
         """Test MongoDB with empty query returns all documents."""
-        from ddcDatabases import MongoDB
+        from ddcdatabases import MongoDB
 
         port = mongodb_container.get_exposed_port(27017)
         host = f"{mongodb_container.get_container_host_ip()}:{port}"
@@ -149,7 +149,7 @@ class TestMongoDBIntegration:
 
     def test_context_manager_cleanup(self, mongodb_container):
         """Test MongoDB context manager properly cleans up."""
-        from ddcDatabases import MongoDB
+        from ddcdatabases import MongoDB
 
         port = mongodb_container.get_exposed_port(27017)
         host = f"{mongodb_container.get_container_host_ip()}:{port}"

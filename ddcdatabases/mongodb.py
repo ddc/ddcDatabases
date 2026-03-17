@@ -1,6 +1,13 @@
 import logging
 import sys
-from .core.configs import BaseConnectionConfig, BaseOperationRetryConfig, BaseRetryConfig
+from .core.configs import (
+    CONNECTION_RETRY_FIELD_MAP,
+    OPERATION_RETRY_FIELD_MAP,
+    BaseConnectionConfig,
+    BaseOperationRetryConfig,
+    BaseRetryConfig,
+    merge_config_with_settings,
+)
 from .core.retry import retry_operation, retry_operation_async
 from .core.settings import get_mongodb_settings
 from dataclasses import dataclass
@@ -107,35 +114,11 @@ class MongoDB:
         self.cursor_ref = None
         self.async_cursor_ref = None
 
-        # Create connection retry configuration
-        _crc = connection_retry_config or MongoDBConnectionRetryConfig()
-        self._connection_retry_config = MongoDBConnectionRetryConfig(
-            enable_retry=_crc.enable_retry if _crc.enable_retry is not None else _settings.connection_enable_retry,
-            max_retries=_crc.max_retries if _crc.max_retries is not None else _settings.connection_max_retries,
-            initial_retry_delay=(
-                _crc.initial_retry_delay
-                if _crc.initial_retry_delay is not None
-                else _settings.connection_initial_retry_delay
-            ),
-            max_retry_delay=(
-                _crc.max_retry_delay if _crc.max_retry_delay is not None else _settings.connection_max_retry_delay
-            ),
+        self._connection_retry_config = merge_config_with_settings(
+            MongoDBConnectionRetryConfig, connection_retry_config, _settings, CONNECTION_RETRY_FIELD_MAP
         )
-
-        # Create operation retry configuration
-        _orc = operation_retry_config or MongoDBOperationRetryConfig()
-        self._operation_retry_config = MongoDBOperationRetryConfig(
-            enable_retry=_orc.enable_retry if _orc.enable_retry is not None else _settings.operation_enable_retry,
-            max_retries=_orc.max_retries if _orc.max_retries is not None else _settings.operation_max_retries,
-            initial_retry_delay=(
-                _orc.initial_retry_delay
-                if _orc.initial_retry_delay is not None
-                else _settings.operation_initial_retry_delay
-            ),
-            max_retry_delay=(
-                _orc.max_retry_delay if _orc.max_retry_delay is not None else _settings.operation_max_retry_delay
-            ),
-            jitter=_orc.jitter if _orc.jitter is not None else _settings.operation_jitter,
+        self._operation_retry_config = merge_config_with_settings(
+            MongoDBOperationRetryConfig, operation_retry_config, _settings, OPERATION_RETRY_FIELD_MAP
         )
 
         self.logger = logger if logger is not None else _logger

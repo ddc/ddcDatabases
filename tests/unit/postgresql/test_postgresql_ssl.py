@@ -16,8 +16,8 @@ class TestPostgreSQLSSLConfig:
 
     def test_valid_ssl_modes(self):
         """Test all valid PostgreSQL SSL modes."""
-        from ddcDatabases.core.constants import POSTGRESQL_SSL_MODES
-        from ddcDatabases.postgresql import PostgreSQLSSLConfig
+        from ddcdatabases.core.constants import POSTGRESQL_SSL_MODES
+        from ddcdatabases.postgresql import PostgreSQLSSLConfig
 
         for mode in POSTGRESQL_SSL_MODES:
             config = PostgreSQLSSLConfig(ssl_mode=mode)
@@ -25,14 +25,14 @@ class TestPostgreSQLSSLConfig:
 
     def test_invalid_ssl_mode_raises_error(self):
         """Test that invalid SSL mode raises ValueError."""
-        from ddcDatabases.postgresql import PostgreSQLSSLConfig
+        from ddcdatabases.postgresql import PostgreSQLSSLConfig
 
         with pytest.raises(ValueError, match="ssl_mode must be one of"):
             PostgreSQLSSLConfig(ssl_mode="invalid_mode")
 
     def test_ssl_config_with_all_paths(self):
         """Test SSL config with all certificate paths."""
-        from ddcDatabases.postgresql import PostgreSQLSSLConfig
+        from ddcdatabases.postgresql import PostgreSQLSSLConfig
 
         config = PostgreSQLSSLConfig(
             ssl_mode="verify-full",
@@ -47,7 +47,7 @@ class TestPostgreSQLSSLConfig:
 
     def test_ssl_config_immutability(self):
         """Test that SSL config is immutable (frozen)."""
-        from ddcDatabases.postgresql import PostgreSQLSSLConfig
+        from ddcdatabases.postgresql import PostgreSQLSSLConfig
 
         config = PostgreSQLSSLConfig(ssl_mode="require")
         with pytest.raises(AttributeError):
@@ -55,21 +55,21 @@ class TestPostgreSQLSSLConfig:
 
     def test_ssl_mode_none_by_default(self):
         """Test default SSL mode is None (not set)."""
-        from ddcDatabases.postgresql import PostgreSQLSSLConfig
+        from ddcdatabases.postgresql import PostgreSQLSSLConfig
 
         config = PostgreSQLSSLConfig()
         assert config.ssl_mode is None
 
     def test_ssl_modes_case_insensitive_validation(self):
         """Test that PostgreSQL SSL mode validation is case-insensitive."""
-        from ddcDatabases.postgresql import PostgreSQLSSLConfig
+        from ddcdatabases.postgresql import PostgreSQLSSLConfig
 
         config = PostgreSQLSSLConfig(ssl_mode="REQUIRE")
         assert config.ssl_mode == "REQUIRE"
 
     def test_verify_ca_mode(self):
         """Test verify-ca SSL mode."""
-        from ddcDatabases.postgresql import PostgreSQLSSLConfig
+        from ddcdatabases.postgresql import PostgreSQLSSLConfig
 
         config = PostgreSQLSSLConfig(
             ssl_mode="verify-ca",
@@ -79,7 +79,7 @@ class TestPostgreSQLSSLConfig:
 
     def test_all_ssl_modes_are_valid(self):
         """Test that all documented SSL modes are accepted."""
-        from ddcDatabases.postgresql import PostgreSQLSSLConfig
+        from ddcdatabases.postgresql import PostgreSQLSSLConfig
 
         valid_modes = ["disable", "allow", "prefer", "require", "verify-ca", "verify-full"]
         for mode in valid_modes:
@@ -88,7 +88,7 @@ class TestPostgreSQLSSLConfig:
 
     def test_ssl_ca_cert_path_only(self):
         """Test SSL config with only CA certificate path."""
-        from ddcDatabases.postgresql import PostgreSQLSSLConfig
+        from ddcdatabases.postgresql import PostgreSQLSSLConfig
 
         config = PostgreSQLSSLConfig(
             ssl_mode="verify-ca",
@@ -100,7 +100,7 @@ class TestPostgreSQLSSLConfig:
 
     def test_ssl_client_cert_without_key(self):
         """Test SSL config with client cert but no key."""
-        from ddcDatabases.postgresql import PostgreSQLSSLConfig
+        from ddcdatabases.postgresql import PostgreSQLSSLConfig
 
         config = PostgreSQLSSLConfig(
             ssl_mode="verify-full",
@@ -116,18 +116,18 @@ class TestPostgreSQLSSLEngine:
     # noinspection PyMethodMayBeStatic
     def setup_method(self):
         """Clear cache before each test."""
-        from ddcDatabases.core.settings import get_postgresql_settings
+        from ddcdatabases.core.settings import get_postgresql_settings
 
         get_postgresql_settings.cache_clear()
 
-        import ddcDatabases.core.settings
+        import ddcdatabases.core.settings
 
-        ddcDatabases.core.settings._dotenv_loaded = False
+        ddcdatabases.core.settings._dotenv_loaded = False
 
-    @patch("ddcDatabases.postgresql.get_postgresql_settings")
+    @patch("ddcdatabases.postgresql.get_postgresql_settings")
     def test_async_engine_ssl_with_cert_paths_uses_ssl_context(self, mock_get_settings):
         """Test that _get_async_engine passes an ssl.SSLContext when cert paths are provided."""
-        from ddcDatabases.postgresql import PostgreSQL, PostgreSQLSSLConfig
+        from ddcdatabases.postgresql import PostgreSQL, PostgreSQLSSLConfig
 
         mock_settings = MagicMock()
         mock_settings.host = "localhost"
@@ -174,8 +174,8 @@ class TestPostgreSQLSSLEngine:
         mock_ssl_context = MagicMock(spec=ssl.SSLContext)
 
         with (
-            patch("ddcDatabases.postgresql.create_async_engine") as mock_create,
-            patch("ddcDatabases.postgresql._ssl_module.SSLContext", return_value=mock_ssl_context),
+            patch("ddcdatabases.postgresql.create_async_engine") as mock_create,
+            patch("ddcdatabases.postgresql._ssl_module.SSLContext", return_value=mock_ssl_context),
         ):
             mock_engine = MagicMock()
             mock_engine.dispose = AsyncMock()
@@ -199,10 +199,10 @@ class TestPostgreSQLSSLEngine:
             keyfile="/path/to/client-key.pem",
         )
 
-    @patch("ddcDatabases.postgresql.get_postgresql_settings")
+    @patch("ddcdatabases.postgresql.get_postgresql_settings")
     def test_async_engine_ssl_without_cert_paths_uses_mode_string(self, mock_get_settings):
         """Test that _get_async_engine passes the mode string when no cert paths are provided."""
-        from ddcDatabases.postgresql import PostgreSQL, PostgreSQLSSLConfig
+        from ddcdatabases.postgresql import PostgreSQL, PostgreSQLSSLConfig
 
         mock_settings = MagicMock()
         mock_settings.host = "localhost"
@@ -240,7 +240,7 @@ class TestPostgreSQLSSLEngine:
 
         captured_args = {}
 
-        with patch("ddcDatabases.postgresql.create_async_engine") as mock_create:
+        with patch("ddcdatabases.postgresql.create_async_engine") as mock_create:
             mock_engine = MagicMock()
             mock_engine.dispose = AsyncMock()
             mock_create.return_value = mock_engine
@@ -256,10 +256,10 @@ class TestPostgreSQLSSLEngine:
         connect_args = captured_args.get("connect_args", {})
         assert connect_args.get("ssl") == "require", f"Expected mode string 'require', got {connect_args.get('ssl')!r}"
 
-    @patch("ddcDatabases.postgresql.get_postgresql_settings")
+    @patch("ddcdatabases.postgresql.get_postgresql_settings")
     def test_async_engine_ssl_ca_only_no_client_certs(self, mock_get_settings):
         """Test that _get_async_engine creates SSLContext with CA cert only (no client cert/key)."""
-        from ddcDatabases.postgresql import PostgreSQL, PostgreSQLSSLConfig
+        from ddcdatabases.postgresql import PostgreSQL, PostgreSQLSSLConfig
 
         mock_settings = MagicMock()
         mock_settings.host = "localhost"
@@ -304,8 +304,8 @@ class TestPostgreSQLSSLEngine:
         mock_ssl_context = MagicMock(spec=ssl.SSLContext)
 
         with (
-            patch("ddcDatabases.postgresql.create_async_engine") as mock_create,
-            patch("ddcDatabases.postgresql._ssl_module.SSLContext", return_value=mock_ssl_context),
+            patch("ddcdatabases.postgresql.create_async_engine") as mock_create,
+            patch("ddcdatabases.postgresql._ssl_module.SSLContext", return_value=mock_ssl_context),
         ):
             mock_engine = MagicMock()
             mock_engine.dispose = AsyncMock()
@@ -325,10 +325,10 @@ class TestPostgreSQLSSLEngine:
         mock_ssl_context.load_verify_locations.assert_called_once_with(cafile="/path/to/ca.pem")
         mock_ssl_context.load_cert_chain.assert_not_called()
 
-    @patch("ddcDatabases.postgresql.get_postgresql_settings")
+    @patch("ddcdatabases.postgresql.get_postgresql_settings")
     def test_sync_engine_ssl_with_cert_paths(self, mock_get_settings):
         """Test that _get_engine passes SSL cert paths as connect_args for psycopg."""
-        from ddcDatabases.postgresql import PostgreSQL, PostgreSQLSSLConfig
+        from ddcdatabases.postgresql import PostgreSQL, PostgreSQLSSLConfig
 
         mock_settings = MagicMock()
         mock_settings.host = "localhost"
@@ -371,7 +371,7 @@ class TestPostgreSQLSSLEngine:
             )
         )
 
-        with patch("ddcDatabases.postgresql.create_engine") as mock_create:
+        with patch("ddcdatabases.postgresql.create_engine") as mock_create:
             mock_engine = MagicMock()
             mock_create.return_value = mock_engine
 
@@ -391,17 +391,17 @@ class TestPostgreSQLSSLEnvVars:
     # noinspection PyMethodMayBeStatic
     def setup_method(self):
         """Clear cache before each test."""
-        from ddcDatabases.core.settings import get_postgresql_settings
+        from ddcdatabases.core.settings import get_postgresql_settings
 
         get_postgresql_settings.cache_clear()
 
-        import ddcDatabases.core.settings
+        import ddcdatabases.core.settings
 
-        ddcDatabases.core.settings._dotenv_loaded = False
+        ddcdatabases.core.settings._dotenv_loaded = False
 
     def test_ssl_cert_paths_from_env_vars(self):
         """Test that SSL cert paths are read from POSTGRESQL_SSL_* env vars."""
-        from ddcDatabases.core.settings import PostgreSQLSettings
+        from ddcdatabases.core.settings import PostgreSQLSettings
 
         with patch.dict(
             os.environ,
@@ -420,8 +420,8 @@ class TestPostgreSQLSSLEnvVars:
 
     def test_ssl_env_vars_propagate_to_async_engine(self):
         """Test that SSL cert paths from env vars result in SSLContext for async engine."""
-        from ddcDatabases.core.settings import PostgreSQLSettings
-        from ddcDatabases.postgresql import PostgreSQL
+        from ddcdatabases.core.settings import PostgreSQLSettings
+        from ddcdatabases.postgresql import PostgreSQL
 
         with patch.dict(
             os.environ,
@@ -434,7 +434,7 @@ class TestPostgreSQLSSLEnvVars:
         ):
             mock_settings = PostgreSQLSettings()
 
-        with patch("ddcDatabases.postgresql.get_postgresql_settings", return_value=mock_settings):
+        with patch("ddcdatabases.postgresql.get_postgresql_settings", return_value=mock_settings):
             postgresql = PostgreSQL()
 
         assert postgresql._ssl_config.ssl_ca_cert_path == "/env/path/to/ca.pem"
@@ -445,8 +445,8 @@ class TestPostgreSQLSSLEnvVars:
         mock_ssl_context = MagicMock(spec=ssl.SSLContext)
 
         with (
-            patch("ddcDatabases.postgresql.create_async_engine") as mock_create,
-            patch("ddcDatabases.postgresql._ssl_module.SSLContext", return_value=mock_ssl_context),
+            patch("ddcdatabases.postgresql.create_async_engine") as mock_create,
+            patch("ddcdatabases.postgresql._ssl_module.SSLContext", return_value=mock_ssl_context),
         ):
             mock_engine = MagicMock()
             mock_engine.dispose = AsyncMock()

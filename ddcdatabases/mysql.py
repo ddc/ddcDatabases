@@ -1,20 +1,19 @@
 import logging
 from .core.base import BaseConnection
 from .core.configs import (
+    CONNECTION_RETRY_FIELD_MAP,
+    OPERATION_RETRY_FIELD_MAP,
     BaseConnectionConfig,
     BaseOperationRetryConfig,
     BasePoolConfig,
     BaseRetryConfig,
     BaseSessionConfig,
     BaseSSLConfig,
+    merge_config_with_settings,
 )
 from .core.constants import MYSQL_SSL_MODES
 from .core.settings import get_mysql_settings
-from collections.abc import AsyncGenerator, Generator
-from contextlib import asynccontextmanager, contextmanager
 from dataclasses import dataclass
-from sqlalchemy.engine import URL, Engine, create_engine
-from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
 from typing import Any
 
 _logger = logging.getLogger(__name__)
@@ -89,23 +88,8 @@ class MySQL(BaseConnection):
             database=database or _settings.database,
         )
 
-        _pc = pool_config or MySQLPoolConfig()
-        self._pool_config = MySQLPoolConfig(
-            pool_size=_pc.pool_size if _pc.pool_size is not None else _settings.pool_size,
-            max_overflow=_pc.max_overflow if _pc.max_overflow is not None else _settings.max_overflow,
-            pool_recycle=_pc.pool_recycle if _pc.pool_recycle is not None else _settings.pool_recycle,
-            connection_timeout=(
-                _pc.connection_timeout if _pc.connection_timeout is not None else _settings.connection_timeout
-            ),
-        )
-
-        _sc = session_config or MySQLSessionConfig()
-        self._session_config = MySQLSessionConfig(
-            echo=_sc.echo if _sc.echo is not None else _settings.echo,
-            autoflush=_sc.autoflush if _sc.autoflush is not None else _settings.autoflush,
-            expire_on_commit=_sc.expire_on_commit if _sc.expire_on_commit is not None else _settings.expire_on_commit,
-            autocommit=_sc.autocommit if _sc.autocommit is not None else _settings.autocommit,
-        )
+        self._pool_config = merge_config_with_settings(MySQLPoolConfig, pool_config, _settings)
+        self._session_config = merge_config_with_settings(MySQLSessionConfig, session_config, _settings)
 
         _ssl = ssl_config or MySQLSSLConfig()
         self._ssl_config = MySQLSSLConfig(
@@ -155,35 +139,11 @@ class MySQL(BaseConnection):
             **self.extra_engine_args,
         }
 
-        # Create connection retry configuration
-        _crc = connection_retry_config or MySQLConnectionRetryConfig()
-        self._connection_retry_config = MySQLConnectionRetryConfig(
-            enable_retry=_crc.enable_retry if _crc.enable_retry is not None else _settings.connection_enable_retry,
-            max_retries=_crc.max_retries if _crc.max_retries is not None else _settings.connection_max_retries,
-            initial_retry_delay=(
-                _crc.initial_retry_delay
-                if _crc.initial_retry_delay is not None
-                else _settings.connection_initial_retry_delay
-            ),
-            max_retry_delay=(
-                _crc.max_retry_delay if _crc.max_retry_delay is not None else _settings.connection_max_retry_delay
-            ),
+        self._connection_retry_config = merge_config_with_settings(
+            MySQLConnectionRetryConfig, connection_retry_config, _settings, CONNECTION_RETRY_FIELD_MAP
         )
-
-        # Create operation retry configuration
-        _orc = operation_retry_config or MySQLOperationRetryConfig()
-        self._operation_retry_config = MySQLOperationRetryConfig(
-            enable_retry=_orc.enable_retry if _orc.enable_retry is not None else _settings.operation_enable_retry,
-            max_retries=_orc.max_retries if _orc.max_retries is not None else _settings.operation_max_retries,
-            initial_retry_delay=(
-                _orc.initial_retry_delay
-                if _orc.initial_retry_delay is not None
-                else _settings.operation_initial_retry_delay
-            ),
-            max_retry_delay=(
-                _orc.max_retry_delay if _orc.max_retry_delay is not None else _settings.operation_max_retry_delay
-            ),
-            jitter=_orc.jitter if _orc.jitter is not None else _settings.operation_jitter,
+        self._operation_retry_config = merge_config_with_settings(
+            MySQLOperationRetryConfig, operation_retry_config, _settings, OPERATION_RETRY_FIELD_MAP
         )
 
         self.logger = logger if logger is not None else _logger
@@ -234,31 +194,3 @@ class MySQL(BaseConnection):
 
     def get_ssl_info(self) -> MySQLSSLConfig:
         return self._ssl_config
-
-    @contextmanager
-    def _get_engine(self) -> Generator[Engine, None, None]:
-        _connection_url = URL.create(
-            drivername=self.sync_driver,
-            **self.connection_url,
-        )
-        _engine_args = {
-            "url": _connection_url,
-            **self.engine_args,
-        }
-        _engine = create_engine(**_engine_args)
-        yield _engine
-        _engine.dispose()
-
-    @asynccontextmanager
-    async def _get_async_engine(self) -> AsyncGenerator[AsyncEngine, None]:
-        _connection_url = URL.create(
-            drivername=self.async_driver,
-            **self.connection_url,
-        )
-        _engine_args = {
-            "url": _connection_url,
-            **self.engine_args,
-        }
-        _engine = create_async_engine(**_engine_args)
-        yield _engine
-        await _engine.dispose()

@@ -10,7 +10,7 @@ class TestOracleIntegration:
 
     def test_sync_connection(self, oracle_container):
         """Test synchronous Oracle connection and CRUD operations."""
-        from ddcDatabases import DBUtils, Oracle
+        from ddcdatabases import DBUtils, Oracle
 
         port = oracle_container.get_exposed_port(1521)
         host = oracle_container.get_container_host_ip()
@@ -60,7 +60,7 @@ class TestOracleIntegration:
 
     def test_oracle_dual_query(self, oracle_container):
         """Test Oracle-specific SELECT FROM dual."""
-        from ddcDatabases import Oracle
+        from ddcdatabases import Oracle
 
         port = oracle_container.get_exposed_port(1521)
         host = oracle_container.get_container_host_ip()
@@ -77,12 +77,12 @@ class TestOracleIntegration:
 
     def test_pool_configuration(self, oracle_container):
         """Test Oracle pool configuration works with real connection."""
-        from ddcDatabases import Oracle
+        from ddcdatabases import Oracle
 
         port = oracle_container.get_exposed_port(1521)
         host = oracle_container.get_container_host_ip()
 
-        from ddcDatabases.oracle import OraclePoolConfig
+        from ddcdatabases.oracle import OraclePoolConfig
 
         with Oracle(
             host=host,

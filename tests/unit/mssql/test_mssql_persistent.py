@@ -1,7 +1,7 @@
 """Tests for MSSQL persistent connections."""
 
 # noinspection PyProtectedMember
-from ddcDatabases.core.persistent import (
+from ddcdatabases.core.persistent import (
     MSSQLPersistent,
     PersistentSQLAlchemyAsyncConnection,
     PersistentSQLAlchemyConnection,

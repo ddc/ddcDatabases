@@ -69,7 +69,7 @@ class SettingsMessages:
     HOST_DESCRIPTION = "Database host"
     PORT_DESCRIPTION = "Database port"
     USERNAME_DESCRIPTION = "Database username"
-    PASSWORD_DESCRIPTION = "Database password"
+    PASSWORD_DESCRIPTION = "Database password"  # noqa: S105
     NAME_DESCRIPTION = "Database name"
     SCHEMA_DESCRIPTION = "Database schema (comma-separated for multiple schemas, e.g. 'gw2,public')"
     ASYNC_DATABASE_DRIVER_DESCRIPTION = "Async database driver"

@@ -6,7 +6,7 @@ class TestInitModule:
         """Test that logging is properly configured with NullHandler"""
         import logging
 
-        logger = logging.getLogger("ddcDatabases")
+        logger = logging.getLogger("ddcdatabases")
         handlers = logger.handlers
 
         # Should have at least one NullHandler
@@ -23,18 +23,18 @@ class TestInitModule:
 
         try:
             # Create a test scenario that will trigger ModuleNotFoundError
-            if "ddcDatabases" in sys.modules:
-                del sys.modules["ddcDatabases"]
+            if "ddcdatabases" in sys.modules:
+                del sys.modules["ddcdatabases"]
 
             # Mock the version function to raise ModuleNotFoundError
             with patch("importlib.metadata.version") as mock_version:
-                mock_version.side_effect = ModuleNotFoundError("No module named 'ddcDatabases'")
+                mock_version.side_effect = ModuleNotFoundError("No module named 'ddcdatabases'")
 
                 # This should trigger the exception handling code
                 try:
                     from importlib.metadata import version
 
-                    _version = tuple(int(x) for x in version("ddcDatabases").split("."))
+                    _version = tuple(int(x) for x in version("ddcdatabases").split("."))
                 except ModuleNotFoundError:
                     _version = (0, 0, 0)
 
@@ -55,10 +55,10 @@ class TestInitModule:
         try:
             # Force a re-import with mocked version to test the exception path
             with patch("importlib.metadata.version") as mock_version:
-                mock_version.side_effect = ModuleNotFoundError("No module named 'ddcDatabases'")
+                mock_version.side_effect = ModuleNotFoundError("No module named 'ddcdatabases'")
 
                 # Remove the module from cache if it exists
-                modules_to_remove = [name for name in sys.modules.keys() if name.startswith("ddcDatabases")]
+                modules_to_remove = [name for name in sys.modules.keys() if name.startswith("ddcdatabases")]
                 for module_name in modules_to_remove:
                     del sys.modules[module_name]
 
@@ -74,7 +74,7 @@ class TestInitModule:
 
     def test_constants_accessibility(self):
         """Test that all module constants are accessible"""
-        import ddcDatabases
+        import ddcdatabases
 
         constants = [
             "__title__",
@@ -86,11 +86,11 @@ class TestInitModule:
         ]
 
         for const in constants:
-            assert hasattr(ddcDatabases, const), f"Constant {const} not accessible"
+            assert hasattr(ddcdatabases, const), f"Constant {const} not accessible"
 
     def test_all_exports_defined(self):
         """Test that __all__ contains valid exports and core classes are always present"""
-        import ddcDatabases
+        import ddcdatabases
 
         # Core exports that should always be present (no optional dependencies)
         core_exports = {
@@ -101,14 +101,14 @@ class TestInitModule:
         }
 
         # Verify core exports are always present
-        assert core_exports.issubset(set(ddcDatabases.__all__)), "Core exports missing from __all__"
+        assert core_exports.issubset(set(ddcdatabases.__all__)), "Core exports missing from __all__"
 
         # Verify all items in __all__ are actually accessible
-        for name in ddcDatabases.__all__:
-            assert hasattr(ddcDatabases, name), f"{name} in __all__ but not accessible"
+        for name in ddcdatabases.__all__:
+            assert hasattr(ddcdatabases, name), f"{name} in __all__ but not accessible"
 
         # Verify __all__ is a tuple (converted at end of __init__.py)
-        assert isinstance(ddcDatabases.__all__, tuple), "__all__ should be a tuple"
+        assert isinstance(ddcdatabases.__all__, tuple), "__all__ should be a tuple"
 
     def test_version_string_parsing_edge_cases(self):
         """Test version string parsing with various formats"""
@@ -124,21 +124,21 @@ class TestInitModule:
 
     def test_metadata_string_values(self):
         """Test metadata string values are correct"""
-        import ddcDatabases
+        import ddcdatabases
 
         # Test specific metadata values
-        assert isinstance(ddcDatabases.__title__, str)
-        assert isinstance(ddcDatabases.__author__, str)
-        assert isinstance(ddcDatabases.__email__, str)
-        assert isinstance(ddcDatabases.__license__, str)
-        assert isinstance(ddcDatabases.__copyright__, str)
+        assert isinstance(ddcdatabases.__title__, str)
+        assert isinstance(ddcdatabases.__author__, str)
+        assert isinstance(ddcdatabases.__email__, str)
+        assert isinstance(ddcdatabases.__license__, str)
+        assert isinstance(ddcdatabases.__copyright__, str)
 
         # Test they're not empty
-        assert len(ddcDatabases.__title__) > 0
-        assert len(ddcDatabases.__author__) > 0
-        assert len(ddcDatabases.__email__) > 0
-        assert len(ddcDatabases.__license__) > 0
-        assert len(ddcDatabases.__copyright__) > 0
+        assert len(ddcdatabases.__title__) > 0
+        assert len(ddcdatabases.__author__) > 0
+        assert len(ddcdatabases.__email__) > 0
+        assert len(ddcdatabases.__license__) > 0
+        assert len(ddcdatabases.__copyright__) > 0
 
     def test_force_module_not_found_error_direct(self):
         """Force the ModuleNotFoundError by testing the logic directly"""
@@ -157,7 +157,7 @@ class TestInitModule:
 
     def test_main_imports(self):
         """Test main module imports work correctly"""
-        from ddcDatabases import (
+        from ddcdatabases import (
             MSSQL,
             DBUtils,
             DBUtilsAsync,
@@ -178,13 +178,13 @@ class TestInitModule:
 
     def test_mongodb_import_accessibility(self):
         """Test MongoDB import specifically"""
-        from ddcDatabases import MongoDB
+        from ddcdatabases import MongoDB
 
         assert MongoDB is not None
 
     def test_mariadb_aliases(self):
         """Test MariaDB aliases point to MySQL classes"""
-        from ddcDatabases import (
+        from ddcdatabases import (
             MariaDB,
             MariaDBConnectionConfig,
             MariaDBConnectionRetryConfig,

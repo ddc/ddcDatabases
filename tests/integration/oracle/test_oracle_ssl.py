@@ -11,8 +11,8 @@ class TestOracleSSLIntegration:
 
     def test_connection_with_ssl_disabled(self, oracle_container):
         """Test Oracle connection with SSL disabled."""
-        from ddcDatabases import Oracle
-        from ddcDatabases.oracle import OracleSSLConfig
+        from ddcdatabases import Oracle
+        from ddcdatabases.oracle import OracleSSLConfig
 
         port = oracle_container.get_exposed_port(1521)
         host = oracle_container.get_container_host_ip()
@@ -30,8 +30,8 @@ class TestOracleSSLIntegration:
 
     def test_ssl_config_is_accessible(self, oracle_container):
         """Test that Oracle SSL config is accessible."""
-        from ddcDatabases import Oracle
-        from ddcDatabases.oracle import OracleSSLConfig
+        from ddcdatabases import Oracle
+        from ddcdatabases.oracle import OracleSSLConfig
 
         port = oracle_container.get_exposed_port(1521)
         host = oracle_container.get_container_host_ip()
@@ -51,8 +51,8 @@ class TestOracleSSLIntegration:
 
     def test_ssl_config_immutable(self, oracle_container):
         """Test that Oracle SSL config is immutable."""
-        from ddcDatabases import Oracle
-        from ddcDatabases.oracle import OracleSSLConfig
+        from ddcdatabases import Oracle
+        from ddcdatabases.oracle import OracleSSLConfig
 
         port = oracle_container.get_exposed_port(1521)
         host = oracle_container.get_container_host_ip()

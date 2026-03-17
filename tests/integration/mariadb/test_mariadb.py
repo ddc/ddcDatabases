@@ -10,7 +10,7 @@ class TestMariaDBIntegration:
 
     def test_sync_connection(self, mariadb_container):
         """Test synchronous MariaDB connection and CRUD operations."""
-        from ddcDatabases import DBUtils, MySQL
+        from ddcdatabases import DBUtils, MySQL
 
         port = mariadb_container.get_exposed_port(3306)
         host = mariadb_container.get_container_host_ip()
@@ -61,7 +61,7 @@ class TestMariaDBIntegration:
     @pytest.mark.asyncio
     async def test_async_connection(self, mariadb_container):
         """Test asynchronous MariaDB connection and CRUD operations."""
-        from ddcDatabases import DBUtilsAsync, MySQL
+        from ddcdatabases import DBUtilsAsync, MySQL
 
         port = mariadb_container.get_exposed_port(3306)
         host = mariadb_container.get_container_host_ip()
@@ -104,12 +104,12 @@ class TestMariaDBIntegration:
 
     def test_pool_size_configuration(self, mariadb_container):
         """Test MariaDB pool size configuration works with real connection."""
-        from ddcDatabases import MySQL
+        from ddcdatabases import MySQL
 
         port = mariadb_container.get_exposed_port(3306)
         host = mariadb_container.get_container_host_ip()
 
-        from ddcDatabases.mysql import MySQLPoolConfig
+        from ddcdatabases.mysql import MySQLPoolConfig
 
         with MySQL(
             host=host,
@@ -124,7 +124,7 @@ class TestMariaDBIntegration:
 
     def test_fetchvalue(self, mariadb_container):
         """Test fetchvalue utility method."""
-        from ddcDatabases import DBUtils, MySQL
+        from ddcdatabases import DBUtils, MySQL
 
         port = mariadb_container.get_exposed_port(3306)
         host = mariadb_container.get_container_host_ip()
@@ -154,7 +154,7 @@ class TestMariaDBIntegration:
 
     def test_mariadb_version(self, mariadb_container):
         """Test that the container is actually running MariaDB."""
-        from ddcDatabases import MySQL
+        from ddcdatabases import MySQL
 
         port = mariadb_container.get_exposed_port(3306)
         host = mariadb_container.get_container_host_ip()

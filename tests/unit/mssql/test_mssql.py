@@ -1,5 +1,5 @@
 import pytest
-from ddcDatabases.mssql import MSSQL, MSSQLConnectionConfig, MSSQLPoolConfig, MSSQLSessionConfig, MSSQLSSLConfig
+from ddcdatabases.mssql import MSSQL, MSSQLConnectionConfig, MSSQLPoolConfig, MSSQLSessionConfig, MSSQLSSLConfig
 from unittest.mock import MagicMock, patch
 
 
@@ -50,7 +50,7 @@ class TestMSSQL:
     # already covered by the credential validation tests that are working.
     # Core functionality (credential validation) is tested and working.
 
-    @patch("ddcDatabases.mssql.get_mssql_settings")
+    @patch("ddcdatabases.mssql.get_mssql_settings")
     def test_init_with_parameters(self, mock_get_settings):
         """Test MSSQL initialization with override parameters"""
         mock_settings = self._create_mock_settings(
@@ -173,7 +173,7 @@ class TestMSSQL:
     # This test was testing URL schema parameters which is an edge case
     # Core functionality is covered by other tests
 
-    @patch("ddcDatabases.mssql.get_mssql_settings")
+    @patch("ddcdatabases.mssql.get_mssql_settings")
     def test_custom_odbcdriver_version(self, mock_get_settings):
         """Test custom ODBC driver version"""
         mock_settings = self._create_mock_settings(odbcdriver_version=18)
@@ -185,7 +185,7 @@ class TestMSSQL:
         assert mssql._connection_config.odbcdriver_version == 18
         assert mssql.connection_url["query"]["driver"] == "ODBC Driver 18 for SQL Server"
 
-    @patch("ddcDatabases.mssql.get_mssql_settings")
+    @patch("ddcdatabases.mssql.get_mssql_settings")
     def test_extra_engine_args(self, mock_get_settings):
         """Test extra engine arguments are properly included"""
         mock_settings = self._create_mock_settings()
@@ -204,7 +204,7 @@ class TestMSSQL:
         assert mssql.engine_args["max_overflow"] == 50
         assert not mssql.engine_args["echo"]
 
-    @patch("ddcDatabases.mssql.get_mssql_settings")
+    @patch("ddcdatabases.mssql.get_mssql_settings")
     def test_autoflush_and_expire_on_commit(self, mock_get_settings):
         """Test MSSQL autoflush and expire_on_commit parameters"""
         mock_settings = self._create_mock_settings()
@@ -215,7 +215,7 @@ class TestMSSQL:
         assert not mssql._session_config.autoflush
         assert not mssql._session_config.expire_on_commit
 
-    @patch("ddcDatabases.mssql.get_mssql_settings")
+    @patch("ddcdatabases.mssql.get_mssql_settings")
     def test_autocommit_parameter(self, mock_get_settings):
         """Test MSSQL autocommit parameter"""
         mock_settings = self._create_mock_settings(odbcdriver_version=18)
@@ -226,7 +226,7 @@ class TestMSSQL:
         assert mssql._session_config.autocommit
         assert mssql.engine_args["connect_args"]["autocommit"]
 
-    @patch("ddcDatabases.mssql.get_mssql_settings")
+    @patch("ddcdatabases.mssql.get_mssql_settings")
     def test_connection_timeout_parameter(self, mock_get_settings):
         """Test MSSQL connection_timeout parameter"""
         mock_settings = self._create_mock_settings(odbcdriver_version=18)
@@ -238,7 +238,7 @@ class TestMSSQL:
         assert mssql.engine_args["connect_args"]["timeout"] == 60
         assert mssql.engine_args["connect_args"]["login_timeout"] == 60
 
-    @patch("ddcDatabases.mssql.get_mssql_settings")
+    @patch("ddcdatabases.mssql.get_mssql_settings")
     def test_pool_recycle_parameter(self, mock_get_settings):
         """Test MSSQL pool_recycle parameter"""
         mock_settings = self._create_mock_settings(odbcdriver_version=18)
@@ -249,7 +249,7 @@ class TestMSSQL:
         assert mssql._pool_config.pool_recycle == 7200
         assert mssql.engine_args["pool_recycle"] == 7200
 
-    @patch("ddcDatabases.mssql.get_mssql_settings")
+    @patch("ddcdatabases.mssql.get_mssql_settings")
     def test_all_parameters_defaults(self, mock_get_settings):
         """Test MSSQL parameters use settings defaults"""
         mock_settings = self._create_mock_settings(autoflush=False, expire_on_commit=False, odbcdriver_version=18)
@@ -266,7 +266,7 @@ class TestMSSQL:
         assert mssql.engine_args["connect_args"]["timeout"] == 30
         assert mssql.engine_args["pool_recycle"] == 3600
 
-    @patch("ddcDatabases.mssql.get_mssql_settings")
+    @patch("ddcdatabases.mssql.get_mssql_settings")
     def test_test_connection_sync_url_creation(self, mock_get_settings):
         """Test _test_connection_sync URL creation logic - Lines 73-77"""
         mock_settings = self._create_mock_settings()
@@ -299,7 +299,7 @@ class TestMSSQL:
         assert _connection_url.port == 1433
         assert _connection_url.database == "master"
 
-    @patch("ddcDatabases.mssql.get_mssql_settings")
+    @patch("ddcdatabases.mssql.get_mssql_settings")
     def test_test_connection_async_url_creation(self, mock_get_settings):
         """Test _test_connection_async URL creation logic - Lines 87-91"""
         mock_settings = self._create_mock_settings()
@@ -332,7 +332,7 @@ class TestMSSQL:
         assert _connection_url.port == 1433
         assert _connection_url.database == "master"
 
-    @patch("ddcDatabases.mssql.get_mssql_settings")
+    @patch("ddcdatabases.mssql.get_mssql_settings")
     def test_connection_url_modification_sync(self, mock_get_settings):
         """Test that connection_url is properly copied (not modified) in _test_connection_sync"""
         mock_settings = self._create_mock_settings()
@@ -355,7 +355,7 @@ class TestMSSQL:
         assert "password" in mssql.connection_url
         assert "query" in mssql.connection_url
 
-    @patch("ddcDatabases.mssql.get_mssql_settings")
+    @patch("ddcdatabases.mssql.get_mssql_settings")
     def test_connection_url_modification_async(self, mock_get_settings):
         """Test that connection_url is properly copied (not modified) in _test_connection_async"""
         mock_settings = self._create_mock_settings(odbcdriver_version=18)
@@ -382,7 +382,7 @@ class TestMSSQL:
         assert "password" in mssql.connection_url
         assert "query" in mssql.connection_url
 
-    @patch("ddcDatabases.mssql.get_mssql_settings")
+    @patch("ddcdatabases.mssql.get_mssql_settings")
     def test_ssl_encrypt_enabled(self, mock_get_settings):
         """Test MSSQL SSL encrypt enabled"""
         mock_settings = self._create_mock_settings(odbcdriver_version=18)
@@ -395,7 +395,7 @@ class TestMSSQL:
         assert mssql.connection_url["query"]["Encrypt"] == "yes"
         assert mssql.connection_url["query"]["TrustServerCertificate"] == "no"
 
-    @patch("ddcDatabases.mssql.get_mssql_settings")
+    @patch("ddcdatabases.mssql.get_mssql_settings")
     def test_ssl_encrypt_disabled(self, mock_get_settings):
         """Test MSSQL SSL encrypt disabled"""
         mock_settings = self._create_mock_settings(odbcdriver_version=18)
@@ -408,7 +408,7 @@ class TestMSSQL:
         assert mssql.connection_url["query"]["Encrypt"] == "no"
         assert mssql.connection_url["query"]["TrustServerCertificate"] == "yes"
 
-    @patch("ddcDatabases.mssql.get_mssql_settings")
+    @patch("ddcdatabases.mssql.get_mssql_settings")
     def test_get_ssl_info(self, mock_get_settings):
         """Test get_ssl_info() returns the immutable SSL configuration"""
         mock_settings = self._create_mock_settings(odbcdriver_version=18)
@@ -427,7 +427,7 @@ class TestMSSQL:
         assert not ssl_info.ssl_trust_server_certificate
         assert ssl_info.ssl_ca_cert_path == "/path/to/ca.pem"
 
-    @patch("ddcDatabases.mssql.get_mssql_settings")
+    @patch("ddcdatabases.mssql.get_mssql_settings")
     def test_get_connection_info(self, mock_get_settings):
         """Test get_connection_info returns connection config"""
         mock_get_settings.return_value = self._create_mock_settings()
@@ -440,7 +440,7 @@ class TestMSSQL:
         assert conn_info.host == "localhost"
         assert conn_info.port == 1433
 
-    @patch("ddcDatabases.mssql.get_mssql_settings")
+    @patch("ddcdatabases.mssql.get_mssql_settings")
     def test_get_pool_info(self, mock_get_settings):
         """Test get_pool_info returns pool config"""
         mock_get_settings.return_value = self._create_mock_settings()
@@ -453,7 +453,7 @@ class TestMSSQL:
         assert pool_info.pool_size == 15
         assert pool_info.max_overflow == 30
 
-    @patch("ddcDatabases.mssql.get_mssql_settings")
+    @patch("ddcdatabases.mssql.get_mssql_settings")
     def test_get_session_info(self, mock_get_settings):
         """Test get_session_info returns session config"""
         mock_get_settings.return_value = self._create_mock_settings()
@@ -466,7 +466,7 @@ class TestMSSQL:
         assert session_info.echo
         assert not session_info.autoflush
 
-    @patch("ddcDatabases.mssql.get_mssql_settings")
+    @patch("ddcdatabases.mssql.get_mssql_settings")
     def test_get_operation_retry_info(self, mock_get_settings):
         """Test get_operation_retry_info returns operation retry config"""
         mock_get_settings.return_value = self._create_mock_settings()

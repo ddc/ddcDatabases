@@ -1,5 +1,5 @@
 import pytest
-from ddcDatabases.mongodb import (
+from ddcdatabases.mongodb import (
     MongoDB,
     MongoDBConnectionConfig,
     MongoDBQueryConfig,
@@ -12,13 +12,13 @@ from unittest.mock import MagicMock, patch
 @pytest.fixture(autouse=True)
 def setup_mongodb_test_env():
     """Setup clean test environment for MongoDB tests to prevent interference"""
-    import ddcDatabases.mongodb
+    import ddcdatabases.mongodb
     import logging
 
     # Store original state
     original_disabled_level = logging.root.manager.disable
     # noinspection PyProtectedMember
-    logger = ddcDatabases.mongodb._logger
+    logger = ddcdatabases.mongodb._logger
     original_handlers = logger.handlers[:]
     original_level = logger.level
     original_propagate = logger.propagate
@@ -111,7 +111,7 @@ class TestMongoDB:
         assert mongodb._query_config.limit == 0
         assert not mongodb.is_connected
 
-    @patch("ddcDatabases.mongodb.get_mongodb_settings")
+    @patch("ddcdatabases.mongodb.get_mongodb_settings")
     def test_init_with_parameters(self, mock_get_settings):
         """Test MongoDB initialization with override parameters"""
         mock_settings = self._create_mock_settings(
@@ -143,8 +143,8 @@ class TestMongoDB:
         assert mongodb._query_config.batch_size == 500
         assert mongodb._query_config.limit == 100
 
-    @patch("ddcDatabases.mongodb.get_mongodb_settings")
-    @patch("ddcDatabases.mongodb.MongoClient")
+    @patch("ddcdatabases.mongodb.get_mongodb_settings")
+    @patch("ddcdatabases.mongodb.MongoClient")
     def test_init_with_query_parameter(self, mock_mongo_client, mock_get_settings):
         """Test MongoDB initialization with query parameter and cursor creation"""
         mock_settings = self._create_mock_settings()
@@ -390,8 +390,8 @@ class TestMongoDB:
             assert not mongodb.is_connected
             mongodb.client.close.assert_called_once()
 
-    @patch("ddcDatabases.mongodb.get_mongodb_settings")
-    @patch("ddcDatabases.mongodb.MongoClient")
+    @patch("ddcdatabases.mongodb.get_mongodb_settings")
+    @patch("ddcdatabases.mongodb.MongoClient")
     def test_enter_method_client_close_condition(self, _mock_mongo_client, mock_get_settings):
         """Test __enter__ method client.close() condition - Line 47"""
         mock_settings = self._create_mock_settings()
@@ -410,7 +410,7 @@ class TestMongoDB:
         # Verify client.close() was called
         mock_client.close.assert_called_once()
 
-    @patch("ddcDatabases.mongodb.get_mongodb_settings")
+    @patch("ddcdatabases.mongodb.get_mongodb_settings")
     def test_exit_method_with_none_client(self, mock_get_settings):
         """Test __exit__ method when client is None - Lines 51-53"""
         mock_settings = self._create_mock_settings()
@@ -432,14 +432,14 @@ class TestMongoDB:
         with pytest.raises(ValueError, match="MongoDB collection name is required"):
             MongoDB(query_config=MongoDBQueryConfig(query={"test": "value"}))  # collection is None
 
-    @patch("ddcDatabases.mongodb.get_mongodb_settings")
+    @patch("ddcdatabases.mongodb.get_mongodb_settings")
     def test_empty_query_defaults_to_empty_dict(self, mock_get_settings):
         """Test that missing query defaults to {} for fetching entire collection"""
         mock_get_settings.return_value = self._create_mock_settings()
         mongodb = MongoDB(collection="test_collection")  # query is None
         assert mongodb._query_config.query == {}  # Should default to empty dict
 
-    @patch("ddcDatabases.mongodb.get_mongodb_settings")
+    @patch("ddcdatabases.mongodb.get_mongodb_settings")
     def test_create_cursor_with_empty_query(self, mock_get_settings):
         """Test _create_cursor works with empty query (fetch entire collection)"""
         mock_settings = self._create_mock_settings()
@@ -466,7 +466,7 @@ class TestMongoDB:
         mock_cursor.batch_size.assert_called_once_with(2865)
         assert result == mock_cursor
 
-    @patch("ddcDatabases.mongodb.get_mongodb_settings")
+    @patch("ddcdatabases.mongodb.get_mongodb_settings")
     def test_exit_with_cursor_cleanup(self, mock_get_settings):
         """Test __exit__ method cleans up cursor_ref"""
         mock_settings = self._create_mock_settings()
@@ -492,7 +492,7 @@ class TestMongoDB:
         mock_client.close.assert_called_once()
         assert mongodb.is_connected is False
 
-    @patch("ddcDatabases.mongodb.get_mongodb_settings")
+    @patch("ddcdatabases.mongodb.get_mongodb_settings")
     def test_exit_without_cursor_ref(self, mock_get_settings):
         """Test __exit__ method when cursor_ref is None"""
         mock_settings = self._create_mock_settings()
@@ -511,7 +511,7 @@ class TestMongoDB:
         mock_client.close.assert_called_once()
         assert mongodb.is_connected is False
 
-    @patch("ddcDatabases.mongodb.get_mongodb_settings")
+    @patch("ddcdatabases.mongodb.get_mongodb_settings")
     def test_create_cursor_with_sorting(self, mock_get_settings):
         """Test _create_cursor with sorting parameters"""
         mock_settings = self._create_mock_settings()
@@ -552,7 +552,7 @@ class TestMongoDB:
         # Return value should be the sorted cursor
         assert result is mock_sorted_cursor
 
-    @patch("ddcDatabases.mongodb.get_mongodb_settings")
+    @patch("ddcdatabases.mongodb.get_mongodb_settings")
     def test_create_cursor_with_ascending_sort(self, mock_get_settings):
         """Test _create_cursor with ascending sort"""
         mock_settings = self._create_mock_settings()
@@ -579,7 +579,7 @@ class TestMongoDB:
 
         mock_collection.create_index.assert_called_once_with([("name", ASCENDING)])
 
-    @patch("ddcDatabases.mongodb.get_mongodb_settings")
+    @patch("ddcdatabases.mongodb.get_mongodb_settings")
     def test_create_cursor_with_none_query(self, mock_get_settings):
         """Test _create_cursor with None query (should default to empty dict)"""
         mock_settings = self._create_mock_settings()
@@ -604,7 +604,7 @@ class TestMongoDB:
         # Verify empty dict was used for query
         mock_collection.find.assert_called_once_with({}, batch_size=2865, limit=0)
 
-    @patch("ddcDatabases.mongodb.get_mongodb_settings")
+    @patch("ddcdatabases.mongodb.get_mongodb_settings")
     def test_init_with_sort_parameters(self, mock_get_settings):
         """Test MongoDB initialization with sort parameters"""
         mock_settings = self._create_mock_settings()
@@ -629,7 +629,7 @@ class TestMongoDB:
         assert mongodb._query_config.batch_size == 1000
         assert mongodb._query_config.limit == 50
 
-    @patch("ddcDatabases.mongodb.get_mongodb_settings")
+    @patch("ddcdatabases.mongodb.get_mongodb_settings")
     def test_create_cursor_with_sort_column_only(self, mock_get_settings):
         """Test _create_cursor with only sort_column (should default to ascending)"""
         mock_settings = self._create_mock_settings()
@@ -658,7 +658,7 @@ class TestMongoDB:
         mock_collection.create_index.assert_called_once_with([("created_at", ASCENDING)])
         mock_cursor.sort.assert_called_once_with("created_at", ASCENDING)
 
-    @patch("ddcDatabases.mongodb.get_mongodb_settings")
+    @patch("ddcdatabases.mongodb.get_mongodb_settings")
     def test_create_cursor_with_id_field_sorting(self, mock_get_settings):
         """Test _create_cursor with _id field sorting (should not create index but still sort)"""
         mock_settings = self._create_mock_settings()
@@ -707,7 +707,7 @@ class TestMongoDB:
         """Test __enter__ method structural elements for coverage"""
         mock_settings = self._create_mock_settings()
 
-        with patch("ddcDatabases.mongodb.get_mongodb_settings", return_value=mock_settings):
+        with patch("ddcdatabases.mongodb.get_mongodb_settings", return_value=mock_settings):
             mongodb = MongoDB(collection="test_collection", query_config=MongoDBQueryConfig(query={"test": "value"}))
 
             # Test connection URL creation (line 41)
@@ -724,7 +724,7 @@ class TestMongoDB:
         """Test __enter__ exception handling structure for coverage"""
         mock_settings = self._create_mock_settings()
 
-        with patch("ddcDatabases.mongodb.get_mongodb_settings", return_value=mock_settings):
+        with patch("ddcdatabases.mongodb.get_mongodb_settings", return_value=mock_settings):
             mongodb = MongoDB(collection="test_collection", query_config=MongoDBQueryConfig(query={"test": "value"}))
 
             # Test the exception handling logic structure
@@ -743,7 +743,7 @@ class TestMongoDB:
         """Test client assignment and is_connected flag - Lines 42, 44, 45"""
         mock_settings = self._create_mock_settings()
 
-        with patch("ddcDatabases.mongodb.get_mongodb_settings", return_value=mock_settings):
+        with patch("ddcdatabases.mongodb.get_mongodb_settings", return_value=mock_settings):
             mongodb = MongoDB(collection="test_collection", query_config=MongoDBQueryConfig(query={"test": "value"}))
 
             # Test the assignment logic that happens in __enter__
@@ -767,7 +767,7 @@ class TestMongoDB:
 
         mock_settings = self._create_mock_settings()
 
-        with patch("ddcDatabases.mongodb.get_mongodb_settings", return_value=mock_settings):
+        with patch("ddcdatabases.mongodb.get_mongodb_settings", return_value=mock_settings):
             mongodb = MongoDB(collection="test_collection", query_config=MongoDBQueryConfig(query={"test": "value"}))
 
             # Mock client with failing ping
@@ -782,7 +782,7 @@ class TestMongoDB:
         """Test _create_cursor with ascending sort order and custom limit."""
         mock_settings = self._create_mock_settings(batch_size=100, limit=10)
 
-        with patch("ddcDatabases.mongodb.get_mongodb_settings", return_value=mock_settings):
+        with patch("ddcdatabases.mongodb.get_mongodb_settings", return_value=mock_settings):
             mongodb = MongoDB(collection="test_collection")
 
             # Create proper nested mock structure
@@ -814,7 +814,7 @@ class TestMongoDB:
         """Test _create_cursor with no explicit sort order defaults to ascending."""
         mock_settings = self._create_mock_settings(batch_size=100, limit=10)
 
-        with patch("ddcDatabases.mongodb.get_mongodb_settings", return_value=mock_settings):
+        with patch("ddcdatabases.mongodb.get_mongodb_settings", return_value=mock_settings):
             mongodb = MongoDB(collection="test_collection")
 
             # Create proper nested mock structure
@@ -841,7 +841,7 @@ class TestMongoDB:
             call_args = mock_cursor.sort.call_args
             assert call_args[0][1] == ASCENDING
 
-    @patch("ddcDatabases.mongodb.get_mongodb_settings")
+    @patch("ddcdatabases.mongodb.get_mongodb_settings")
     def test_enter_with_connection_error_calls_sys_exit(self, mock_get_settings):
         """Test that __enter__ calls sys.exit when connection fails."""
         from pymongo.errors import PyMongoError
@@ -851,8 +851,8 @@ class TestMongoDB:
         mock_client = MagicMock()
         mock_client.admin.command.side_effect = PyMongoError("Connection failed")
 
-        with patch("ddcDatabases.mongodb.MongoClient", return_value=mock_client):
-            from ddcDatabases.mongodb import MongoDBConnectionRetryConfig
+        with patch("ddcdatabases.mongodb.MongoClient", return_value=mock_client):
+            from ddcdatabases.mongodb import MongoDBConnectionRetryConfig
 
             mongodb = MongoDB(
                 collection="test_collection",
@@ -865,7 +865,7 @@ class TestMongoDB:
 
             assert exc_info.value.code == 1
 
-    @patch("ddcDatabases.mongodb.get_mongodb_settings")
+    @patch("ddcdatabases.mongodb.get_mongodb_settings")
     def test_tls_enabled(self, mock_get_settings):
         """Test MongoDB TLS configuration"""
         mock_settings = self._create_mock_settings()
@@ -890,7 +890,7 @@ class TestMongoDB:
         assert mongodb._tls_config.tls_cert_key_path == "/path/to/cert.pem"
         assert mongodb._tls_config.tls_allow_invalid_certificates
 
-    @patch("ddcDatabases.mongodb.get_mongodb_settings")
+    @patch("ddcdatabases.mongodb.get_mongodb_settings")
     def test_tls_disabled(self, mock_get_settings):
         """Test MongoDB with TLS disabled"""
         mock_settings = self._create_mock_settings()
@@ -907,8 +907,8 @@ class TestMongoDB:
         assert mongodb._tls_config.tls_cert_key_path is None
         assert not mongodb._tls_config.tls_allow_invalid_certificates
 
-    @patch("ddcDatabases.mongodb.get_mongodb_settings")
-    @patch("ddcDatabases.mongodb.MongoClient")
+    @patch("ddcdatabases.mongodb.get_mongodb_settings")
+    @patch("ddcdatabases.mongodb.MongoClient")
     def test_tls_connection_url(self, mock_mongo_client, mock_get_settings):
         """Test MongoDB TLS parameters are appended to connection URL"""
         mock_settings = self._create_mock_settings()
@@ -948,7 +948,7 @@ class TestMongoDB:
 
         assert _connection_url == expected_url
 
-    @patch("ddcDatabases.mongodb.get_mongodb_settings")
+    @patch("ddcdatabases.mongodb.get_mongodb_settings")
     def test_get_connection_info(self, mock_get_settings):
         """Test get_connection_info returns connection config"""
         mock_get_settings.return_value = self._create_mock_settings()
@@ -961,7 +961,7 @@ class TestMongoDB:
         assert conn_info.host == "localhost"
         assert conn_info.collection == "test_collection"
 
-    @patch("ddcDatabases.mongodb.get_mongodb_settings")
+    @patch("ddcdatabases.mongodb.get_mongodb_settings")
     def test_get_query_info(self, mock_get_settings):
         """Test get_query_info returns query config"""
         mock_get_settings.return_value = self._create_mock_settings()
@@ -977,7 +977,7 @@ class TestMongoDB:
         assert query_info.query == {"status": "active"}
         assert query_info.batch_size == 500
 
-    @patch("ddcDatabases.mongodb.get_mongodb_settings")
+    @patch("ddcdatabases.mongodb.get_mongodb_settings")
     def test_get_operation_retry_info(self, mock_get_settings):
         """Test get_operation_retry_info returns operation retry config"""
         mock_get_settings.return_value = self._create_mock_settings()
@@ -993,7 +993,7 @@ class TestMongoDB:
         assert hasattr(op_retry_info, "max_retry_delay")
         assert hasattr(op_retry_info, "jitter")
 
-    @patch("ddcDatabases.mongodb.get_mongodb_settings")
+    @patch("ddcdatabases.mongodb.get_mongodb_settings")
     def test_get_tls_info(self, mock_get_settings):
         """Test get_tls_info returns TLS config"""
         mock_get_settings.return_value = self._create_mock_settings()
@@ -1009,7 +1009,7 @@ class TestMongoDB:
         assert tls_info.tls_enabled
         assert tls_info.tls_ca_cert_path == "/path/to/ca.pem"
 
-    @patch("ddcDatabases.mongodb.get_mongodb_settings")
+    @patch("ddcdatabases.mongodb.get_mongodb_settings")
     def test_build_connection_url_with_tls(self, mock_get_settings):
         """Test _build_connection_url with TLS options"""
         mock_get_settings.return_value = self._create_mock_settings()
@@ -1030,7 +1030,7 @@ class TestMongoDB:
         assert "&tlsCertificateKeyFile=/path/to/cert.pem" in url
         assert "&tlsAllowInvalidCertificates=true" in url
 
-    @patch("ddcDatabases.mongodb.get_mongodb_settings")
+    @patch("ddcdatabases.mongodb.get_mongodb_settings")
     def test_build_connection_url_without_tls(self, mock_get_settings):
         """Test _build_connection_url without TLS"""
         mock_get_settings.return_value = self._create_mock_settings()
@@ -1041,7 +1041,7 @@ class TestMongoDB:
         assert "?tls=true" not in url
         assert "mongodb://admin:admin@localhost/admin" == url
 
-    @patch("ddcDatabases.mongodb.get_mongodb_settings")
+    @patch("ddcdatabases.mongodb.get_mongodb_settings")
     def test_test_connection_success(self, mock_get_settings):
         """Test _test_connection logs success message"""
         mock_get_settings.return_value = self._create_mock_settings()
@@ -1059,7 +1059,7 @@ class TestMongoDB:
         assert "Connected to" in str(mongodb.logger.info.call_args)
 
     @pytest.mark.asyncio
-    @patch("ddcDatabases.mongodb.get_mongodb_settings")
+    @patch("ddcdatabases.mongodb.get_mongodb_settings")
     async def test_async_aenter_success(self, mock_get_settings):
         """Test async __aenter__ method structure and _create_cursor_async"""
         mock_get_settings.return_value = self._create_mock_settings()
@@ -1087,7 +1087,7 @@ class TestMongoDB:
         mock_collection.find.assert_called_once()
 
     @pytest.mark.asyncio
-    @patch("ddcDatabases.mongodb.get_mongodb_settings")
+    @patch("ddcdatabases.mongodb.get_mongodb_settings")
     async def test_async_aexit_cleanup(self, mock_get_settings):
         """Test async __aexit__ cleans up resources"""
         mock_get_settings.return_value = self._create_mock_settings()
@@ -1113,7 +1113,7 @@ class TestMongoDB:
         mock_client.close.assert_called_once()
 
     @pytest.mark.asyncio
-    @patch("ddcDatabases.mongodb.get_mongodb_settings")
+    @patch("ddcdatabases.mongodb.get_mongodb_settings")
     async def test_async_aexit_without_cursor(self, mock_get_settings):
         """Test async __aexit__ when cursor is None"""
         mock_get_settings.return_value = self._create_mock_settings()
@@ -1131,7 +1131,7 @@ class TestMongoDB:
         mock_client.close.assert_called_once()
 
     @pytest.mark.asyncio
-    @patch("ddcDatabases.mongodb.get_mongodb_settings")
+    @patch("ddcdatabases.mongodb.get_mongodb_settings")
     async def test_async_test_connection_success(self, mock_get_settings):
         """Test _test_connection_async logs success message"""
         mock_get_settings.return_value = self._create_mock_settings()
@@ -1152,7 +1152,7 @@ class TestMongoDB:
         assert "Async connected to" in str(mongodb.logger.info.call_args)
 
     @pytest.mark.asyncio
-    @patch("ddcDatabases.mongodb.get_mongodb_settings")
+    @patch("ddcdatabases.mongodb.get_mongodb_settings")
     async def test_async_test_connection_failure(self, mock_get_settings):
         """Test _test_connection_async raises ConnectionError on failure"""
         from pymongo.errors import PyMongoError
@@ -1171,7 +1171,7 @@ class TestMongoDB:
         with pytest.raises(ConnectionError, match="Async connection to MongoDB failed"):
             await mongodb._test_connection_async()
 
-    @patch("ddcDatabases.mongodb.get_mongodb_settings")
+    @patch("ddcdatabases.mongodb.get_mongodb_settings")
     def test_create_cursor_async(self, mock_get_settings):
         """Test _create_cursor_async method"""
         mock_get_settings.return_value = self._create_mock_settings(batch_size=100, limit=10)
@@ -1200,7 +1200,7 @@ class TestMongoDB:
         mock_cursor.batch_size.assert_called_once_with(100)
         assert cursor is mock_cursor
 
-    @patch("ddcDatabases.mongodb.get_mongodb_settings")
+    @patch("ddcdatabases.mongodb.get_mongodb_settings")
     def test_create_cursor_async_with_sorting(self, mock_get_settings):
         """Test _create_cursor_async with sorting"""
         from pymongo import DESCENDING
@@ -1227,11 +1227,11 @@ class TestMongoDB:
         mock_cursor.sort.assert_called_once_with("created_at", DESCENDING)
 
     @pytest.mark.asyncio
-    @patch("ddcDatabases.mongodb.get_mongodb_settings")
-    @patch("ddcDatabases.mongodb.AsyncIOMotorClient")
+    @patch("ddcdatabases.mongodb.get_mongodb_settings")
+    @patch("ddcdatabases.mongodb.AsyncIOMotorClient")
     async def test_async_aenter_connection_error(self, mock_async_client, mock_get_settings):
         """Test async __aenter__ handles connection error"""
-        from ddcDatabases.mongodb import MongoDBConnectionRetryConfig
+        from ddcdatabases.mongodb import MongoDBConnectionRetryConfig
         from pymongo.errors import PyMongoError
 
         mock_get_settings.return_value = self._create_mock_settings()

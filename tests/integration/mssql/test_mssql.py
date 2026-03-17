@@ -10,7 +10,7 @@ class TestMSSQLIntegration:
 
     def test_sync_connection(self, mssql_container):
         """Test synchronous MSSQL connection and CRUD operations."""
-        from ddcDatabases import MSSQL, DBUtils
+        from ddcdatabases import MSSQL, DBUtils
 
         port = mssql_container.get_exposed_port(1433)
         host = mssql_container.get_container_host_ip()
@@ -61,7 +61,7 @@ class TestMSSQLIntegration:
     @pytest.mark.asyncio
     async def test_async_connection(self, mssql_container):
         """Test asynchronous MSSQL connection and CRUD operations."""
-        from ddcDatabases import MSSQL, DBUtilsAsync
+        from ddcdatabases import MSSQL, DBUtilsAsync
 
         port = mssql_container.get_exposed_port(1433)
         host = mssql_container.get_container_host_ip()
@@ -104,12 +104,12 @@ class TestMSSQLIntegration:
 
     def test_ssl_encrypt_connection(self, mssql_container):
         """Test MSSQL with SSL encrypt enabled."""
-        from ddcDatabases import MSSQL
+        from ddcdatabases import MSSQL
 
         port = mssql_container.get_exposed_port(1433)
         host = mssql_container.get_container_host_ip()
 
-        from ddcDatabases.mssql import MSSQLSSLConfig
+        from ddcdatabases.mssql import MSSQLSSLConfig
 
         with MSSQL(
             host=host,

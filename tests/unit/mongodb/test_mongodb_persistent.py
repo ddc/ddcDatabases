@@ -1,7 +1,7 @@
 """Tests for MongoDB persistent connections."""
 
 # noinspection PyProtectedMember
-from ddcDatabases.core.persistent import (
+from ddcdatabases.core.persistent import (
     MongoDBPersistent,
     PersistentConnectionConfig,
     PersistentMongoDBConnection,

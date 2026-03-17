@@ -10,8 +10,8 @@ class TestMongoDBTLSIntegration:
 
     def test_connection_with_tls_disabled(self, mongodb_container):
         """Test MongoDB connection with TLS disabled."""
-        from ddcDatabases import MongoDB
-        from ddcDatabases.mongodb import MongoDBTLSConfig
+        from ddcdatabases import MongoDB
+        from ddcdatabases.mongodb import MongoDBTLSConfig
 
         port = mongodb_container.get_exposed_port(27017)
         host = f"{mongodb_container.get_container_host_ip()}:{port}"
@@ -38,8 +38,8 @@ class TestMongoDBTLSIntegration:
 
     def test_tls_config_is_accessible(self, mongodb_container):
         """Test that MongoDB TLS config is accessible."""
-        from ddcDatabases import MongoDB
-        from ddcDatabases.mongodb import MongoDBTLSConfig
+        from ddcdatabases import MongoDB
+        from ddcdatabases.mongodb import MongoDBTLSConfig
 
         port = mongodb_container.get_exposed_port(27017)
         host = f"{mongodb_container.get_container_host_ip()}:{port}"
@@ -62,8 +62,8 @@ class TestMongoDBTLSIntegration:
 
     def test_tls_config_immutable(self, mongodb_container):
         """Test that MongoDB TLS config is immutable."""
-        from ddcDatabases import MongoDB
-        from ddcDatabases.mongodb import MongoDBTLSConfig
+        from ddcdatabases import MongoDB
+        from ddcdatabases.mongodb import MongoDBTLSConfig
 
         port = mongodb_container.get_exposed_port(27017)
         host = f"{mongodb_container.get_container_host_ip()}:{port}"

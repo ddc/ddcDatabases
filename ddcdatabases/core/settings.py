@@ -41,6 +41,31 @@ class _BaseDBSettings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="allow")
 
 
+class _NetworkDBSettings(_BaseDBSettings):
+    """Base for network database settings with common retry and persistent fields."""
+
+    # Connection Retry settings
+    connection_enable_retry: bool = Field(default=True, description=Msg.ENABLE_RETRY_DESCRIPTION)
+    connection_max_retries: int = Field(default=3, description=Msg.MAX_RETRIES_DESCRIPTION)
+    connection_initial_retry_delay: float = Field(default=1.0, description=Msg.INITIAL_RETRY_DELAY_DESCRIPTION)
+    connection_max_retry_delay: float = Field(default=30.0, description=Msg.MAX_RETRY_DELAY_DESCRIPTION)
+    connection_disconnect_idle_timeout: int = Field(default=300, description=Msg.DISCONNECT_IDLE_TIMEOUT_DESCRIPTION)
+
+    # Operation Retry settings
+    operation_enable_retry: bool = Field(default=True, description=Msg.ENABLE_RETRY_DESCRIPTION)
+    operation_max_retries: int = Field(default=3, description=Msg.MAX_RETRIES_DESCRIPTION)
+    operation_initial_retry_delay: float = Field(default=0.5, description=Msg.INITIAL_RETRY_DELAY_DESCRIPTION)
+    operation_max_retry_delay: float = Field(default=10.0, description=Msg.MAX_RETRY_DELAY_DESCRIPTION)
+    operation_jitter: float = Field(default=0.1, description=Msg.JITTER_DESCRIPTION)
+
+    # Persistent connection settings
+    persistent_idle_timeout: int = Field(default=300, description=Msg.PERSISTENT_IDLE_TIMEOUT_DESCRIPTION)
+    persistent_health_check_interval: int = Field(
+        default=30, description=Msg.PERSISTENT_HEALTH_CHECK_INTERVAL_DESCRIPTION
+    )
+    persistent_auto_reconnect: bool = Field(default=True, description=Msg.PERSISTENT_AUTO_RECONNECT_DESCRIPTION)
+
+
 class SQLiteSettings(_BaseDBSettings):
     """SQLite database settings with environment variable fallback."""
 
@@ -63,7 +88,7 @@ class SQLiteSettings(_BaseDBSettings):
     model_config = SettingsConfigDict(env_prefix="SQLITE_")
 
 
-class PostgreSQLSettings(_BaseDBSettings):
+class PostgreSQLSettings(_NetworkDBSettings):
     """PostgreSQL database settings with environment variable fallback."""
 
     host: str = Field(default="localhost", description=Msg.HOST_DESCRIPTION)
@@ -90,31 +115,10 @@ class PostgreSQLSettings(_BaseDBSettings):
     ssl_client_cert_path: str | None = Field(default=None, description=Msg.SSL_CLIENT_CERT_PATH_DESCRIPTION)
     ssl_client_key_path: str | None = Field(default=None, description=Msg.SSL_CLIENT_KEY_PATH_DESCRIPTION)
 
-    # Connection Retry settings
-    connection_enable_retry: bool = Field(default=True, description=Msg.ENABLE_RETRY_DESCRIPTION)
-    connection_max_retries: int = Field(default=3, description=Msg.MAX_RETRIES_DESCRIPTION)
-    connection_initial_retry_delay: float = Field(default=1.0, description=Msg.INITIAL_RETRY_DELAY_DESCRIPTION)
-    connection_max_retry_delay: float = Field(default=30.0, description=Msg.MAX_RETRY_DELAY_DESCRIPTION)
-    connection_disconnect_idle_timeout: int = Field(default=300, description=Msg.DISCONNECT_IDLE_TIMEOUT_DESCRIPTION)
-
-    # Operation Retry settings
-    operation_enable_retry: bool = Field(default=True, description=Msg.ENABLE_RETRY_DESCRIPTION)
-    operation_max_retries: int = Field(default=3, description=Msg.MAX_RETRIES_DESCRIPTION)
-    operation_initial_retry_delay: float = Field(default=0.5, description=Msg.INITIAL_RETRY_DELAY_DESCRIPTION)
-    operation_max_retry_delay: float = Field(default=10.0, description=Msg.MAX_RETRY_DELAY_DESCRIPTION)
-    operation_jitter: float = Field(default=0.1, description=Msg.JITTER_DESCRIPTION)
-
-    # Persistent connection settings
-    persistent_idle_timeout: int = Field(default=300, description=Msg.PERSISTENT_IDLE_TIMEOUT_DESCRIPTION)
-    persistent_health_check_interval: int = Field(
-        default=30, description=Msg.PERSISTENT_HEALTH_CHECK_INTERVAL_DESCRIPTION
-    )
-    persistent_auto_reconnect: bool = Field(default=True, description=Msg.PERSISTENT_AUTO_RECONNECT_DESCRIPTION)
-
     model_config = SettingsConfigDict(env_prefix="POSTGRESQL_")
 
 
-class MSSQLSettings(_BaseDBSettings):
+class MSSQLSettings(_NetworkDBSettings):
     """Microsoft SQL Server settings with environment variable fallback."""
 
     host: str = Field(default="localhost", description=Msg.HOST_DESCRIPTION)
@@ -141,31 +145,10 @@ class MSSQLSettings(_BaseDBSettings):
     ssl_trust_server_certificate: bool = Field(default=True, description=Msg.SSL_TRUST_SERVER_CERTIFICATE_DESCRIPTION)
     ssl_ca_cert_path: str | None = Field(default=None, description=Msg.SSL_CA_CERT_PATH_DESCRIPTION)
 
-    # Connection Retry settings
-    connection_enable_retry: bool = Field(default=True, description=Msg.ENABLE_RETRY_DESCRIPTION)
-    connection_max_retries: int = Field(default=3, description=Msg.MAX_RETRIES_DESCRIPTION)
-    connection_initial_retry_delay: float = Field(default=1.0, description=Msg.INITIAL_RETRY_DELAY_DESCRIPTION)
-    connection_max_retry_delay: float = Field(default=30.0, description=Msg.MAX_RETRY_DELAY_DESCRIPTION)
-    connection_disconnect_idle_timeout: int = Field(default=300, description=Msg.DISCONNECT_IDLE_TIMEOUT_DESCRIPTION)
-
-    # Operation Retry settings
-    operation_enable_retry: bool = Field(default=True, description=Msg.ENABLE_RETRY_DESCRIPTION)
-    operation_max_retries: int = Field(default=3, description=Msg.MAX_RETRIES_DESCRIPTION)
-    operation_initial_retry_delay: float = Field(default=0.5, description=Msg.INITIAL_RETRY_DELAY_DESCRIPTION)
-    operation_max_retry_delay: float = Field(default=10.0, description=Msg.MAX_RETRY_DELAY_DESCRIPTION)
-    operation_jitter: float = Field(default=0.1, description=Msg.JITTER_DESCRIPTION)
-
-    # Persistent connection settings
-    persistent_idle_timeout: int = Field(default=300, description=Msg.PERSISTENT_IDLE_TIMEOUT_DESCRIPTION)
-    persistent_health_check_interval: int = Field(
-        default=30, description=Msg.PERSISTENT_HEALTH_CHECK_INTERVAL_DESCRIPTION
-    )
-    persistent_auto_reconnect: bool = Field(default=True, description=Msg.PERSISTENT_AUTO_RECONNECT_DESCRIPTION)
-
     model_config = SettingsConfigDict(env_prefix="MSSQL_")
 
 
-class MySQLSettings(_BaseDBSettings):
+class MySQLSettings(_NetworkDBSettings):
     """MySQL database settings with environment variable fallback."""
 
     host: str = Field(default="localhost", description=Msg.HOST_DESCRIPTION)
@@ -191,31 +174,10 @@ class MySQLSettings(_BaseDBSettings):
     ssl_client_cert_path: str | None = Field(default=None, description=Msg.SSL_CLIENT_CERT_PATH_DESCRIPTION)
     ssl_client_key_path: str | None = Field(default=None, description=Msg.SSL_CLIENT_KEY_PATH_DESCRIPTION)
 
-    # Connection Retry settings
-    connection_enable_retry: bool = Field(default=True, description=Msg.ENABLE_RETRY_DESCRIPTION)
-    connection_max_retries: int = Field(default=3, description=Msg.MAX_RETRIES_DESCRIPTION)
-    connection_initial_retry_delay: float = Field(default=1.0, description=Msg.INITIAL_RETRY_DELAY_DESCRIPTION)
-    connection_max_retry_delay: float = Field(default=30.0, description=Msg.MAX_RETRY_DELAY_DESCRIPTION)
-    connection_disconnect_idle_timeout: int = Field(default=300, description=Msg.DISCONNECT_IDLE_TIMEOUT_DESCRIPTION)
-
-    # Operation Retry settings
-    operation_enable_retry: bool = Field(default=True, description=Msg.ENABLE_RETRY_DESCRIPTION)
-    operation_max_retries: int = Field(default=3, description=Msg.MAX_RETRIES_DESCRIPTION)
-    operation_initial_retry_delay: float = Field(default=0.5, description=Msg.INITIAL_RETRY_DELAY_DESCRIPTION)
-    operation_max_retry_delay: float = Field(default=10.0, description=Msg.MAX_RETRY_DELAY_DESCRIPTION)
-    operation_jitter: float = Field(default=0.1, description=Msg.JITTER_DESCRIPTION)
-
-    # Persistent connection settings
-    persistent_idle_timeout: int = Field(default=300, description=Msg.PERSISTENT_IDLE_TIMEOUT_DESCRIPTION)
-    persistent_health_check_interval: int = Field(
-        default=30, description=Msg.PERSISTENT_HEALTH_CHECK_INTERVAL_DESCRIPTION
-    )
-    persistent_auto_reconnect: bool = Field(default=True, description=Msg.PERSISTENT_AUTO_RECONNECT_DESCRIPTION)
-
     model_config = SettingsConfigDict(env_prefix="MYSQL_")
 
 
-class MongoDBSettings(_BaseDBSettings):
+class MongoDBSettings(_NetworkDBSettings):
     """MongoDB settings with environment variable fallback."""
 
     host: str = Field(default="localhost", description=Msg.HOST_DESCRIPTION)
@@ -236,31 +198,10 @@ class MongoDBSettings(_BaseDBSettings):
         default=False, description=Msg.TLS_ALLOW_INVALID_CERTIFICATES_DESCRIPTION
     )
 
-    # Connection Retry settings
-    connection_enable_retry: bool = Field(default=True, description=Msg.ENABLE_RETRY_DESCRIPTION)
-    connection_max_retries: int = Field(default=3, description=Msg.MAX_RETRIES_DESCRIPTION)
-    connection_initial_retry_delay: float = Field(default=1.0, description=Msg.INITIAL_RETRY_DELAY_DESCRIPTION)
-    connection_max_retry_delay: float = Field(default=30.0, description=Msg.MAX_RETRY_DELAY_DESCRIPTION)
-    connection_disconnect_idle_timeout: int = Field(default=300, description=Msg.DISCONNECT_IDLE_TIMEOUT_DESCRIPTION)
-
-    # Operation Retry settings
-    operation_enable_retry: bool = Field(default=True, description=Msg.ENABLE_RETRY_DESCRIPTION)
-    operation_max_retries: int = Field(default=3, description=Msg.MAX_RETRIES_DESCRIPTION)
-    operation_initial_retry_delay: float = Field(default=0.5, description=Msg.INITIAL_RETRY_DELAY_DESCRIPTION)
-    operation_max_retry_delay: float = Field(default=10.0, description=Msg.MAX_RETRY_DELAY_DESCRIPTION)
-    operation_jitter: float = Field(default=0.1, description=Msg.JITTER_DESCRIPTION)
-
-    # Persistent connection settings
-    persistent_idle_timeout: int = Field(default=300, description=Msg.PERSISTENT_IDLE_TIMEOUT_DESCRIPTION)
-    persistent_health_check_interval: int = Field(
-        default=30, description=Msg.PERSISTENT_HEALTH_CHECK_INTERVAL_DESCRIPTION
-    )
-    persistent_auto_reconnect: bool = Field(default=True, description=Msg.PERSISTENT_AUTO_RECONNECT_DESCRIPTION)
-
     model_config = SettingsConfigDict(env_prefix="MONGODB_")
 
 
-class OracleSettings(_BaseDBSettings):
+class OracleSettings(_NetworkDBSettings):
     """Oracle database settings with environment variable fallback."""
 
     host: str = Field(default="localhost", description=Msg.HOST_DESCRIPTION)
@@ -282,27 +223,6 @@ class OracleSettings(_BaseDBSettings):
     # SSL settings
     ssl_enabled: bool = Field(default=False, description=Msg.SSL_ENABLED_DESCRIPTION)
     ssl_wallet_path: str | None = Field(default=None, description=Msg.SSL_WALLET_PATH_DESCRIPTION)
-
-    # Connection Retry settings
-    connection_enable_retry: bool = Field(default=True, description=Msg.ENABLE_RETRY_DESCRIPTION)
-    connection_max_retries: int = Field(default=3, description=Msg.MAX_RETRIES_DESCRIPTION)
-    connection_initial_retry_delay: float = Field(default=1.0, description=Msg.INITIAL_RETRY_DELAY_DESCRIPTION)
-    connection_max_retry_delay: float = Field(default=30.0, description=Msg.MAX_RETRY_DELAY_DESCRIPTION)
-    connection_disconnect_idle_timeout: int = Field(default=300, description=Msg.DISCONNECT_IDLE_TIMEOUT_DESCRIPTION)
-
-    # Operation Retry settings
-    operation_enable_retry: bool = Field(default=True, description=Msg.ENABLE_RETRY_DESCRIPTION)
-    operation_max_retries: int = Field(default=3, description=Msg.MAX_RETRIES_DESCRIPTION)
-    operation_initial_retry_delay: float = Field(default=0.5, description=Msg.INITIAL_RETRY_DELAY_DESCRIPTION)
-    operation_max_retry_delay: float = Field(default=10.0, description=Msg.MAX_RETRY_DELAY_DESCRIPTION)
-    operation_jitter: float = Field(default=0.1, description=Msg.JITTER_DESCRIPTION)
-
-    # Persistent connection settings
-    persistent_idle_timeout: int = Field(default=300, description=Msg.PERSISTENT_IDLE_TIMEOUT_DESCRIPTION)
-    persistent_health_check_interval: int = Field(
-        default=30, description=Msg.PERSISTENT_HEALTH_CHECK_INTERVAL_DESCRIPTION
-    )
-    persistent_auto_reconnect: bool = Field(default=True, description=Msg.PERSISTENT_AUTO_RECONNECT_DESCRIPTION)
 
     model_config = SettingsConfigDict(env_prefix="ORACLE_")
 

@@ -1,7 +1,7 @@
 import pytest
 import sqlalchemy as sa
 import tempfile
-from ddcDatabases.sqlite import SqliteSessionConfig
+from ddcdatabases.sqlite import SqliteSessionConfig
 from sqlalchemy import Boolean
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 from unittest.mock import MagicMock, patch
@@ -25,12 +25,12 @@ class TestSQLite:
 
     def setup_method(self):
         """Import dependencies when needed"""
-        from ddcDatabases import DBUtils, Sqlite
+        from ddcdatabases import DBUtils, Sqlite
 
         self.Sqlite = Sqlite
         self.DBUtils = DBUtils
 
-    @patch("ddcDatabases.sqlite.get_sqlite_settings")
+    @patch("ddcdatabases.sqlite.get_sqlite_settings")
     def test_init_basic(self, mock_get_settings):
         """Test SQLite basic initialization"""
         mock_settings = MagicMock()
@@ -53,7 +53,7 @@ class TestSQLite:
         assert not sqlite.echo
         assert not sqlite.is_connected
 
-    @patch("ddcDatabases.sqlite.get_sqlite_settings")
+    @patch("ddcdatabases.sqlite.get_sqlite_settings")
     def test_init_with_parameters(self, mock_get_settings):
         """Test SQLite initialization with parameters"""
         mock_settings = MagicMock()
@@ -169,7 +169,7 @@ class TestSQLite:
         sqlite.__exit__(None, None, None)
         assert not sqlite.is_connected
 
-    @patch("ddcDatabases.sqlite.create_engine")
+    @patch("ddcdatabases.sqlite.create_engine")
     def test_engine_creation_error(self, mock_create_engine):
         """Test SQLite engine creation error handling"""
         mock_create_engine.side_effect = Exception("Engine creation failed")
@@ -201,7 +201,7 @@ class TestSQLiteInfoMethods:
     """Test SQLite info getter methods"""
 
     def setup_method(self):
-        from ddcDatabases import Sqlite
+        from ddcdatabases import Sqlite
 
         self.Sqlite = Sqlite
 
@@ -229,7 +229,7 @@ class TestSQLiteRealOperations:
 
     def setup_method(self):
         """Import dependencies when needed"""
-        from ddcDatabases import DBUtils, Sqlite
+        from ddcdatabases import DBUtils, Sqlite
 
         self.Sqlite = Sqlite
         self.DBUtils = DBUtils

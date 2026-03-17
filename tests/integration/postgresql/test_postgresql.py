@@ -10,7 +10,7 @@ class TestPostgreSQLIntegration:
 
     def test_sync_connection(self, postgres_container):
         """Test synchronous PostgreSQL connection and CRUD operations."""
-        from ddcDatabases import DBUtils, PostgreSQL
+        from ddcdatabases import DBUtils, PostgreSQL
 
         port = postgres_container.get_exposed_port(5432)
         host = postgres_container.get_container_host_ip()
@@ -61,7 +61,7 @@ class TestPostgreSQLIntegration:
     @pytest.mark.asyncio
     async def test_async_connection(self, postgres_container):
         """Test asynchronous PostgreSQL connection and CRUD operations."""
-        from ddcDatabases import DBUtilsAsync, PostgreSQL
+        from ddcdatabases import DBUtilsAsync, PostgreSQL
 
         port = postgres_container.get_exposed_port(5432)
         host = postgres_container.get_container_host_ip()
@@ -104,7 +104,7 @@ class TestPostgreSQLIntegration:
 
     def test_schema_support(self, postgres_container):
         """Test PostgreSQL schema parameter."""
-        from ddcDatabases import PostgreSQL
+        from ddcdatabases import PostgreSQL
 
         port = postgres_container.get_exposed_port(5432)
         host = postgres_container.get_container_host_ip()
@@ -123,7 +123,7 @@ class TestPostgreSQLIntegration:
 
     def test_fetchvalue(self, postgres_container):
         """Test fetchvalue utility method."""
-        from ddcDatabases import DBUtils, PostgreSQL
+        from ddcdatabases import DBUtils, PostgreSQL
 
         port = postgres_container.get_exposed_port(5432)
         host = postgres_container.get_container_host_ip()
@@ -153,7 +153,7 @@ class TestPostgreSQLIntegration:
 
     def test_multi_schema_search_path(self, postgres_container):
         """Test PostgreSQL with comma-separated schemas in search_path."""
-        from ddcDatabases import PostgreSQL
+        from ddcdatabases import PostgreSQL
 
         port = postgres_container.get_exposed_port(5432)
         host = postgres_container.get_container_host_ip()
@@ -198,7 +198,7 @@ class TestPostgreSQLIntegration:
     @pytest.mark.asyncio
     async def test_multi_schema_search_path_async(self, postgres_container):
         """Test async PostgreSQL with comma-separated schemas in search_path."""
-        from ddcDatabases import PostgreSQL
+        from ddcdatabases import PostgreSQL
 
         port = postgres_container.get_exposed_port(5432)
         host = postgres_container.get_container_host_ip()

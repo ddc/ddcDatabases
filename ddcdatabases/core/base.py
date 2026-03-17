@@ -1,14 +1,13 @@
 from __future__ import annotations
-
 import logging
 import sqlalchemy as sa
 from .configs import BaseOperationRetryConfig, BaseRetryConfig
 from .retry import retry_operation, retry_operation_async
-from abc import ABC, abstractmethod
-from contextlib import AbstractAsyncContextManager, AbstractContextManager
+from collections.abc import AsyncGenerator, Generator
+from contextlib import asynccontextmanager, contextmanager
 from datetime import datetime
-from sqlalchemy.engine import URL, Engine
-from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker
+from sqlalchemy.engine import URL, Engine, create_engine
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import Session, sessionmaker
 from typing import Any
 
@@ -16,7 +15,7 @@ _logger = logging.getLogger(__name__)
 _logger.addHandler(logging.NullHandler())
 
 
-class BaseConnection(ABC):
+class BaseConnection:
     __slots__ = (
         "connection_url",
         "engine_args",
@@ -110,13 +109,19 @@ class BaseConnection(ABC):
         self.is_connected = False
         self.logger.debug("Disconnected")
 
-    @abstractmethod
-    def _get_engine(self) -> AbstractContextManager[Engine]:
-        pass
+    @contextmanager
+    def _get_engine(self) -> Generator[Engine, None, None]:
+        _connection_url = URL.create(drivername=self.sync_driver, **self.connection_url)
+        _engine = create_engine(url=_connection_url, **self.engine_args)
+        yield _engine
+        _engine.dispose()
 
-    @abstractmethod
-    def _get_async_engine(self) -> AbstractAsyncContextManager[AsyncEngine]:
-        pass
+    @asynccontextmanager
+    async def _get_async_engine(self) -> AsyncGenerator[AsyncEngine, None]:
+        _connection_url = URL.create(drivername=self.async_driver, **self.connection_url)
+        _engine = create_async_engine(url=_connection_url, **self.engine_args)
+        yield _engine
+        await _engine.dispose()
 
     def _test_connection_sync(self, session: Session) -> None:
         _connection_url_copy = self.connection_url.copy()

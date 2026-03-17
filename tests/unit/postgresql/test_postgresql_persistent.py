@@ -1,10 +1,10 @@
 """Tests for PostgreSQL persistent connections."""
 
 import pytest
-from ddcDatabases.core.configs import BaseRetryConfig as RetryConfig
+from ddcdatabases.core.configs import BaseRetryConfig as RetryConfig
 
 # noinspection PyProtectedMember
-from ddcDatabases.core.persistent import (
+from ddcdatabases.core.persistent import (
     PersistentConnectionConfig,
     PersistentSQLAlchemyAsyncConnection,
     PersistentSQLAlchemyConnection,

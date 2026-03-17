@@ -5,8 +5,8 @@ import pytest
 def clear_settings_cache():
     """Clear all settings caches before and after each test to ensure isolation."""
     try:
-        import ddcDatabases.core.settings
-        from ddcDatabases.core.settings import (
+        import ddcdatabases.core.settings
+        from ddcdatabases.core.settings import (
             get_mongodb_settings,
             get_mssql_settings,
             get_mysql_settings,
@@ -21,7 +21,7 @@ def clear_settings_cache():
         get_mysql_settings.cache_clear()
         get_mongodb_settings.cache_clear()
         get_oracle_settings.cache_clear()
-        ddcDatabases.core.settings._dotenv_loaded = False
+        ddcdatabases.core.settings._dotenv_loaded = False
     except ImportError:
         pass
 
@@ -34,6 +34,6 @@ def clear_settings_cache():
         get_mysql_settings.cache_clear()
         get_mongodb_settings.cache_clear()
         get_oracle_settings.cache_clear()
-        ddcDatabases.core.settings._dotenv_loaded = False
+        ddcdatabases.core.settings._dotenv_loaded = False
     except (NameError, ImportError):
         pass

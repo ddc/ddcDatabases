@@ -6,14 +6,14 @@ build-backend = "hatchling.build"
 allow-direct-references = true
 
 [tool.hatch.build]
-include = ["ddcDatabases/**/*"]
+include = ["ddcdatabases/**/*"]
 
 [tool.hatch.build.targets.wheel]
-packages = ["ddcDatabases"]
+packages = ["ddcdatabases"]
 
 [project]
-name = "ddcDatabases"
-version = "3.0.11"
+name = "ddcdatabases"
+version = "4.0.0"
 description = "Simplified database ORM connections with support for multiple database engines"
 urls.Repository = "https://github.com/ddc/ddcDatabases"
 urls.Homepage = "https://pypi.org/project/ddcDatabases"
@@ -28,7 +28,7 @@ maintainers = [
 keywords = [
     "python", "python3", "python-3",
     "ORM", "ORM-connection", "sqlalchemy",
-    "database", "databases", "ddcDatabase", "ddcDatabases",
+    "database", "databases", "ddcdatabase", "ddcdatabases",
     "mssql", "mssql-database",
     "mysql", "mysql-database",
     "oracle", "oracle-database",
@@ -55,7 +55,7 @@ classifiers = [
 requires-python = ">=3.10"
 dependencies = [
     "pydantic-settings>=2.11.0",
-    "sqlalchemy[asyncio]>=2.0.47",
+    "sqlalchemy[asyncio]>=2.0.48",
 ]
 
 [project.optional-dependencies]
@@ -64,15 +64,15 @@ oracle = ["oracledb>=3.4.2"]
 mssql = ["pyodbc>=5.3.0", "aioodbc>=0.5.0"]
 mysql = ["mysqlclient>=2.2.8", "aiomysql>=0.3.2"]
 postgres = ["psycopg[binary]>=3.3.3", "asyncpg>=0.31.0"]
-pgsql = ["ddcDatabases[postgres]"]
-mariadb = ["ddcDatabases[mysql]"]
+pgsql = ["ddcdatabases[postgres]"]
+mariadb = ["ddcdatabases[mysql]"]
 
 [dependency-groups]
 dev = [
-    "coverage>=7.13.4",
-    "poethepoet>=0.42.0",
+    "coverage>=7.13.5",
+    "poethepoet>=0.42.1",
     "pytest-asyncio>=1.3.0",
-    "ruff>=0.15.2",
+    "ruff>=0.15.6",
     "testcontainers[postgres,mysql,mssql,mongodb,oracle]>=4.14.1",
 ]
 
@@ -124,7 +124,7 @@ line-length = 120
 target-version = "py310"
 
 [tool.ruff.lint]
-select = ["E", "W", "F", "I", "B", "C4", "UP"]
+select = ["E", "W", "F", "I", "B", "C4", "UP", "S", "SLF"]
 ignore = ["E501", "E402", "UP046", "UP047"]
 
 [tool.ruff.lint.per-file-ignores]
@@ -132,7 +132,6 @@ ignore = ["E501", "E402", "UP046", "UP047"]
 "tests/**/*.py" = ["S101", "S105", "S106", "S311", "SLF001", "F841"]
 
 [tool.ruff.lint.isort]
-known-first-party = ["ddcDatabases"]
-force-sort-within-sections = false
-from-first = false
+known-first-party = ["ddcdatabases"]
+no-lines-before = ["future", "standard-library", "third-party", "first-party", "local-folder"]
 no-sections = true

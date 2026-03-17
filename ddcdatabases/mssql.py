@@ -1,19 +1,17 @@
 import logging
-from .core.base import BaseConnection, ConnectionTester
+from .core.base import BaseConnection
 from .core.configs import (
+    CONNECTION_RETRY_FIELD_MAP,
+    OPERATION_RETRY_FIELD_MAP,
     BaseConnectionConfig,
     BaseOperationRetryConfig,
     BasePoolConfig,
     BaseRetryConfig,
     BaseSessionConfig,
+    merge_config_with_settings,
 )
 from .core.settings import get_mssql_settings
-from collections.abc import AsyncGenerator, Generator
-from contextlib import asynccontextmanager, contextmanager
 from dataclasses import dataclass
-from sqlalchemy.engine import URL, Engine, create_engine
-from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
-from sqlalchemy.orm import Session
 from typing import Any
 
 _logger = logging.getLogger(__name__)
@@ -87,23 +85,8 @@ class MSSQL(BaseConnection):
             odbcdriver_version=int(_settings.odbcdriver_version),
         )
 
-        _pc = pool_config or MSSQLPoolConfig()
-        self._pool_config = MSSQLPoolConfig(
-            pool_size=_pc.pool_size if _pc.pool_size is not None else int(_settings.pool_size),
-            max_overflow=_pc.max_overflow if _pc.max_overflow is not None else int(_settings.max_overflow),
-            pool_recycle=_pc.pool_recycle if _pc.pool_recycle is not None else _settings.pool_recycle,
-            connection_timeout=(
-                _pc.connection_timeout if _pc.connection_timeout is not None else _settings.connection_timeout
-            ),
-        )
-
-        _sc = session_config or MSSQLSessionConfig()
-        self._session_config = MSSQLSessionConfig(
-            echo=_sc.echo if _sc.echo is not None else _settings.echo,
-            autoflush=_sc.autoflush if _sc.autoflush is not None else _settings.autoflush,
-            expire_on_commit=_sc.expire_on_commit if _sc.expire_on_commit is not None else _settings.expire_on_commit,
-            autocommit=_sc.autocommit if _sc.autocommit is not None else _settings.autocommit,
-        )
+        self._pool_config = merge_config_with_settings(MSSQLPoolConfig, pool_config, _settings)
+        self._session_config = merge_config_with_settings(MSSQLSessionConfig, session_config, _settings)
 
         _ssl = ssl_config or MSSQLSSLConfig()
         self._ssl_config = MSSQLSSLConfig(
@@ -153,35 +136,11 @@ class MSSQL(BaseConnection):
             **self.extra_engine_args,
         }
 
-        # Create connection retry configuration
-        _crc = connection_retry_config or MSSQLConnectionRetryConfig()
-        self._connection_retry_config = MSSQLConnectionRetryConfig(
-            enable_retry=_crc.enable_retry if _crc.enable_retry is not None else _settings.connection_enable_retry,
-            max_retries=_crc.max_retries if _crc.max_retries is not None else _settings.connection_max_retries,
-            initial_retry_delay=(
-                _crc.initial_retry_delay
-                if _crc.initial_retry_delay is not None
-                else _settings.connection_initial_retry_delay
-            ),
-            max_retry_delay=(
-                _crc.max_retry_delay if _crc.max_retry_delay is not None else _settings.connection_max_retry_delay
-            ),
+        self._connection_retry_config = merge_config_with_settings(
+            MSSQLConnectionRetryConfig, connection_retry_config, _settings, CONNECTION_RETRY_FIELD_MAP
         )
-
-        # Create operation retry configuration
-        _orc = operation_retry_config or MSSQLOperationRetryConfig()
-        self._operation_retry_config = MSSQLOperationRetryConfig(
-            enable_retry=_orc.enable_retry if _orc.enable_retry is not None else _settings.operation_enable_retry,
-            max_retries=_orc.max_retries if _orc.max_retries is not None else _settings.operation_max_retries,
-            initial_retry_delay=(
-                _orc.initial_retry_delay
-                if _orc.initial_retry_delay is not None
-                else _settings.operation_initial_retry_delay
-            ),
-            max_retry_delay=(
-                _orc.max_retry_delay if _orc.max_retry_delay is not None else _settings.operation_max_retry_delay
-            ),
-            jitter=_orc.jitter if _orc.jitter is not None else _settings.operation_jitter,
+        self._operation_retry_config = merge_config_with_settings(
+            MSSQLOperationRetryConfig, operation_retry_config, _settings, OPERATION_RETRY_FIELD_MAP
         )
 
         self.logger = logger if logger is not None else _logger
@@ -232,51 +191,3 @@ class MSSQL(BaseConnection):
 
     def get_ssl_info(self) -> MSSQLSSLConfig:
         return self._ssl_config
-
-    @contextmanager
-    def _get_engine(self) -> Generator[Engine, None, None]:
-        _connection_url = URL.create(
-            drivername=self.sync_driver,
-            **self.connection_url,
-        )
-        _engine = create_engine(url=_connection_url, **self.engine_args)
-        yield _engine
-        _engine.dispose()
-
-    @asynccontextmanager
-    async def _get_async_engine(self) -> AsyncGenerator[AsyncEngine, None]:
-        _connection_url = URL.create(
-            drivername=self.async_driver,
-            **self.connection_url,
-        )
-        _engine = create_async_engine(url=_connection_url, **self.engine_args)
-        yield _engine
-        await _engine.dispose()
-
-    def _test_connection_sync(self, session: Session) -> None:
-        _connection_url_copy = self.connection_url.copy()
-        _connection_url_copy.pop("password", None)
-        _connection_url = URL.create(
-            **_connection_url_copy,
-            drivername=self.sync_driver,
-        )
-        test_connection = ConnectionTester(
-            sync_session=session,
-            host_url=_connection_url,
-            logger=self.logger,
-        )
-        test_connection.test_connection_sync()
-
-    async def _test_connection_async(self, session: AsyncSession) -> None:
-        _connection_url_copy = self.connection_url.copy()
-        _connection_url_copy.pop("password", None)
-        _connection_url = URL.create(
-            **_connection_url_copy,
-            drivername=self.async_driver,
-        )
-        test_connection = ConnectionTester(
-            async_session=session,
-            host_url=_connection_url,
-            logger=self.logger,
-        )
-        await test_connection.test_connection_async()

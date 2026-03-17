@@ -12,7 +12,7 @@ class TestSqliteIntegration:
 
     def test_sync_memory_connection(self):
         """Test synchronous SQLite in-memory connection and CRUD operations."""
-        from ddcDatabases import DBUtils, Sqlite
+        from ddcdatabases import DBUtils, Sqlite
         from sqlalchemy.pool import StaticPool
 
         with Sqlite(filepath=":memory:", extra_engine_args={"poolclass": StaticPool}) as session:
@@ -54,7 +54,7 @@ class TestSqliteIntegration:
 
     def test_sync_file_connection(self):
         """Test synchronous SQLite file-based connection."""
-        from ddcDatabases import DBUtils, Sqlite
+        from ddcdatabases import DBUtils, Sqlite
 
         with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as f:
             db_path = f.name
@@ -80,7 +80,7 @@ class TestSqliteIntegration:
 
     def test_fetchvalue(self):
         """Test fetchvalue utility method with SQLite."""
-        from ddcDatabases import DBUtils, Sqlite
+        from ddcdatabases import DBUtils, Sqlite
         from sqlalchemy.pool import StaticPool
 
         with Sqlite(filepath=":memory:", extra_engine_args={"poolclass": StaticPool}) as session:
@@ -98,7 +98,7 @@ class TestSqliteIntegration:
 
     def test_multiple_inserts(self):
         """Test multiple inserts and fetchall with SQLite."""
-        from ddcDatabases import DBUtils, Sqlite
+        from ddcdatabases import DBUtils, Sqlite
         from sqlalchemy.pool import StaticPool
 
         with Sqlite(filepath=":memory:", extra_engine_args={"poolclass": StaticPool}) as session:

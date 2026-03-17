@@ -1,29 +1,31 @@
 <h1 align="center">
-  <img src="https://raw.githubusercontent.com/ddc/ddcDatabases/main/assets/database-icon.svg" alt="ddcDatabases" width="150">
+  <img src="https://raw.githubusercontent.com/ddc/ddcDatabases/main/assets/database-icon.svg" alt="ddcdatabases" width="150">
   <br>
-  ddcDatabases
+  ddcdatabases
 </h1>
 
 <p align="center">
-    <a href="https://www.paypal.com/ncp/payment/6G9Z78QHUD4RJ"><img src="https://img.shields.io/badge/Donate-PayPal-brightgreen.svg?style=plastic" alt="Donate"/></a>
     <a href="https://github.com/sponsors/ddc"><img src="https://img.shields.io/static/v1?style=plastic&label=Sponsor&message=%E2%9D%A4&logo=GitHub&color=ff69b4" alt="Sponsor"/></a>
     <br>
-    <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-yellow.svg?style=plastic" alt="License: MIT"/></a>
-    <a href="https://pepy.tech/projects/ddcDatabases"><img src="https://static.pepy.tech/badge/ddcDatabases?style=plastic" alt="PyPI Downloads"/></a>
+    <a href="https://ko-fi.com/ddcsta"><img src="https://img.shields.io/badge/Ko--fi-ddcsta-FF5E5B?style=plastic&logo=kofi&logoColor=white&color=brightgreen" alt="Ko-fi"/></a>
+    <a href="https://www.paypal.com/ncp/payment/6G9Z78QHUD4RJ"><img src="https://img.shields.io/badge/Donate-PayPal-brightgreen.svg?style=plastic&logo=paypal&logoColor=white" alt="Donate"/></a>
+    <br>
     <a href="https://pypi.python.org/pypi/ddcDatabases"><img src="https://img.shields.io/pypi/v/ddcDatabases.svg?style=plastic&logo=python&cacheSeconds=3600" alt="PyPi"/></a>
+    <a href="https://pepy.tech/projects/ddcDatabases"><img src="https://img.shields.io/pepy/dt/ddcDatabases?style=plastic&logo=pypi&logoColor=3776AB" alt="PyPI Downloads"/></a>
+    <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-yellow.svg?style=plastic&logo=creativecommons&logoColor=white" alt="License: MIT"/></a>
     <br>
     <a href="https://www.python.org/downloads"><img src="https://img.shields.io/pypi/pyversions/ddcDatabases.svg?style=plastic&logo=python&cacheSeconds=3600" alt="Python"/></a>
-    <a href="https://github.com/astral-sh/uv"><img src="https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/uv/main/assets/badge/v0.json?style=plastic" alt="uv"/></a>
-    <a href="https://github.com/astral-sh/ruff"><img src="https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json?style=plastic" alt="Ruff"/></a>
+    <a href="https://github.com/astral-sh/uv"><img src="https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/uv/main/assets/badge/v0.json&style=plastic" alt="uv"/></a>
+    <a href="https://github.com/astral-sh/ruff"><img src="https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json&style=plastic" alt="Ruff"/></a>
     <br>
-    <a href="https://github.com/ddc/ddcDatabases/issues"><img src="https://img.shields.io/github/issues/ddc/ddcDatabases?style=plastic" alt="issues"/></a>
-    <a href="https://codecov.io/gh/ddc/ddcDatabases"><img src="https://codecov.io/gh/ddc/ddcDatabases/graph/badge.svg?token=XWB53034GI&style=plastic" alt="codecov"/></a>
-    <a href="https://sonarcloud.io/dashboard?id=ddc_ddcDatabases"><img src="https://sonarcloud.io/api/project_badges/measure?project=ddc_ddcDatabases&metric=alert_status&style=plastic" alt="Quality Gate Status"/></a>
-    <a href="https://github.com/ddc/ddcDatabases/actions/workflows/workflow.yml"><img src="https://github.com/ddc/ddcDatabases/actions/workflows/workflow.yml/badge.svg?style=plastic" alt="CI/CD Pipeline"/></a>
-    <a href="https://actions-badge.atrox.dev/ddc/ddcDatabases/goto?ref=main"><img src="https://img.shields.io/endpoint.svg?url=https%3A//actions-badge.atrox.dev/ddc/ddcDatabases/badge?ref=main&label=build&logo=none&style=plastic" alt="Build Status"/></a>
+    <a href="https://github.com/ddc/ddcDatabases/issues"><img src="https://img.shields.io/github/issues/ddc/ddcDatabases?style=plastic&logo=github&logoColor=white" alt="issues"/></a>
+    <a href="https://codecov.io/gh/ddc/ddcDatabases"><img src="https://img.shields.io/codecov/c/github/ddc/ddcDatabases?token=XWB53034GI&style=plastic&logo=codecov" alt="codecov"/></a>
+    <a href="https://sonarcloud.io/dashboard?id=ddc_ddcDatabases"><img src="https://img.shields.io/sonar/quality_gate/ddc_ddcDatabases?server=https%3A%2F%2Fsonarcloud.io&style=plastic&logo=sonarqubecloud&logoColor=white" alt="Quality Gate Status"/></a>
+    <a href="https://github.com/ddc/ddcDatabases/actions/workflows/workflow.yml"><img src="https://img.shields.io/github/actions/workflow/status/ddc/ddcDatabases/workflow.yml?style=plastic&logo=github&logoColor=white&label=CI%2FCD%20Pipeline" alt="CI/CD Pipeline"/></a>
+    <a href="https://actions-badge.atrox.dev/ddc/ddcDatabases/goto?ref=main"><img src="https://img.shields.io/endpoint.svg?url=https%3A//actions-badge.atrox.dev/ddc/ddcDatabases/badge?ref=main&label=build&logo=github&style=plastic" alt="Build Status"/></a>
 </p>
 
-<p align="center">A Python library for database connections and ORM queries with support for multiple database engines including SQLite, PostgreSQL, MySQL, MariaDB, MSSQL, Oracle, and MongoDB</p>
+<p align="center">A Python library for database connections and ORM queries with support for multiple database engines. <br> Includes SQLite, PostgreSQL, MySQL/MariaDB, MSSQL, Oracle, and MongoDB</p>
 
 
 # Table of Contents
@@ -81,7 +83,7 @@
 | MySQL      | `True`  | Autocommit ON is MySQL's default |
 | Oracle     | `False` | Requires explicit COMMIT         |
 
-**Note:** All constructor parameters are optional and fall back to [.env](./ddcDatabases/.env.example) file variables.
+**Note:** All constructor parameters are optional and fall back to [.env](./ddcdatabases/.env.example) file variables.
 
 
 ## Configuration Classes
@@ -121,7 +123,7 @@ Retry with exponential backoff is enabled by default at two levels:
 
 **1. Connection Level** - Retries when establishing database connections:
 ```python
-from ddcDatabases import PostgreSQL, PostgreSQLConnectionRetryConfig
+from ddcdatabases import PostgreSQL, PostgreSQLConnectionRetryConfig
 
 with PostgreSQL(
     connection_retry_config=PostgreSQLConnectionRetryConfig(
@@ -137,7 +139,7 @@ with PostgreSQL(
 
 **2. Operation Level** - Retries individual database operations (fetchall, insert, etc.):
 ```python
-from ddcDatabases import DBUtils, PostgreSQL, PostgreSQLOperationRetryConfig
+from ddcdatabases import DBUtils, PostgreSQL, PostgreSQLOperationRetryConfig
 
 with PostgreSQL(
     operation_retry_config=PostgreSQLOperationRetryConfig(
@@ -170,7 +172,7 @@ with PostgreSQL(
 For long-running applications, use persistent connections with automatic reconnection and idle timeout:
 
 ```python
-from ddcDatabases import (
+from ddcdatabases import (
     PostgreSQLPersistent,
     MySQLPersistent,
     MongoDBPersistent,
@@ -230,7 +232,7 @@ The `execute_with_retry` method provides automatic session management with retry
 
 **Synchronous:**
 ```python
-from ddcDatabases import PostgreSQLPersistent
+from ddcdatabases import PostgreSQLPersistent
 
 db = PostgreSQLPersistent(logger=logger)
 result = db.execute_with_retry(
@@ -240,7 +242,7 @@ result = db.execute_with_retry(
 
 **Asynchronous:**
 ```python
-from ddcDatabases import PostgreSQLPersistent
+from ddcdatabases import PostgreSQLPersistent
 
 db = PostgreSQLPersistent(async_mode=True, logger=logger)
 result = await db.execute_with_retry(
@@ -267,7 +269,7 @@ The method automatically:
 
 ## Basic Installation (SQLite only)
 ```shell
-pip install ddcDatabases
+pip install ddcdatabases
 ```
 
 **Note:** The basic installation includes only SQlite. Database-specific drivers are optional extras that you can install as needed.
@@ -278,29 +280,29 @@ Install only the database drivers you need:
 
 ```shell
 # All database drivers
-pip install "ddcDatabases[all]"
+pip install "ddcdatabases[all]"
 
 # SQL Server / MSSQL
-pip install "ddcDatabases[mssql]"
+pip install "ddcdatabases[mssql]"
 
 # MySQL/MariaDB
-pip install "ddcDatabases[mysql]"
+pip install "ddcdatabases[mysql]"
 # or
-pip install "ddcDatabases[mariadb]"
+pip install "ddcdatabases[mariadb]"
 
 # PostgreSQL
-pip install "ddcDatabases[postgres]"
+pip install "ddcdatabases[postgres]"
 # or
-pip install "ddcDatabases[pgsql]"
+pip install "ddcdatabases[pgsql]"
 
 # Oracle Database
-pip install "ddcDatabases[oracle]"
+pip install "ddcdatabases[oracle]"
 
 # MongoDB
-pip install "ddcDatabases[mongodb]"
+pip install "ddcdatabases[mongodb]"
 
 # Multiple databases (example)
-pip install "ddcDatabases[mysql,postgres,mongodb]"
+pip install "ddcdatabases[mysql,postgres,mongodb]"
 ```
 
 **Available Database Extras:**
@@ -329,7 +331,7 @@ pip install "ddcDatabases[mysql,postgres,mongodb]"
 
 ```python
 import sqlalchemy as sa
-from ddcDatabases import DBUtils, Sqlite
+from ddcdatabases import DBUtils, Sqlite
 from your_models import Model  # Your SQLAlchemy model
 
 with Sqlite(filepath="data.db") as session:
@@ -347,7 +349,7 @@ with Sqlite(filepath="data.db") as session:
 
 ```python
 import sqlalchemy as sa
-from ddcDatabases import DBUtils, MSSQL, MSSQLPoolConfig, MSSQLSessionConfig, MSSQLSSLConfig
+from ddcdatabases import DBUtils, MSSQL, MSSQLPoolConfig, MSSQLSessionConfig, MSSQLSSLConfig
 
 with MSSQL(
     host="127.0.0.1",
@@ -385,7 +387,7 @@ with MSSQL(
 ```python
 import asyncio
 import sqlalchemy as sa
-from ddcDatabases import DBUtilsAsync, MSSQL
+from ddcdatabases import DBUtilsAsync, MSSQL
 from your_models import Model
 
 async def main():
@@ -405,7 +407,7 @@ asyncio.run(main())
 
 ```python
 import sqlalchemy as sa
-from ddcDatabases import DBUtils, PostgreSQL, PostgreSQLPoolConfig, PostgreSQLSessionConfig, PostgreSQLSSLConfig
+from ddcdatabases import DBUtils, PostgreSQL, PostgreSQLPoolConfig, PostgreSQLSessionConfig, PostgreSQLSSLConfig
 
 with PostgreSQL(
     host="127.0.0.1",
@@ -445,7 +447,7 @@ with PostgreSQL(
 ```python
 import asyncio
 import sqlalchemy as sa
-from ddcDatabases import DBUtilsAsync, PostgreSQL
+from ddcdatabases import DBUtilsAsync, PostgreSQL
 from your_models import Model
 
 async def main():
@@ -465,15 +467,15 @@ The MySQL class is fully compatible with both MySQL and MariaDB databases. For c
 
 ```python
 # Both imports are equivalent
-from ddcDatabases import MySQL, MySQLPoolConfig, MySQLSessionConfig
-from ddcDatabases import MariaDB, MariaDBPoolConfig, MariaDBSessionConfig  # Aliases
+from ddcdatabases import MySQL, MySQLPoolConfig, MySQLSessionConfig
+from ddcdatabases import MariaDB, MariaDBPoolConfig, MariaDBSessionConfig  # Aliases
 ```
 
 **Synchronous Example:**
 
 ```python
 import sqlalchemy as sa
-from ddcDatabases import DBUtils, MySQL, MySQLPoolConfig, MySQLSessionConfig, MySQLSSLConfig
+from ddcdatabases import DBUtils, MySQL, MySQLPoolConfig, MySQLSessionConfig, MySQLSSLConfig
 
 with MySQL(
     host="127.0.0.1",
@@ -512,7 +514,7 @@ with MySQL(
 ```python
 import asyncio
 import sqlalchemy as sa
-from ddcDatabases import DBUtilsAsync, MySQL
+from ddcdatabases import DBUtilsAsync, MySQL
 
 async def main() -> None:
     async with MySQL(host="127.0.0.1", database="dev") as session:
@@ -531,7 +533,7 @@ asyncio.run(main())
 
 ```python
 import sqlalchemy as sa
-from ddcDatabases import DBUtils, Oracle, OraclePoolConfig, OracleSessionConfig, OracleSSLConfig
+from ddcdatabases import DBUtils, Oracle, OraclePoolConfig, OracleSessionConfig, OracleSSLConfig
 
 with Oracle(
     host="127.0.0.1",
@@ -572,7 +574,7 @@ with Oracle(
 **Example:**
 
 ```python
-from ddcDatabases import MongoDB, MongoDBQueryConfig, MongoDBTLSConfig
+from ddcdatabases import MongoDB, MongoDBQueryConfig, MongoDBTLSConfig
 from bson.objectid import ObjectId
 
 with MongoDB(
@@ -609,7 +611,7 @@ Access the underlying SQLAlchemy engine for advanced operations:
 **Synchronous Engine:**
 
 ```python
-from ddcDatabases import PostgreSQL
+from ddcdatabases import PostgreSQL
 
 with PostgreSQL() as session:
     engine = session.bind
@@ -620,7 +622,7 @@ with PostgreSQL() as session:
 
 ```python
 import asyncio
-from ddcDatabases import PostgreSQL
+from ddcdatabases import PostgreSQL
 
 async def main():
     async with PostgreSQL() as session:
@@ -638,7 +640,7 @@ The `DBUtils` and `DBUtilsAsync` classes provide convenient methods for common d
 ## Available Methods
 
 ```python
-from ddcDatabases import DBUtils, DBUtilsAsync, PostgreSQL
+from ddcdatabases import DBUtils, DBUtilsAsync, PostgreSQL
 
 # Synchronous utilities
 with PostgreSQL() as session:
@@ -668,7 +670,7 @@ All database classes accept an optional `logger` parameter. By default, logs are
 
 ```python
 import logging
-from ddcDatabases import PostgreSQL, DBUtils
+from ddcdatabases import PostgreSQL, DBUtils
 
 log = logging.getLogger("myapp")
 log.setLevel(logging.DEBUG)
@@ -683,8 +685,8 @@ with PostgreSQL(host="localhost", database="mydb", logger=log) as session:
 
 ```python
 import logging
-logging.getLogger("ddcDatabases").setLevel(logging.DEBUG)
-logging.getLogger("ddcDatabases").addHandler(logging.StreamHandler())
+logging.getLogger("ddcdatabases").setLevel(logging.DEBUG)
+logging.getLogger("ddcdatabases").addHandler(logging.StreamHandler())
 ```
 
 
