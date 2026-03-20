@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 _logger = logging.getLogger(__name__)
@@ -13,7 +13,7 @@ class CustomBaseException(Exception):
 
     def __init__(self, msg: Any) -> None:
         self.original_exception = msg
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         dt = now.isoformat(timespec="milliseconds")
         _logger.error(f"[{dt}]:{repr(msg)}")
         raise msg
