@@ -13,7 +13,7 @@ packages = ["ddcdatabases"]
 
 [project]
 name = "ddcdatabases"
-version = "4.0.1"
+version = "4.0.2"
 description = "Simplified database ORM connections with support for multiple database engines"
 urls.Repository = "https://github.com/ddc/ddcDatabases"
 urls.Homepage = "https://pypi.org/project/ddcDatabases"
@@ -53,7 +53,7 @@ classifiers = [
 requires-python = ">=3.12"
 dependencies = [
     "pydantic-settings>=2.11.0",
-    "sqlalchemy[asyncio]>=2.0.48",
+    "sqlalchemy[asyncio]>=2.0.49",
 ]
 
 [project.optional-dependencies]
@@ -68,9 +68,9 @@ mariadb = ["ddcdatabases[mysql]"]
 [dependency-groups]
 dev = [
     "coverage>=7.13.5",
-    "poethepoet>=0.42.1",
+    "poethepoet>=0.43.0",
     "pytest-asyncio>=1.3.0",
-    "ruff>=0.15.7",
+    "ruff>=0.15.9",
     "testcontainers[postgres,mysql,mssql,mongodb,oracle]>=4.14.2",
 ]
 
@@ -83,7 +83,7 @@ profile-integration = "uv run python -m cProfile -o cprofile_integration.prof -m
 test.sequence = [{ shell = "uv run coverage run -m pytest tests/unit" }, { shell = "uv run coverage report" }, { shell = "uv run coverage xml" }]
 test-integration = "uv run pytest tests/integration"
 tests.sequence = ["linter", "test", "test-integration"]
-updatedev.sequence = ["linter", {shell = "uv lock --upgrade && uv sync --all-extras --group dev"}]
+updatedev.sequence = ["linter", {shell = "uv lock --upgrade && uv sync --all-extras --all-groups"}]
 build.sequence = ["updatedev", "tests", {shell = "uv build --wheel"}]
 
 [tool.pytest.ini_options]

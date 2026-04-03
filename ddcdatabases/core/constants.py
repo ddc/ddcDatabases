@@ -1,5 +1,7 @@
+from typing import Final
+
 # SSL Modes
-POSTGRESQL_SSL_MODES: frozenset[str] = frozenset(
+POSTGRESQL_SSL_MODES: Final[frozenset[str]] = frozenset(
     {
         "disable",
         "allow",
@@ -10,7 +12,7 @@ POSTGRESQL_SSL_MODES: frozenset[str] = frozenset(
     }
 )
 
-MYSQL_SSL_MODES: frozenset[str] = frozenset(
+MYSQL_SSL_MODES: Final[frozenset[str]] = frozenset(
     {
         "DISABLED",
         "PREFERRED",
@@ -21,7 +23,7 @@ MYSQL_SSL_MODES: frozenset[str] = frozenset(
 )
 
 # Connection error keywords for retry logic
-CONNECTION_ERROR_KEYWORDS: frozenset[str] = frozenset(
+CONNECTION_ERROR_KEYWORDS: Final[frozenset[str]] = frozenset(
     {
         "connection",
         "connect",
