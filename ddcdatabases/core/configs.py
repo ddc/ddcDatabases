@@ -1,18 +1,18 @@
 import dataclasses
 from dataclasses import dataclass
-from typing import Any, TypeVar
+from typing import Any, Final, TypeVar
 
 _C = TypeVar("_C")
 
 # Field maps for merging retry configs with settings
-CONNECTION_RETRY_FIELD_MAP: dict[str, str] = {
+CONNECTION_RETRY_FIELD_MAP: Final[dict[str, str]] = {
     "enable_retry": "connection_enable_retry",
     "max_retries": "connection_max_retries",
     "initial_retry_delay": "connection_initial_retry_delay",
     "max_retry_delay": "connection_max_retry_delay",
 }
 
-OPERATION_RETRY_FIELD_MAP: dict[str, str] = {
+OPERATION_RETRY_FIELD_MAP: Final[dict[str, str]] = {
     "enable_retry": "operation_enable_retry",
     "max_retries": "operation_max_retries",
     "initial_retry_delay": "operation_initial_retry_delay",

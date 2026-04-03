@@ -54,9 +54,9 @@ jobs:
             uv sync --locked --all-extras --dev --no-install-package mysqlclient --no-install-package aiomysql
           elif [[ '${{ matrix.os }}' == 'macos-latest' ]]; then
             export PKG_CONFIG_PATH="$(brew --prefix mysql-client)/lib/pkgconfig"
-            uv sync --locked --all-extras --group dev
+            uv sync --locked --all-extras --all-groups
           else
-            uv sync --locked --all-extras --group dev
+            uv sync --locked --all-extras --all-groups
           fi
         shell: bash
 
@@ -97,7 +97,7 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y default-libmysqlclient-dev pkg-config
 
       - name: Install dependencies
-        run: uv sync --locked --all-extras --group dev
+        run: uv sync --locked --all-extras --all-groups
 
       - name: Install ODBC driver for MSSQL
         run: |
