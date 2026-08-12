@@ -19,7 +19,7 @@
     <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-yellow.svg?style=plastic&logo=creativecommons&logoColor=white" alt="License: MIT"/></a>
     <br>
     <a href="https://github.com/ddc/ddcDatabases/issues"><img src="https://img.shields.io/github/issues/ddc/ddcDatabases?style=plastic&logo=github&logoColor=white" alt="issues"/></a>
-    <a href="https://codecov.io/gh/ddc/ddcDatabases"><img src="https://img.shields.io/codecov/c/github/ddc/ddcDatabases?token=XWB53034GI&style=plastic&logo=codecov" alt="codecov"/></a>
+    <a href="https://sonarcloud.io/component_measures?id=ddc_ddcDatabases&metric=coverage"><img src="https://img.shields.io/sonar/coverage/ddc_ddcDatabases?server=https%3A%2F%2Fsonarcloud.io&style=plastic&logo=sonarqubecloud&logoColor=white" alt="SonarCloud Coverage"/></a>
     <a href="https://sonarcloud.io/dashboard?id=ddc_ddcDatabases"><img src="https://img.shields.io/sonar/quality_gate/ddc_ddcDatabases?server=https%3A%2F%2Fsonarcloud.io&style=plastic&logo=sonarqubecloud&logoColor=white" alt="Quality Gate Status"/></a>
     <a href="https://github.com/ddc/ddcDatabases/actions/workflows/workflow.yml"><img src="https://img.shields.io/github/actions/workflow/status/ddc/ddcDatabases/workflow.yml?style=plastic&logo=github&logoColor=white&label=CI%2FCD%20Pipeline" alt="CI/CD Pipeline"/></a>
     <a href="https://actions-badge.atrox.dev/ddc/ddcDatabases/goto?ref=main"><img src="https://img.shields.io/endpoint.svg?url=https%3A//actions-badge.atrox.dev/ddc/ddcDatabases/badge?ref=main&label=build&logo=github&style=plastic" alt="Build Status"/></a>
@@ -127,10 +127,10 @@ from ddcdatabases import PostgreSQL, PostgreSQLConnectionRetryConfig
 
 with PostgreSQL(
     connection_retry_config=PostgreSQLConnectionRetryConfig(
-        enable_retry=True,           # Enable/disable retry (default: True)
-        max_retries=3,               # Maximum retry attempts (default: 3)
-        initial_retry_delay=1.0,     # Initial delay in seconds (default: 1.0)
-        max_retry_delay=30.0,        # Maximum delay in seconds (default: 30.0)
+        enable_retry=True,  # Enable/disable retry (default: True)
+        max_retries=3,  # Maximum retry attempts (default: 3)
+        initial_retry_delay=1.0,  # Initial delay in seconds (default: 1.0)
+        max_retry_delay=30.0,  # Maximum delay in seconds (default: 30.0)
     ),
 ) as session:
     # Connection errors will automatically retry with exponential backoff
@@ -143,11 +143,11 @@ from ddcdatabases import DBUtils, PostgreSQL, PostgreSQLOperationRetryConfig
 
 with PostgreSQL(
     operation_retry_config=PostgreSQLOperationRetryConfig(
-        enable_retry=True,            # Enable/disable (default: True)
-        max_retries=3,                # Max attempts (default: 3)
-        initial_retry_delay=1.0,      # Initial delay in seconds (default: 1.0)
-        max_retry_delay=30.0,         # Max delay in seconds (default: 30.0)
-        jitter=0.1,                   # Randomization factor (default: 0.1)
+        enable_retry=True,  # Enable/disable (default: True)
+        max_retries=3,  # Max attempts (default: 3)
+        initial_retry_delay=1.0,  # Initial delay in seconds (default: 1.0)
+        max_retry_delay=30.0,  # Max delay in seconds (default: 30.0)
+        jitter=0.1,  # Randomization factor (default: 0.1)
     ),
 ) as session:
     db_utils = DBUtils(session)
@@ -189,22 +189,22 @@ conn = PostgreSQLPersistent(
     password="postgres",
     database="mydb",
     config=PersistentConnectionConfig(
-        idle_timeout=300,            # seconds before idle disconnect (default: 300)
-        health_check_interval=30,    # seconds between health checks (default: 30)
-        auto_reconnect=True,         # auto-reconnect on failure (default: True)
+        idle_timeout=300,  # seconds before idle disconnect (default: 300)
+        health_check_interval=30,  # seconds between health checks (default: 30)
+        auto_reconnect=True,  # auto-reconnect on failure (default: True)
     ),
     connection_retry_config=PostgreSQLConnectionRetryConfig(
-        enable_retry=True,           # enable connection retry (default: True)
-        max_retries=5,               # max connection attempts (default: 5)
-        initial_retry_delay=1.0,     # initial delay in seconds (default: 1.0)
-        max_retry_delay=30.0,        # max delay in seconds (default: 30.0)
+        enable_retry=True,  # enable connection retry (default: True)
+        max_retries=5,  # max connection attempts (default: 5)
+        initial_retry_delay=1.0,  # initial delay in seconds (default: 1.0)
+        max_retry_delay=30.0,  # max delay in seconds (default: 30.0)
     ),
     operation_retry_config=PostgreSQLOperationRetryConfig(
-        enable_retry=True,           # enable operation retry (default: True)
-        max_retries=3,               # max operation attempts (default: 3)
-        initial_retry_delay=0.5,     # initial delay in seconds (default: 0.5)
-        max_retry_delay=10.0,        # max delay in seconds (default: 10.0)
-        jitter=0.1,                  # randomization factor (default: 0.1)
+        enable_retry=True,  # enable operation retry (default: True)
+        max_retries=3,  # max operation attempts (default: 3)
+        initial_retry_delay=0.5,  # initial delay in seconds (default: 0.5)
+        max_retry_delay=10.0,  # max delay in seconds (default: 10.0)
+        jitter=0.1,  # randomization factor (default: 0.1)
     ),
 )
 
@@ -235,9 +235,7 @@ The `execute_with_retry` method provides automatic session management with retry
 from ddcdatabases import PostgreSQLPersistent
 
 db = PostgreSQLPersistent(logger=logger)
-result = db.execute_with_retry(
-    lambda session: MyDal(session).do_something()
-)
+result = db.execute_with_retry(lambda session: MyDal(session).do_something())
 ```
 
 **Asynchronous:**
@@ -245,9 +243,7 @@ result = db.execute_with_retry(
 from ddcdatabases import PostgreSQLPersistent
 
 db = PostgreSQLPersistent(async_mode=True, logger=logger)
-result = await db.execute_with_retry(
-    lambda session: MyDal(session).do_something()
-)
+result = await db.execute_with_retry(lambda session: MyDal(session).do_something())
 ```
 
 The method automatically:
@@ -390,6 +386,7 @@ import sqlalchemy as sa
 from ddcdatabases import DBUtilsAsync, MSSQL
 from your_models import Model
 
+
 async def main():
     async with MSSQL(host="127.0.0.1", database="master") as session:
         stmt = sa.select(Model).where(Model.id == 1)
@@ -397,6 +394,8 @@ async def main():
         results = await db_utils.fetchall(stmt)
         for row in results:
             print(row)
+
+
 asyncio.run(main())
 ```
 
@@ -429,10 +428,10 @@ with PostgreSQL(
         autocommit=True,
     ),
     ssl_config=PostgreSQLSSLConfig(
-        ssl_mode="disable",              # disable, allow, prefer, require, verify-ca, verify-full
-        ssl_ca_cert_path=None,           # Path to CA certificate
-        ssl_client_cert_path=None,       # Path to client certificate
-        ssl_client_key_path=None,        # Path to client key
+        ssl_mode="disable",  # disable, allow, prefer, require, verify-ca, verify-full
+        ssl_ca_cert_path=None,  # Path to CA certificate
+        ssl_client_cert_path=None,  # Path to client certificate
+        ssl_client_key_path=None,  # Path to client key
     ),
 ) as session:
     stmt = sa.select(Model).where(Model.id == 1)
@@ -450,6 +449,7 @@ import sqlalchemy as sa
 from ddcdatabases import DBUtilsAsync, PostgreSQL
 from your_models import Model
 
+
 async def main():
     async with PostgreSQL(host="127.0.0.1", database="postgres") as session:
         stmt = sa.select(Model).where(Model.id == 1)
@@ -457,6 +457,8 @@ async def main():
         results = await db_utils.fetchall(stmt)
         for row in results:
             print(row)
+
+
 asyncio.run(main())
 ```
 
@@ -496,7 +498,7 @@ with MySQL(
         autocommit=True,
     ),
     ssl_config=MySQLSSLConfig(
-        ssl_mode="DISABLED",             # DISABLED, PREFERRED, REQUIRED, VERIFY_CA, VERIFY_IDENTITY
+        ssl_mode="DISABLED",  # DISABLED, PREFERRED, REQUIRED, VERIFY_CA, VERIFY_IDENTITY
         ssl_ca_cert_path=None,
         ssl_client_cert_path=None,
         ssl_client_key_path=None,
@@ -516,6 +518,7 @@ import asyncio
 import sqlalchemy as sa
 from ddcdatabases import DBUtilsAsync, MySQL
 
+
 async def main() -> None:
     async with MySQL(host="127.0.0.1", database="dev") as session:
         stmt = sa.text("SELECT * FROM users")
@@ -523,6 +526,8 @@ async def main() -> None:
         results = await db_utils.fetchall(stmt)
         for row in results:
             print(row)
+
+
 asyncio.run(main())
 ```
 
@@ -587,7 +592,7 @@ with MongoDB(
     query_config=MongoDBQueryConfig(
         query={"_id": ObjectId("689c9f71dd642a68cfc60477")},
         sort_column="_id",
-        sort_order="asc",          # asc or desc
+        sort_order="asc",  # asc or desc
         batch_size=2865,
         limit=0,
     ),
@@ -624,10 +629,12 @@ with PostgreSQL() as session:
 import asyncio
 from ddcdatabases import PostgreSQL
 
+
 async def main():
     async with PostgreSQL() as session:
         engine = session.bind
         # Use engine for advanced operations
+
 
 asyncio.run(main())
 ```
@@ -645,13 +652,13 @@ from ddcdatabases import DBUtils, DBUtilsAsync, PostgreSQL
 # Synchronous utilities
 with PostgreSQL() as session:
     db_utils = DBUtils(session)
-    results = db_utils.fetchall(stmt)                # Returns list of RowMapping objects
+    results = db_utils.fetchall(stmt)  # Returns list of RowMapping objects
     results = db_utils.fetchall(stmt, as_dict=True)  # Returns list of dictionaries
-    value = db_utils.fetchvalue(stmt)                # Returns single value as string
-    db_utils.insert(model_instance)                  # Insert into model table
-    db_utils.deleteall(Model)                        # Delete all records from model
-    db_utils.insertbulk(Model, data_list)            # Bulk insert from list of dictionaries
-    db_utils.execute(stmt)                           # Execute any SQLAlchemy statement
+    value = db_utils.fetchvalue(stmt)  # Returns single value as string
+    db_utils.insert(model_instance)  # Insert into model table
+    db_utils.deleteall(Model)  # Delete all records from model
+    db_utils.insertbulk(Model, data_list)  # Bulk insert from list of dictionaries
+    db_utils.execute(stmt)  # Execute any SQLAlchemy statement
 
 # Asynchronous utilities (similar interface with await)
 async with PostgreSQL() as session:
@@ -685,6 +692,7 @@ with PostgreSQL(host="localhost", database="mydb", logger=log) as session:
 
 ```python
 import logging
+
 logging.getLogger("ddcdatabases").setLevel(logging.DEBUG)
 logging.getLogger("ddcdatabases").addHandler(logging.StreamHandler())
 ```

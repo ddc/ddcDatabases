@@ -942,3 +942,65 @@ class TestDBUtilsAsyncInsertBulk:
 
         mock_session.rollback.assert_called_once()
         mock_session.commit.assert_not_called()  # Should not commit on exception
+
+
+class TestFetchValueNativeTypes:
+    """fetchvalue() returns the stored value with its native type (5.0.0).
+
+    It previously coerced everything with str(), which silently turned a timestamptz
+    column back into text and a COUNT(*) into "42".
+    """
+
+    from ddcdatabases import DBUtils, DBUtilsAsync
+
+    @staticmethod
+    def _sync(value):
+        mock_session = MagicMock()
+        mock_cursor = MagicMock()
+        mock_cursor.fetchone.return_value = (value,) if value is not None else None
+        mock_session.execute.return_value = mock_cursor
+        return TestFetchValueNativeTypes.DBUtils(mock_session)
+
+    @staticmethod
+    def _async(value):
+        mock_session = AsyncMock()
+        mock_cursor = MagicMock()
+        mock_cursor.fetchone.return_value = (value,) if value is not None else None
+        mock_session.execute.return_value = mock_cursor
+        return TestFetchValueNativeTypes.DBUtilsAsync(mock_session)
+
+    def test_datetime_survives_as_datetime(self):
+        from datetime import UTC, datetime
+
+        dt = datetime(2026, 8, 12, 15, 4, 5, tzinfo=UTC)
+        out = self._sync(dt).fetchvalue(sa.select(DatabaseModel.name))
+        assert isinstance(out, datetime)
+        assert out == dt
+        assert out.tzinfo is not None
+
+    def test_count_survives_as_int(self):
+        out = self._sync(42).fetchvalue(sa.select(DatabaseModel.name))
+        assert out == 42
+        assert not isinstance(out, str)
+
+    def test_bool_survives_as_bool(self):
+        assert self._sync(False).fetchvalue(sa.select(DatabaseModel.name)) is False
+
+    def test_none_stays_none(self):
+        assert self._sync(None).fetchvalue(sa.select(DatabaseModel.name)) is None
+
+    def test_str_still_comes_back_as_str(self):
+        assert self._sync("hello").fetchvalue(sa.select(DatabaseModel.name)) == "hello"
+
+    @pytest.mark.asyncio
+    async def test_async_datetime_survives_as_datetime(self):
+        from datetime import UTC, datetime
+
+        dt = datetime(2026, 8, 12, 15, 4, 5, tzinfo=UTC)
+        out = await self._async(dt).fetchvalue(sa.select(DatabaseModel.name))
+        assert isinstance(out, datetime)
+        assert out == dt
+
+    @pytest.mark.asyncio
+    async def test_async_count_survives_as_int(self):
+        assert await self._async(42).fetchvalue(sa.select(DatabaseModel.name)) == 42

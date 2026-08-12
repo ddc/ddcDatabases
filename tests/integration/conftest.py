@@ -6,7 +6,8 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 # Testcontainer image versions
 POSTGRES_IMAGE = "postgres:latest"
 MYSQL_IMAGE = "mysql:latest"
-MONGODB_IMAGE = "mongo:8.0"
+# 8.0 refuses to start on Linux kernel >= 6.19 (SERVER-121912); 8.2 carries the fix.
+MONGODB_IMAGE = "mongo:8.2"
 MARIADB_IMAGE = "mariadb:latest"
 ORACLE_IMAGE = "gvenzl/oracle-free:slim-faststart"
 MSSQL_IMAGE = "mcr.microsoft.com/mssql/server:2022-latest"
@@ -25,7 +26,7 @@ class IntegrationModel(Base):
 
 @pytest.fixture(scope="session")
 def postgres_container():
-    from testcontainers.postgres import PostgresContainer
+    from testcontainers.community.postgres import PostgresContainer
 
     with PostgresContainer(POSTGRES_IMAGE) as pg:
         yield pg
@@ -33,7 +34,7 @@ def postgres_container():
 
 @pytest.fixture(scope="session")
 def mysql_container():
-    from testcontainers.mysql import MySqlContainer
+    from testcontainers.community.mysql import MySqlContainer
 
     with MySqlContainer(MYSQL_IMAGE) as mysql:
         yield mysql
@@ -41,7 +42,7 @@ def mysql_container():
 
 @pytest.fixture(scope="session")
 def mssql_container():
-    from testcontainers.mssql import SqlServerContainer
+    from testcontainers.community.mssql import SqlServerContainer
 
     with SqlServerContainer(MSSQL_IMAGE, password="Strong@Pass123") as mssql:
         yield mssql
@@ -49,7 +50,7 @@ def mssql_container():
 
 @pytest.fixture(scope="session")
 def mongodb_container():
-    from testcontainers.mongodb import MongoDbContainer
+    from testcontainers.community.mongodb import MongoDbContainer
 
     max_attempts = 3
     last_exc = None
@@ -70,7 +71,7 @@ def mongodb_container():
 
 @pytest.fixture(scope="session")
 def mariadb_container():
-    from testcontainers.mysql import MySqlContainer
+    from testcontainers.community.mysql import MySqlContainer
 
     with MySqlContainer(MARIADB_IMAGE) as mariadb:
         yield mariadb
@@ -78,7 +79,7 @@ def mariadb_container():
 
 @pytest.fixture(scope="session")
 def oracle_container():
-    from testcontainers.oracle import OracleDbContainer
+    from testcontainers.community.oracle import OracleDbContainer
 
     with OracleDbContainer(ORACLE_IMAGE) as oracle:
         yield oracle
