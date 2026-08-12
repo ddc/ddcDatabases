@@ -30,14 +30,10 @@ from sqlalchemy.engine import URL, Engine, create_engine
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
 from sqlalchemy.orm import Session, sessionmaker
-from typing import Any, Generic, Literal, TypeVar, cast, overload
+from typing import Any, Literal, cast, overload
 
 _logger = logging.getLogger(__name__)
 _logger.addHandler(logging.NullHandler())
-
-# Type variables
-T = TypeVar("T")
-SessionT = TypeVar("SessionT", Session, AsyncSession)
 
 
 @dataclass(slots=True, frozen=True)
@@ -67,12 +63,20 @@ class IdleCheckerMixin:
     """
     Mixin providing idle connection checking functionality.
 
-    Subclasses must define these attributes in __slots__:
-        _connection_key, _config, _lock, _shutdown_event,
-        _is_connected, _last_used, _idle_checker_thread
+    Owns the slots for the shared connection state it operates on, so subclasses
+    must not redeclare them in their own __slots__.
     """
 
-    __slots__ = ()  # Mixin doesn't add slots; subclasses define them
+    __slots__ = (
+        "_connection_key",
+        "_config",
+        "_lock",
+        "_shutdown_event",
+        "_is_connected",
+        "_last_used",
+        "_idle_checker_thread",
+        "_logger",
+    )
 
     def _start_idle_checker(self: Any) -> None:
         """Start the background idle checker thread."""
@@ -111,7 +115,7 @@ class IdleCheckerMixin:
         raise NotImplementedError
 
 
-class BasePersistentConnection(IdleCheckerMixin, ABC, Generic[SessionT]):
+class BasePersistentConnection[SessionT: (Session, AsyncSession)](IdleCheckerMixin, ABC):
     """
     Abstract base class for persistent database connections.
 
@@ -122,18 +126,10 @@ class BasePersistentConnection(IdleCheckerMixin, ABC, Generic[SessionT]):
     """
 
     __slots__ = (
-        "_connection_key",
         "_engine",
         "_session",
-        "_last_used",
-        "_lock",
-        "_config",
         "_connection_retry_config",
         "_operation_retry_config",
-        "_idle_checker_thread",
-        "_shutdown_event",
-        "_is_connected",
-        "_logger",
         "__weakref__",  # Required for WeakValueDictionary
     )
 
@@ -309,7 +305,7 @@ class PersistentSQLAlchemyConnection(BasePersistentConnection[Session]):
             self._disconnect_internal()
             self._logger.info(f"[{self._connection_key}] Disconnected")
 
-    def execute_with_retry(self, operation: Callable[[Session], T]) -> T:
+    def execute_with_retry[T](self, operation: Callable[[Session], T]) -> T:
         """
         Execute an operation with automatic session management and retry logic.
 
@@ -501,12 +497,12 @@ class PersistentSQLAlchemyAsyncConnection(BasePersistentConnection[AsyncSession]
     # coroutine). Without these overloads an async callable binds T to Coroutine[..., X],
     # so callers see a coroutine type where the runtime hands back X.
     @overload
-    async def execute_with_retry(self, operation: Callable[[AsyncSession], Awaitable[T]]) -> T: ...
+    async def execute_with_retry[T](self, operation: Callable[[AsyncSession], Awaitable[T]]) -> T: ...
 
     @overload
-    async def execute_with_retry(self, operation: Callable[[AsyncSession], T]) -> T: ...
+    async def execute_with_retry[T](self, operation: Callable[[AsyncSession], T]) -> T: ...
 
-    async def execute_with_retry(self, operation: Callable[[AsyncSession], T | Awaitable[T]]) -> T:
+    async def execute_with_retry[T](self, operation: Callable[[AsyncSession], T | Awaitable[T]]) -> T:
         """
         Execute an async operation with automatic session management and retry logic.
 
@@ -574,20 +570,12 @@ class PersistentMongoDBConnection(IdleCheckerMixin):
     """
 
     __slots__ = (
-        "_connection_key",
         "_connection_url",
         "_database",
         "_client",
         "_db",
-        "_last_used",
-        "_lock",
-        "_config",
         "_connection_retry_config",
         "_operation_retry_config",
-        "_idle_checker_thread",
-        "_shutdown_event",
-        "_is_connected",
-        "_logger",
         "__weakref__",  # Required for WeakValueDictionary
     )
 

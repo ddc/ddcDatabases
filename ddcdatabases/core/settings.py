@@ -5,12 +5,8 @@ from dotenv import load_dotenv
 from functools import lru_cache
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from typing import TypeVar
 
 warnings.filterwarnings("ignore", message='Field name "schema".*shadows an attribute in parent')
-
-# Type variable for generic settings factory
-T = TypeVar("T", bound=BaseSettings)
 
 # Lazy loading flag for dotenv - thread-safe singleton pattern
 _dotenv_loaded = False
@@ -24,7 +20,7 @@ def _ensure_dotenv_loaded() -> None:
         _dotenv_loaded = True
 
 
-def _create_cached_settings_factory(settings_class: type[T]) -> Callable[[], T]:
+def _create_cached_settings_factory[T: BaseSettings](settings_class: type[T]) -> Callable[[], T]:
     """Factory function to create cached settings getters with proper type hints."""
 
     @lru_cache(maxsize=1)
@@ -236,7 +232,7 @@ get_mongodb_settings = _create_cached_settings_factory(MongoDBSettings)
 get_oracle_settings = _create_cached_settings_factory(OracleSettings)
 
 
-def _clear_settings_cache(getter_func: Callable[[], T], reload_env: bool = True) -> None:
+def _clear_settings_cache[T: BaseSettings](getter_func: Callable[[], T], reload_env: bool = True) -> None:
     """Clear the cache for a settings getter function.
 
     Args:
