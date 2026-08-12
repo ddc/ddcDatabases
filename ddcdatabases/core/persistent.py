@@ -23,7 +23,7 @@ from .settings import (
     get_postgresql_settings,
 )
 from abc import ABC, abstractmethod
-from collections.abc import Callable
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 from sqlalchemy import text
 from sqlalchemy.engine import URL, Engine, create_engine
@@ -497,7 +497,16 @@ class PersistentSQLAlchemyAsyncConnection(BasePersistentConnection[AsyncSession]
             await self._async_disconnect_internal()
             self._logger.info(f"[{self._connection_key}] Disconnected")
 
-    async def execute_with_retry(self, operation: Callable[[AsyncSession], T]) -> T:
+    # The body accepts a sync *or* async operation (it awaits the result when it is a
+    # coroutine). Without these overloads an async callable binds T to Coroutine[..., X],
+    # so callers see a coroutine type where the runtime hands back X.
+    @overload
+    async def execute_with_retry(self, operation: Callable[[AsyncSession], Awaitable[T]]) -> T: ...
+
+    @overload
+    async def execute_with_retry(self, operation: Callable[[AsyncSession], T]) -> T: ...
+
+    async def execute_with_retry(self, operation: Callable[[AsyncSession], T | Awaitable[T]]) -> T:
         """
         Execute an async operation with automatic session management and retry logic.
 
@@ -528,7 +537,7 @@ class PersistentSQLAlchemyAsyncConnection(BasePersistentConnection[AsyncSession]
                 if asyncio.iscoroutine(result):
                     result = await result
                 await session.commit()
-                return result
+                return cast(T, result)
             except Exception:
                 await session.rollback()
                 raise

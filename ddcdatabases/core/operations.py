@@ -70,26 +70,30 @@ class DBUtils:
         """
         return self._execute_with_retry(lambda: self._fetchall_impl(stmt, as_dict), "fetchall")
 
-    def _fetchvalue_impl(self, stmt: Any) -> str | None:
+    def _fetchvalue_impl(self, stmt: Any) -> Any:
         try:
             cursor = self.session.execute(stmt)
             result = cursor.fetchone()
             cursor.close()
-            return str(result[0]) if result else None
+            return result[0] if result else None
         except Exception as e:
             self.session.rollback()
             _logger.error(f"fetchvalue failed: {e}")
             raise DBFetchValueException(e) from e
 
-    def fetchvalue(self, stmt: Any) -> str | None:
+    def fetchvalue(self, stmt: Any) -> Any:
         """
         Execute a SELECT statement and fetch a single scalar value.
+
+        Changed in 5.0.0: returns the value with its native type. Previously every value
+        was coerced with str(), so a timestamptz came back as text and a COUNT(*) as "42".
+        Wrap the call in str() if the old behaviour is wanted.
 
         Args:
             stmt: SQLAlchemy statement or raw SQL string to execute
 
         Returns:
-            String representation of the first column of the first row, or None if no results
+            The first column of the first row as stored, or None if no results
 
         Raises:
             DBFetchValueException: If query execution fails
@@ -245,26 +249,30 @@ class DBUtilsAsync:
         """
         return await self._execute_with_retry(lambda: self._fetchall_impl(stmt, as_dict), "fetchall")
 
-    async def _fetchvalue_impl(self, stmt: Any) -> str | None:
+    async def _fetchvalue_impl(self, stmt: Any) -> Any:
         try:
             cursor = await self.session.execute(stmt)
             result = cursor.fetchone()
             cursor.close()
-            return str(result[0]) if result else None
+            return result[0] if result else None
         except Exception as e:
             await self.session.rollback()
             _logger.error(f"async fetchvalue failed: {e}")
             raise DBFetchValueException(e) from e
 
-    async def fetchvalue(self, stmt: Any) -> str | None:
+    async def fetchvalue(self, stmt: Any) -> Any:
         """
         Execute a SELECT statement asynchronously and fetch a single scalar value.
+
+        Changed in 5.0.0: returns the value with its native type. Previously every value
+        was coerced with str(), so a timestamptz came back as text and a COUNT(*) as "42".
+        Wrap the call in str() if the old behaviour is wanted.
 
         Args:
             stmt: SQLAlchemy statement or raw SQL string to execute
 
         Returns:
-            String representation of the first column of the first row, or None if no results
+            The first column of the first row as stored, or None if no results
 
         Raises:
             DBFetchValueException: If query execution fails
