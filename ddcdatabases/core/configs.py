@@ -1,8 +1,6 @@
 import dataclasses
 from dataclasses import dataclass
-from typing import Any, Final, TypeVar
-
-_C = TypeVar("_C")
+from typing import Any, Final
 
 # Field maps for merging retry configs with settings
 CONNECTION_RETRY_FIELD_MAP: Final[dict[str, str]] = {
@@ -21,12 +19,12 @@ OPERATION_RETRY_FIELD_MAP: Final[dict[str, str]] = {
 }
 
 
-def merge_config_with_settings(
-    config_cls: type[_C],
-    override: _C | None,
+def merge_config_with_settings[C](
+    config_cls: type[C],
+    override: C | None,
     settings: Any,
     field_map: dict[str, str] | None = None,
-) -> _C:
+) -> C:
     """Create config instance, using override values when not None, else settings defaults.
 
     Args:

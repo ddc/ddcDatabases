@@ -6,10 +6,7 @@ import time
 from .configs import BaseRetryConfig
 from .constants import CONNECTION_ERROR_KEYWORDS
 from collections.abc import Awaitable, Callable
-from typing import Any, TypeVar
-
-# Type variable for generic return types
-T = TypeVar("T")
+from typing import Any
 
 _logger = logging.getLogger(__name__)
 _logger.addHandler(logging.NullHandler())
@@ -102,7 +99,7 @@ def _handle_retry_exception(
     return delay
 
 
-def retry_operation(
+def retry_operation[T](
     operation: Callable[[], T],
     config: BaseRetryConfig,
     operation_name: str = "operation",
@@ -142,7 +139,7 @@ def retry_operation(
     raise RuntimeError("Unexpected state in retry logic")
 
 
-async def retry_operation_async(
+async def retry_operation_async[T](
     operation: Callable[[], Awaitable[T]],
     config: BaseRetryConfig,
     operation_name: str = "operation",
