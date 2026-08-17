@@ -70,13 +70,13 @@ dev = [
     "coverage>=7.15.4",
     "poethepoet>=0.48.0",
     "pytest-asyncio>=1.4.0",
-    "ruff>=0.16.2",
+    "ruff>=0.16.3",
     "testcontainers[postgres,mysql,mssql,mongodb,oracle]>=4.15.0",
 ]
 
 [tool.poe.tasks]
 linter.shell = "uv run ruff check --fix . && uv run ruff format ."
-snyk-export.shell = "rm -f requirements.txt && uv export --no-hashes --no-annotate --format requirements-txt > requirements.txt && uvx pre-commit run --all-files || uvx pre-commit run --all-files"
+snyk-export.shell = "uv export --no-hashes --no-annotate --format requirements-txt > requirements.txt && uvx pre-commit run --all-files || uvx pre-commit run --all-files"
 snyk.sequence = ["snyk-export", { shell = "uv pip install pip && snyk test --file=requirements.txt && snyk code test; uv pip uninstall pip" }]
 profile = "uv run python -m cProfile -o cprofile_unit.prof -m pytest tests/unit"
 profile-integration = "uv run python -m cProfile -o cprofile_integration.prof -m pytest tests/integration"
@@ -98,7 +98,7 @@ tests.sequence = [
   { shell = "uv run coverage report" },
   { shell = "uv run coverage xml" },
 ]
-updatedev.sequence = [{shell = "uv lock --upgrade && uv sync --all-extras --all-groups"}]
+updatedev.sequence = [{shell = "uv lock --upgrade && uv sync --all-extras --all-groups"}, "snyk-export"]
 build.sequence = ["updatedev", "tests", {shell = "uv build --wheel"}]
 
 [tool.pytest.ini_options]
@@ -134,8 +134,8 @@ exclude_lines = [
 ]
 
 [tool.ruff]
-line-length = 120
 target-version = "py312"
+line-length = 120
 
 [tool.ruff.lint]
 select = ["E", "W", "F", "I", "B", "C4", "UP", "S", "SLF"]
