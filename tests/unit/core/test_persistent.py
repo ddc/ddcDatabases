@@ -1228,6 +1228,16 @@ class TestRetrySettingsIntegration:
         assert settings.operation_max_retries == 1  # Minimal retries for file-based DB
 
 
+def _write_certs(tmp_path):
+    """Real files on disk: a connection attempt now verifies the paths it hands the driver."""
+    paths = []
+    for name in ("ca.pem", "client.crt", "client.key"):
+        target = tmp_path / name
+        target.write_text("x")
+        paths.append(str(target))
+    return paths
+
+
 def _mock_pg_settings(**overrides):
     """Create a mock PostgreSQL settings object with SSL defaults."""
     settings = MagicMock()
@@ -1394,13 +1404,14 @@ class TestPostgreSQLSSLSync:
         close_all_persistent_connections()
 
     @patch("ddcdatabases.core.persistent.get_postgresql_settings")
-    def test_ssl_verify_full_with_all_certs_populates_connect_args(self, mock_get_settings):
+    def test_ssl_verify_full_with_all_certs_populates_connect_args(self, mock_get_settings, tmp_path):
         """Test sync ssl_mode=verify-full with CA/client certs populates connect_args."""
+        ca, crt, key = _write_certs(tmp_path)
         mock_get_settings.return_value = _mock_pg_settings(
             ssl_mode="verify-full",
-            ssl_ca_cert_path="/path/to/ca.pem",
-            ssl_client_cert_path="/path/to/client.crt",
-            ssl_client_key_path="/path/to/client.key",
+            ssl_ca_cert_path=ca,
+            ssl_client_cert_path=crt,
+            ssl_client_key_path=key,
         )
 
         conn = PostgreSQLPersistent(
@@ -1414,9 +1425,9 @@ class TestPostgreSQLSSLSync:
         assert isinstance(conn, PersistentSQLAlchemyConnection)
         connect_args = conn._engine_args.get("connect_args", {})
         assert connect_args["sslmode"] == "verify-full"
-        assert connect_args["sslrootcert"] == "/path/to/ca.pem"
-        assert connect_args["sslcert"] == "/path/to/client.crt"
-        assert connect_args["sslkey"] == "/path/to/client.key"
+        assert connect_args["sslrootcert"] == ca
+        assert connect_args["sslcert"] == crt
+        assert connect_args["sslkey"] == key
 
     @patch("ddcdatabases.core.persistent.get_postgresql_settings")
     def test_ssl_verify_full_no_certs_only_sslmode(self, mock_get_settings):
@@ -1451,13 +1462,14 @@ class TestMySQLSSL:
         close_all_persistent_connections()
 
     @patch("ddcdatabases.core.persistent.get_mysql_settings")
-    def test_ssl_with_all_certs_populates_connect_args(self, mock_get_settings):
+    def test_ssl_with_all_certs_populates_connect_args(self, mock_get_settings, tmp_path):
         """Test MySQL SSL with CA/client certs populates connect_args."""
+        ca, crt, key = _write_certs(tmp_path)
         mock_get_settings.return_value = _mock_mysql_settings(
             ssl_mode="REQUIRED",
-            ssl_ca_cert_path="/path/to/ca.pem",
-            ssl_client_cert_path="/path/to/client.crt",
-            ssl_client_key_path="/path/to/client.key",
+            ssl_ca_cert_path=ca,
+            ssl_client_cert_path=crt,
+            ssl_client_key_path=key,
         )
 
         conn = MySQLPersistent(
@@ -1471,16 +1483,17 @@ class TestMySQLSSL:
         assert isinstance(conn, PersistentSQLAlchemyConnection)
         connect_args = conn._engine_args.get("connect_args", {})
         ssl_dict = connect_args.get("ssl", {})
-        assert ssl_dict["ca"] == "/path/to/ca.pem"
-        assert ssl_dict["cert"] == "/path/to/client.crt"
-        assert ssl_dict["key"] == "/path/to/client.key"
+        assert ssl_dict["ca"] == ca
+        assert ssl_dict["cert"] == crt
+        assert ssl_dict["key"] == key
 
     @patch("ddcdatabases.core.persistent.get_mysql_settings")
-    def test_ssl_with_ca_only(self, mock_get_settings):
+    def test_ssl_with_ca_only(self, mock_get_settings, tmp_path):
         """Test MySQL SSL with only CA cert."""
+        ca, _crt, _key = _write_certs(tmp_path)
         mock_get_settings.return_value = _mock_mysql_settings(
             ssl_mode="REQUIRED",
-            ssl_ca_cert_path="/path/to/ca.pem",
+            ssl_ca_cert_path=ca,
         )
 
         conn = MySQLPersistent(
@@ -1494,7 +1507,7 @@ class TestMySQLSSL:
         assert isinstance(conn, PersistentSQLAlchemyConnection)
         connect_args = conn._engine_args.get("connect_args", {})
         ssl_dict = connect_args.get("ssl", {})
-        assert ssl_dict["ca"] == "/path/to/ca.pem"
+        assert ssl_dict["ca"] == ca
         assert "cert" not in ssl_dict
         assert "key" not in ssl_dict
 
@@ -1509,10 +1522,11 @@ class TestMSSQLSSLCACert:
         close_all_persistent_connections()
 
     @patch("ddcdatabases.core.persistent.get_mssql_settings")
-    def test_ssl_ca_cert_path_sets_server_certificate(self, mock_get_settings):
+    def test_ssl_ca_cert_path_sets_server_certificate(self, mock_get_settings, tmp_path):
         """Test with ssl_ca_cert_path set puts ServerCertificate in connection URL query."""
+        ca, _crt, _key = _write_certs(tmp_path)
         mock_get_settings.return_value = _mock_mssql_settings(
-            ssl_ca_cert_path="/path/to/ca.pem",
+            ssl_ca_cert_path=ca,
         )
 
         conn = MSSQLPersistent(

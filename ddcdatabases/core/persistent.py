@@ -9,10 +9,10 @@ on failure and idle timeout for resource management.
 from __future__ import annotations
 import asyncio
 import logging
-import ssl as _ssl_module
 import threading
 import time
 import weakref
+from .certs import build_client_ssl_context, verify_cert_paths
 from .configs import BaseOperationRetryConfig, BaseRetryConfig, merge_config_with_settings
 from .retry import retry_operation, retry_operation_async
 from .settings import (
@@ -805,15 +805,11 @@ class PostgreSQLPersistent:
                 async_connect_args = {}
                 if ssl_mode and ssl_mode != "disable":
                     if ssl_ca_cert_path:
-                        ssl_context = _ssl_module.SSLContext(_ssl_module.PROTOCOL_TLS_CLIENT)
-                        ssl_context.minimum_version = _ssl_module.TLSVersion.TLSv1_3
-                        ssl_context.load_verify_locations(cafile=ssl_ca_cert_path)
-                        if ssl_client_cert_path and ssl_client_key_path:
-                            ssl_context.load_cert_chain(
-                                certfile=ssl_client_cert_path,
-                                keyfile=ssl_client_key_path,
-                            )
-                        async_connect_args["ssl"] = ssl_context
+                        async_connect_args["ssl"] = build_client_ssl_context(
+                            ca_cert_path=ssl_ca_cert_path,
+                            client_cert_path=ssl_client_cert_path,
+                            client_key_path=ssl_client_key_path,
+                        )
                     else:
                         async_connect_args["ssl"] = ssl_mode
 
@@ -847,6 +843,13 @@ class PostgreSQLPersistent:
                 # Build psycopg SSL connect_args
                 sync_connect_args = {}
                 if ssl_mode and ssl_mode != "disable":
+                    verify_cert_paths(
+                        (
+                            (ssl_ca_cert_path, "CA certificate"),
+                            (ssl_client_cert_path, "client certificate"),
+                            (ssl_client_key_path, "client key"),
+                        )
+                    )
                     sync_connect_args["sslmode"] = ssl_mode
                     if ssl_ca_cert_path:
                         sync_connect_args["sslrootcert"] = ssl_ca_cert_path
@@ -970,6 +973,13 @@ class MySQLPersistent:
             # Build MySQL SSL connect_args (same format for both pymysql and aiomysql)
             ssl_connect_args = {}
             if ssl_mode and ssl_mode != "DISABLED":
+                verify_cert_paths(
+                    (
+                        (ssl_ca_cert_path, "CA certificate"),
+                        (ssl_client_cert_path, "client certificate"),
+                        (ssl_client_key_path, "client key"),
+                    )
+                )
                 ssl_dict: dict[str, str] = {}
                 if ssl_ca_cert_path:
                     ssl_dict["ca"] = ssl_ca_cert_path
@@ -1108,6 +1118,7 @@ class MSSQLPersistent:
         _query["Encrypt"] = "yes" if _settings.ssl_encrypt else "no"
         _query["TrustServerCertificate"] = "yes" if _settings.ssl_trust_server_certificate else "no"
         if _settings.ssl_ca_cert_path:
+            verify_cert_paths(((_settings.ssl_ca_cert_path, "CA certificate"),))
             _query["ServerCertificate"] = _settings.ssl_ca_cert_path
 
         with _registry_lock:

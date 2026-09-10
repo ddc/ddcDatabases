@@ -1,6 +1,7 @@
 from __future__ import annotations
 import logging
 import sqlalchemy as sa
+from .certs import verify_cert_paths
 from .configs import BaseOperationRetryConfig, BaseRetryConfig
 from .retry import retry_operation, retry_operation_async
 from collections.abc import AsyncGenerator, Generator
@@ -19,6 +20,7 @@ class BaseConnection:
     __slots__ = (
         "connection_url",
         "engine_args",
+        "driver_cert_paths",
         "autoflush",
         "expire_on_commit",
         "sync_driver",
@@ -42,9 +44,11 @@ class BaseConnection:
         connection_retry_config: BaseRetryConfig | None = None,
         operation_retry_config: BaseOperationRetryConfig | None = None,
         logger: Any = None,
+        driver_cert_paths: tuple[tuple[str | None, str], ...] = (),
     ) -> None:
         self.connection_url = connection_url
         self.engine_args = engine_args
+        self.driver_cert_paths = driver_cert_paths
         self.autoflush = autoflush
         self.expire_on_commit = expire_on_commit
         self.sync_driver = sync_driver
@@ -111,6 +115,7 @@ class BaseConnection:
 
     @contextmanager
     def _get_engine(self) -> Generator[Engine, None, None]:
+        verify_cert_paths(self.driver_cert_paths)
         _connection_url = URL.create(drivername=self.sync_driver, **self.connection_url)
         _engine = create_engine(url=_connection_url, **self.engine_args)
         yield _engine
@@ -118,6 +123,7 @@ class BaseConnection:
 
     @asynccontextmanager
     async def _get_async_engine(self) -> AsyncGenerator[AsyncEngine, None]:
+        verify_cert_paths(self.driver_cert_paths)
         _connection_url = URL.create(drivername=self.async_driver, **self.connection_url)
         _engine = create_async_engine(url=_connection_url, **self.engine_args)
         yield _engine

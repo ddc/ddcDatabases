@@ -1,5 +1,6 @@
 import logging
 import sys
+from .core.certs import verify_cert_paths
 from .core.configs import (
     CONNECTION_RETRY_FIELD_MAP,
     OPERATION_RETRY_FIELD_MAP,
@@ -167,6 +168,12 @@ class MongoDB:
             f"@{self._connection_config.host}/{self._connection_config.database}"
         )
         if self._tls_config.tls_enabled:
+            verify_cert_paths(
+                (
+                    (self._tls_config.tls_ca_cert_path, "TLS CA certificate"),
+                    (self._tls_config.tls_cert_key_path, "TLS certificate/key"),
+                )
+            )
             url += "?tls=true"
             if self._tls_config.tls_ca_cert_path:
                 url += f"&tlsCAFile={self._tls_config.tls_ca_cert_path}"

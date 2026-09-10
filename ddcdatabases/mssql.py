@@ -109,7 +109,9 @@ class MSSQL(BaseConnection):
             "Encrypt": "yes" if self._ssl_config.ssl_encrypt else "no",
             "TrustServerCertificate": "yes" if self._ssl_config.ssl_trust_server_certificate else "no",
         }
+        _driver_cert_paths: tuple[tuple[str | None, str], ...] = ()
         if self._ssl_config.ssl_ca_cert_path:
+            _driver_cert_paths = ((self._ssl_config.ssl_ca_cert_path, "CA certificate"),)
             _query["ServerCertificate"] = self._ssl_config.ssl_ca_cert_path
 
         self.connection_url = {
@@ -148,6 +150,7 @@ class MSSQL(BaseConnection):
         super().__init__(
             connection_url=self.connection_url,
             engine_args=self.engine_args,
+            driver_cert_paths=_driver_cert_paths,
             autoflush=self._session_config.autoflush,
             expire_on_commit=self._session_config.expire_on_commit,
             sync_driver=self.sync_driver,
