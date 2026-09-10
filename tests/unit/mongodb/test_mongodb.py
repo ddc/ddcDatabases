@@ -1010,15 +1010,19 @@ class TestMongoDB:
         assert tls_info.tls_ca_cert_path == "/path/to/ca.pem"
 
     @patch("ddcdatabases.mongodb.get_mongodb_settings")
-    def test_build_connection_url_with_tls(self, mock_get_settings):
+    def test_build_connection_url_with_tls(self, mock_get_settings, tmp_path):
         """Test _build_connection_url with TLS options"""
+        ca = tmp_path / "ca.pem"
+        ca.write_text("x")
+        cert_key = tmp_path / "cert.pem"
+        cert_key.write_text("x")
         mock_get_settings.return_value = self._create_mock_settings()
         mongodb = MongoDB(
             collection="test_collection",
             tls_config=MongoDBTLSConfig(
                 tls_enabled=True,
-                tls_ca_cert_path="/path/to/ca.pem",
-                tls_cert_key_path="/path/to/cert.pem",
+                tls_ca_cert_path=str(ca),
+                tls_cert_key_path=str(cert_key),
                 tls_allow_invalid_certificates=True,
             ),
         )
@@ -1026,8 +1030,8 @@ class TestMongoDB:
         url = mongodb._build_connection_url()
 
         assert "?tls=true" in url
-        assert "&tlsCAFile=/path/to/ca.pem" in url
-        assert "&tlsCertificateKeyFile=/path/to/cert.pem" in url
+        assert f"&tlsCAFile={ca}" in url
+        assert f"&tlsCertificateKeyFile={cert_key}" in url
         assert "&tlsAllowInvalidCertificates=true" in url
 
     @patch("ddcdatabases.mongodb.get_mongodb_settings")

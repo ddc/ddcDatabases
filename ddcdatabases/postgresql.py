@@ -1,6 +1,6 @@
 import logging
-import ssl as _ssl_module
 from .core.base import BaseConnection
+from .core.certs import build_client_ssl_context, verify_cert_paths
 from .core.configs import (
     CONNECTION_RETRY_FIELD_MAP,
     OPERATION_RETRY_FIELD_MAP,
@@ -109,6 +109,15 @@ class PostgreSQL(BaseConnection):
         self.sync_driver = _settings.sync_driver
         self.async_driver = _settings.async_driver
 
+        # psycopg opens these itself; asyncpg's are attributed by build_client_ssl_context
+        _driver_cert_paths: tuple[tuple[str | None, str], ...] = ()
+        if self._ssl_config.ssl_mode and self._ssl_config.ssl_mode != "disable":
+            _driver_cert_paths = (
+                (self._ssl_config.ssl_ca_cert_path, "CA certificate"),
+                (self._ssl_config.ssl_client_cert_path, "client certificate"),
+                (self._ssl_config.ssl_client_key_path, "client key"),
+            )
+
         self.connection_url = {
             "host": self._connection_config.host,
             "port": self._connection_config.port,
@@ -137,6 +146,7 @@ class PostgreSQL(BaseConnection):
         super().__init__(
             connection_url=self.connection_url,
             engine_args=self.engine_args,
+            driver_cert_paths=_driver_cert_paths,
             autoflush=self._session_config.autoflush,
             expire_on_commit=self._session_config.expire_on_commit,
             sync_driver=self.sync_driver,
@@ -201,6 +211,7 @@ class PostgreSQL(BaseConnection):
 
     @contextmanager
     def _get_engine(self) -> Generator[Engine, None, None]:
+        verify_cert_paths(self.driver_cert_paths)
         _connection_url = URL.create(
             drivername=self.sync_driver,
             **self.connection_url,
@@ -247,15 +258,11 @@ class PostgreSQL(BaseConnection):
                 async_connect_args["server_settings"] = {"search_path": self._connection_config.schema}
             if self._ssl_config.ssl_mode and self._ssl_config.ssl_mode != "disable":
                 if self._ssl_config.ssl_ca_cert_path:
-                    ssl_context = _ssl_module.SSLContext(_ssl_module.PROTOCOL_TLS_CLIENT)
-                    ssl_context.minimum_version = _ssl_module.TLSVersion.TLSv1_3
-                    ssl_context.load_verify_locations(cafile=self._ssl_config.ssl_ca_cert_path)
-                    if self._ssl_config.ssl_client_cert_path and self._ssl_config.ssl_client_key_path:
-                        ssl_context.load_cert_chain(
-                            certfile=self._ssl_config.ssl_client_cert_path,
-                            keyfile=self._ssl_config.ssl_client_key_path,
-                        )
-                    async_connect_args["ssl"] = ssl_context
+                    async_connect_args["ssl"] = build_client_ssl_context(
+                        ca_cert_path=self._ssl_config.ssl_ca_cert_path,
+                        client_cert_path=self._ssl_config.ssl_client_cert_path,
+                        client_key_path=self._ssl_config.ssl_client_key_path,
+                    )
                 else:
                     async_connect_args["ssl"] = self._ssl_config.ssl_mode
 

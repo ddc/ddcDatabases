@@ -105,7 +105,9 @@ class Oracle(BaseConnection):
 
         self.extra_engine_args = extra_engine_args or {}
         _connect_args = {}
+        _driver_cert_paths: tuple[tuple[str | None, str], ...] = ()
         if self._ssl_config.ssl_wallet_path:
+            _driver_cert_paths = ((self._ssl_config.ssl_wallet_path, "wallet directory"),)
             _connect_args["wallet_location"] = self._ssl_config.ssl_wallet_path
         self.engine_args = {
             "echo": self._session_config.echo,
@@ -129,6 +131,7 @@ class Oracle(BaseConnection):
         super().__init__(
             connection_url=self.connection_url,
             engine_args=self.engine_args,
+            driver_cert_paths=_driver_cert_paths,
             autoflush=self._session_config.autoflush,
             expire_on_commit=self._session_config.expire_on_commit,
             sync_driver=self.sync_driver,
