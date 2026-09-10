@@ -120,7 +120,13 @@ class MySQL(BaseConnection):
             "autocommit": self._session_config.autocommit,
             "connect_timeout": self._pool_config.connection_timeout,
         }
+        _driver_cert_paths: tuple[tuple[str | None, str], ...] = ()
         if self._ssl_config.ssl_mode and self._ssl_config.ssl_mode != "DISABLED":
+            _driver_cert_paths = (
+                (self._ssl_config.ssl_ca_cert_path, "CA certificate"),
+                (self._ssl_config.ssl_client_cert_path, "client certificate"),
+                (self._ssl_config.ssl_client_key_path, "client key"),
+            )
             ssl_dict = {}
             if self._ssl_config.ssl_ca_cert_path:
                 ssl_dict["ca"] = self._ssl_config.ssl_ca_cert_path
@@ -151,6 +157,7 @@ class MySQL(BaseConnection):
         super().__init__(
             connection_url=self.connection_url,
             engine_args=self.engine_args,
+            driver_cert_paths=_driver_cert_paths,
             autoflush=self._session_config.autoflush,
             expire_on_commit=self._session_config.expire_on_commit,
             sync_driver=self.sync_driver,

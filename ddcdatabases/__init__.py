@@ -1,4 +1,5 @@
 import logging
+from .core.certs import SSLCertificateError
 from .core.operations import DBUtils, DBUtilsAsync
 from .core.persistent import PersistentConnectionConfig, close_all_persistent_connections
 from importlib.metadata import version
@@ -7,6 +8,7 @@ __all__ = [
     "DBUtils",
     "DBUtilsAsync",
     "PersistentConnectionConfig",
+    "SSLCertificateError",
     "close_all_persistent_connections",
 ]
 

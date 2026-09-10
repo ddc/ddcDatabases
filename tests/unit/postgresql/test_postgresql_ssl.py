@@ -175,7 +175,7 @@ class TestPostgreSQLSSLEngine:
 
         with (
             patch("ddcdatabases.postgresql.create_async_engine") as mock_create,
-            patch("ddcdatabases.postgresql._ssl_module.SSLContext", return_value=mock_ssl_context),
+            patch("ddcdatabases.core.certs.ssl.SSLContext", return_value=mock_ssl_context),
         ):
             mock_engine = MagicMock()
             mock_engine.dispose = AsyncMock()
@@ -305,7 +305,7 @@ class TestPostgreSQLSSLEngine:
 
         with (
             patch("ddcdatabases.postgresql.create_async_engine") as mock_create,
-            patch("ddcdatabases.postgresql._ssl_module.SSLContext", return_value=mock_ssl_context),
+            patch("ddcdatabases.core.certs.ssl.SSLContext", return_value=mock_ssl_context),
         ):
             mock_engine = MagicMock()
             mock_engine.dispose = AsyncMock()
@@ -326,9 +326,15 @@ class TestPostgreSQLSSLEngine:
         mock_ssl_context.load_cert_chain.assert_not_called()
 
     @patch("ddcdatabases.postgresql.get_postgresql_settings")
-    def test_sync_engine_ssl_with_cert_paths(self, mock_get_settings):
+    def test_sync_engine_ssl_with_cert_paths(self, mock_get_settings, tmp_path):
         """Test that _get_engine passes SSL cert paths as connect_args for psycopg."""
         from ddcdatabases.postgresql import PostgreSQL, PostgreSQLSSLConfig
+
+        # real files: _get_engine now verifies the paths it hands psycopg
+        ca_file, client_file, key_file = (tmp_path / n for n in ("ca.pem", "client.pem", "client-key.pem"))
+        for _f in (ca_file, client_file, key_file):
+            _f.write_text("x")
+        ca_path, client_path, key_path = str(ca_file), str(client_file), str(key_file)
 
         mock_settings = MagicMock()
         mock_settings.host = "localhost"
@@ -348,9 +354,9 @@ class TestPostgreSQLSSLEngine:
         mock_settings.sync_driver = "postgresql+psycopg"
         mock_settings.async_driver = "postgresql+asyncpg"
         mock_settings.ssl_mode = "verify-full"
-        mock_settings.ssl_ca_cert_path = "/path/to/ca.pem"
-        mock_settings.ssl_client_cert_path = "/path/to/client.pem"
-        mock_settings.ssl_client_key_path = "/path/to/client-key.pem"
+        mock_settings.ssl_ca_cert_path = ca_path
+        mock_settings.ssl_client_cert_path = client_path
+        mock_settings.ssl_client_key_path = key_path
         mock_settings.connection_enable_retry = None
         mock_settings.connection_max_retries = None
         mock_settings.connection_initial_retry_delay = None
@@ -365,9 +371,9 @@ class TestPostgreSQLSSLEngine:
         postgresql = PostgreSQL(
             ssl_config=PostgreSQLSSLConfig(
                 ssl_mode="verify-full",
-                ssl_ca_cert_path="/path/to/ca.pem",
-                ssl_client_cert_path="/path/to/client.pem",
-                ssl_client_key_path="/path/to/client-key.pem",
+                ssl_ca_cert_path=ca_path,
+                ssl_client_cert_path=client_path,
+                ssl_client_key_path=key_path,
             )
         )
 
@@ -380,9 +386,9 @@ class TestPostgreSQLSSLEngine:
 
         connect_args = captured_args.get("connect_args", {})
         assert connect_args["sslmode"] == "verify-full"
-        assert connect_args["sslrootcert"] == "/path/to/ca.pem"
-        assert connect_args["sslcert"] == "/path/to/client.pem"
-        assert connect_args["sslkey"] == "/path/to/client-key.pem"
+        assert connect_args["sslrootcert"] == ca_path
+        assert connect_args["sslcert"] == client_path
+        assert connect_args["sslkey"] == key_path
 
 
 class TestPostgreSQLSSLEnvVars:
@@ -446,7 +452,7 @@ class TestPostgreSQLSSLEnvVars:
 
         with (
             patch("ddcdatabases.postgresql.create_async_engine") as mock_create,
-            patch("ddcdatabases.postgresql._ssl_module.SSLContext", return_value=mock_ssl_context),
+            patch("ddcdatabases.core.certs.ssl.SSLContext", return_value=mock_ssl_context),
         ):
             mock_engine = MagicMock()
             mock_engine.dispose = AsyncMock()
