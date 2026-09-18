@@ -6,6 +6,13 @@ import ssl
 from ddcdatabases.core.certs import SSLCertificateError, build_client_ssl_context, verify_cert_paths
 from unittest.mock import patch
 
+# Windows has no geteuid and os.chmod only toggles the read-only flag, so an
+# unreadable file can't be produced there; root bypasses permission checks.
+_needs_posix_permissions = pytest.mark.skipif(
+    not hasattr(os, "geteuid") or os.geteuid() == 0,
+    reason="requires POSIX file permissions as a non-root user",
+)
+
 
 @pytest.fixture
 def certs_dir(tmp_path):
@@ -23,7 +30,7 @@ class TestBuildClientSslContext:
         assert absent in str(err.value)
         assert "CA certificate" in str(err.value)
 
-    @pytest.mark.skipif(os.geteuid() == 0, reason="root bypasses file permissions")
+    @_needs_posix_permissions
     def test_unreadable_ca_names_the_file(self, certs_dir):
         ca = os.path.join(certs_dir, "ca.pem")
         os.chmod(ca, 0o000)
@@ -124,7 +131,7 @@ class TestVerifyCertPaths:
         for path in paths:
             assert path in str(err.value)
 
-    @pytest.mark.skipif(os.geteuid() == 0, reason="root bypasses file permissions")
+    @_needs_posix_permissions
     def test_unreadable_is_distinguished_from_absent(self, certs_dir):
         ca = os.path.join(certs_dir, "ca.pem")
         os.chmod(ca, 0o000)
@@ -139,7 +146,7 @@ class TestVerifyCertPaths:
         """An Oracle wallet is a directory, not a file."""
         verify_cert_paths(((certs_dir, "wallet directory"),))
 
-    @pytest.mark.skipif(os.geteuid() == 0, reason="root bypasses file permissions")
+    @_needs_posix_permissions
     def test_untraversable_directory_is_rejected(self, tmp_path):
         """A readable-but-not-executable directory cannot be opened by the driver."""
         wallet = tmp_path / "wallet"
