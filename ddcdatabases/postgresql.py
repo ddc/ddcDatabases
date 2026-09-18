@@ -12,7 +12,7 @@ from .core.configs import (
     BaseSSLConfig,
     merge_config_with_settings,
 )
-from .core.constants import POSTGRESQL_SSL_MODES
+from .core.constants import CA_CERT_LABEL, CLIENT_CERT_LABEL, CLIENT_KEY_LABEL, POSTGRESQL_SSL_MODES
 from .core.settings import get_postgresql_settings
 from collections.abc import AsyncGenerator, Generator
 from contextlib import asynccontextmanager, contextmanager
@@ -113,9 +113,9 @@ class PostgreSQL(BaseConnection):
         _driver_cert_paths: tuple[tuple[str | None, str], ...] = ()
         if self._ssl_config.ssl_mode and self._ssl_config.ssl_mode != "disable":
             _driver_cert_paths = (
-                (self._ssl_config.ssl_ca_cert_path, "CA certificate"),
-                (self._ssl_config.ssl_client_cert_path, "client certificate"),
-                (self._ssl_config.ssl_client_key_path, "client key"),
+                (self._ssl_config.ssl_ca_cert_path, CA_CERT_LABEL),
+                (self._ssl_config.ssl_client_cert_path, CLIENT_CERT_LABEL),
+                (self._ssl_config.ssl_client_key_path, CLIENT_KEY_LABEL),
             )
 
         self.connection_url = {

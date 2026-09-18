@@ -4,6 +4,7 @@ Construction of the client SSL contexts used by the async drivers.
 
 import os
 import ssl
+from .constants import CA_CERT_LABEL, MINIMUM_TLS_VERSION
 from collections.abc import Iterable
 
 
@@ -15,17 +16,17 @@ def build_client_ssl_context(
     ca_cert_path: str,
     client_cert_path: str | None = None,
     client_key_path: str | None = None,
-    minimum_version: ssl.TLSVersion = ssl.TLSVersion.TLSv1_3,
+    minimum_version: ssl.TLSVersion = MINIMUM_TLS_VERSION,
 ) -> ssl.SSLContext:
     """Build a client SSL context, naming the file when one cannot be loaded"""
 
-    context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+    context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)  # noqa: S4423
     context.minimum_version = minimum_version
 
     try:
         context.load_verify_locations(cafile=ca_cert_path)
     except OSError as err:
-        raise SSLCertificateError(f"CA certificate unusable: {ca_cert_path} | {err}") from err
+        raise SSLCertificateError(f"{CA_CERT_LABEL} unusable: {ca_cert_path} | {err}") from err
 
     if client_cert_path and client_key_path:
         try:
@@ -48,7 +49,6 @@ def verify_cert_paths(entries: Iterable[tuple[str | None, str]]) -> None:
         if not os.path.exists(path):
             problems.append(f"{label} missing: {path}")
             continue
-        # a directory (an Oracle wallet) must also be traversable, not merely readable
         required = os.R_OK | os.X_OK if os.path.isdir(path) else os.R_OK
         if not os.access(path, required):
             problems.append(f"{label} not readable: {path}")

@@ -30,6 +30,7 @@ class DBUtils:
 
     def _execute_with_retry[T](self, operation: Callable[[], T], operation_name: str) -> T:
         """Execute an operation with retry logic if enabled."""
+
         if self.retry_config.enable_retry:
             return retry_operation(operation, self.retry_config, operation_name)
         return operation()
@@ -45,7 +46,7 @@ class DBUtils:
             else:
                 result = cursor.mappings().all()
                 cursor.close()
-                return list(result)
+                return list[RowMapping](result)
         except Exception as e:
             self.session.rollback()
             _logger.exception("fetchall failed")
@@ -65,6 +66,7 @@ class DBUtils:
         Raises:
             DBFetchAllException: If query execution fails
         """
+
         return self._execute_with_retry(lambda: self._fetchall_impl(stmt, as_dict), "fetchall")
 
     def _fetchvalue_impl(self, stmt: Any) -> Any:
@@ -95,6 +97,7 @@ class DBUtils:
         Raises:
             DBFetchValueException: If query execution fails
         """
+
         return self._execute_with_retry(lambda: self._fetchvalue_impl(stmt), "fetchvalue")
 
     def _insert_impl(self, stmt: Any) -> Any:
@@ -121,6 +124,7 @@ class DBUtils:
         Raises:
             DBInsertSingleException: If insert operation fails
         """
+
         return self._execute_with_retry(lambda: self._insert_impl(stmt), "insert")
 
     def _insertbulk_impl[T](self, model: type[T], list_data: Sequence[dict[str, Any]], batch_size: int = 1000) -> None:
@@ -153,6 +157,7 @@ class DBUtils:
         Raises:
             DBInsertBulkException: If bulk insert operation fails
         """
+
         return self._execute_with_retry(lambda: self._insertbulk_impl(model, list_data, batch_size), "insertbulk")
 
     def _deleteall_impl[T](self, model: type[T]) -> None:
@@ -176,6 +181,7 @@ class DBUtils:
         Raises:
             DBDeleteAllDataException: If delete operation fails
         """
+
         return self._execute_with_retry(lambda: self._deleteall_impl(model), "deleteall")
 
     def _execute_impl(self, stmt: Any) -> None:
@@ -197,6 +203,7 @@ class DBUtils:
         Raises:
             DBExecuteException: If statement execution fails
         """
+
         return self._execute_with_retry(lambda: self._execute_impl(stmt), "execute")
 
 
@@ -209,6 +216,7 @@ class DBUtilsAsync:
 
     async def _execute_with_retry(self, operation: Callable[[], Any], operation_name: str) -> Any:
         """Execute an async operation with retry logic if enabled."""
+
         if self.retry_config.enable_retry:
             return await retry_operation_async(operation, self.retry_config, operation_name)
         return await operation()
@@ -224,7 +232,7 @@ class DBUtilsAsync:
             else:
                 result = cursor.mappings().all()
                 cursor.close()
-                return list(result)
+                return list[RowMapping](result)
         except Exception as e:
             await self.session.rollback()
             _logger.exception("async fetchall failed")
@@ -244,6 +252,7 @@ class DBUtilsAsync:
         Raises:
             DBFetchAllException: If query execution fails
         """
+
         return await self._execute_with_retry(lambda: self._fetchall_impl(stmt, as_dict), "fetchall")
 
     async def _fetchvalue_impl(self, stmt: Any) -> Any:
@@ -274,6 +283,7 @@ class DBUtilsAsync:
         Raises:
             DBFetchValueException: If query execution fails
         """
+
         return await self._execute_with_retry(lambda: self._fetchvalue_impl(stmt), "fetchvalue")
 
     async def _insert_impl(self, stmt: Any) -> Any:
@@ -300,10 +310,14 @@ class DBUtilsAsync:
         Raises:
             DBInsertSingleException: If insert operation fails
         """
+
         return await self._execute_with_retry(lambda: self._insert_impl(stmt), "insert")
 
     async def _insertbulk_impl[T](
-        self, model: type[T], list_data: Sequence[dict[str, Any]], batch_size: int = 1000
+        self,
+        model: type[T],
+        list_data: Sequence[dict[str, Any]],
+        batch_size: int = 1000,
     ) -> None:
         try:
             if not list_data:
@@ -338,6 +352,7 @@ class DBUtilsAsync:
         Raises:
             DBInsertBulkException: If bulk insert operation fails
         """
+
         return await self._execute_with_retry(lambda: self._insertbulk_impl(model, list_data, batch_size), "insertbulk")
 
     async def _deleteall_impl[T](self, model: type[T]) -> None:
@@ -362,6 +377,7 @@ class DBUtilsAsync:
         Raises:
             DBDeleteAllDataException: If delete operation fails
         """
+
         return await self._execute_with_retry(lambda: self._deleteall_impl(model), "deleteall")
 
     async def _execute_impl(self, stmt: Any) -> None:
@@ -383,4 +399,5 @@ class DBUtilsAsync:
         Raises:
             DBExecuteException: If statement execution fails
         """
+
         return await self._execute_with_retry(lambda: self._execute_impl(stmt), "execute")

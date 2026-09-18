@@ -10,6 +10,7 @@ from .core.configs import (
     BaseSessionConfig,
     merge_config_with_settings,
 )
+from .core.constants import CA_CERT_LABEL
 from .core.settings import get_mssql_settings
 from dataclasses import dataclass
 from typing import Any
@@ -111,7 +112,7 @@ class MSSQL(BaseConnection):
         }
         _driver_cert_paths: tuple[tuple[str | None, str], ...] = ()
         if self._ssl_config.ssl_ca_cert_path:
-            _driver_cert_paths = ((self._ssl_config.ssl_ca_cert_path, "CA certificate"),)
+            _driver_cert_paths = ((self._ssl_config.ssl_ca_cert_path, CA_CERT_LABEL),)
             _query["ServerCertificate"] = self._ssl_config.ssl_ca_cert_path
 
         self.connection_url = {

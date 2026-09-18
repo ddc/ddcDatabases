@@ -1,7 +1,11 @@
+import ssl
 from typing import Final
 
+# Lowest TLS version
+MINIMUM_TLS_VERSION: Final = ssl.TLSVersion.TLSv1_3
+
 # SSL Modes
-POSTGRESQL_SSL_MODES: Final[frozenset[str]] = frozenset(
+POSTGRESQL_SSL_MODES: Final[frozenset[str]] = frozenset[str](
     {
         "disable",
         "allow",
@@ -12,7 +16,7 @@ POSTGRESQL_SSL_MODES: Final[frozenset[str]] = frozenset(
     }
 )
 
-MYSQL_SSL_MODES: Final[frozenset[str]] = frozenset(
+MYSQL_SSL_MODES: Final[frozenset[str]] = frozenset[str](
     {
         "DISABLED",
         "PREFERRED",
@@ -22,8 +26,13 @@ MYSQL_SSL_MODES: Final[frozenset[str]] = frozenset(
     }
 )
 
+# Labels naming each certificate path in SSLCertificateError messages
+CA_CERT_LABEL: Final = "CA certificate"
+CLIENT_CERT_LABEL: Final = "client certificate"
+CLIENT_KEY_LABEL: Final = "client key"
+
 # Connection error keywords for retry logic
-CONNECTION_ERROR_KEYWORDS: Final[frozenset[str]] = frozenset(
+CONNECTION_ERROR_KEYWORDS: Final[frozenset[str]] = frozenset[str](
     {
         "connection",
         "connect",

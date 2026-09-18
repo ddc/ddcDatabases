@@ -22,6 +22,7 @@ def _is_connection_error(exc: Exception) -> bool:
     Returns:
         True if the exception appears to be connection-related
     """
+
     error_str = str(exc).lower()
     exc_type_name = type(exc).__name__.lower()
 
@@ -44,6 +45,7 @@ def _calculate_retry_delay(attempt: int, config: BaseRetryConfig) -> float:
     Returns:
         Delay in seconds
     """
+
     # Exponential backoff: delay = initial_retry_delay * 2^attempt
     base_delay = config.initial_retry_delay * (2**attempt)
 
@@ -81,6 +83,7 @@ def _handle_retry_exception(
     Raises:
         The exception if it's not retryable or max retries reached
     """
+
     log = logger or _logger
 
     if not _is_connection_error(e):
@@ -120,6 +123,7 @@ def retry_operation[T](
     Raises:
         The last exception if all retries fail
     """
+
     if not config.enable_retry:
         return operation()
 
@@ -160,6 +164,7 @@ async def retry_operation_async[T](
     Raises:
         The last exception if all retries fail
     """
+
     if not config.enable_retry:
         return await operation()
 
