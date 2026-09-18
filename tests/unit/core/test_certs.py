@@ -49,12 +49,13 @@ class TestBuildClientSslContext:
         assert ca in str(err.value)
 
     def test_missing_client_pair_names_both_paths(self, certs_dir, tmp_path):
+        ca = os.path.join(certs_dir, "ca.pem")
         crt, key = str(tmp_path / "absent.crt"), str(tmp_path / "absent.key")
         with (
             patch.object(ssl.SSLContext, "load_verify_locations"),
             pytest.raises(SSLCertificateError) as err,
         ):
-            build_client_ssl_context(os.path.join(certs_dir, "ca.pem"), crt, key)
+            build_client_ssl_context(ca, crt, key)
         assert crt in str(err.value)
         assert key in str(err.value)
 
@@ -63,8 +64,9 @@ class TestBuildClientSslContext:
         assert issubclass(SSLCertificateError, OSError)
 
     def test_original_error_is_chained(self, tmp_path):
+        absent = str(tmp_path / "absent.pem")
         with pytest.raises(SSLCertificateError) as err:
-            build_client_ssl_context(str(tmp_path / "absent.pem"))
+            build_client_ssl_context(absent)
         assert isinstance(err.value.__cause__, FileNotFoundError)
 
     def test_pins_tls_13_and_requires_verification(self, certs_dir):
@@ -126,8 +128,9 @@ class TestVerifyCertPaths:
         """The production case: the mount is present but its contents are gone."""
         paths = [str(tmp_path / n) for n in ("ca.pem", "client.crt", "client.key")]
         labels = ("CA certificate", "client certificate", "client key")
+        entries = list(zip(paths, labels, strict=True))
         with pytest.raises(SSLCertificateError) as err:
-            verify_cert_paths(zip(paths, labels, strict=True))
+            verify_cert_paths(entries)
         for path in paths:
             assert path in str(err.value)
 
@@ -151,10 +154,11 @@ class TestVerifyCertPaths:
         """A readable-but-not-executable directory cannot be opened by the driver."""
         wallet = tmp_path / "wallet"
         wallet.mkdir()
+        entries = ((str(wallet), "wallet directory"),)
         os.chmod(wallet, 0o600)
         try:
             with pytest.raises(SSLCertificateError) as err:
-                verify_cert_paths(((str(wallet), "wallet directory"),))
+                verify_cert_paths(entries)
             assert "not readable" in str(err.value)
         finally:
             os.chmod(wallet, 0o700)

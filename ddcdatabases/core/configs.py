@@ -34,6 +34,7 @@ def merge_config_with_settings[C](
         field_map: Dict mapping config field names to settings attribute names.
                    If None, config field names must match settings attribute names.
     """
+
     override = override or config_cls()
     field_map = field_map or {}
     kwargs = {}
@@ -47,10 +48,11 @@ def merge_config_with_settings[C](
 
 def _validate_retry_config(
     max_retries: int | None,
-    initial_retry_delay: float | None,
-    max_retry_delay: float | None,
+    initial_retry_delay: float | int | None,
+    max_retry_delay: float | int | None,
 ) -> None:
     """Validation for retry configs to avoid super() issues with frozen slotted dataclasses"""
+
     if max_retries is not None and max_retries < 0:
         raise ValueError("max_retries must be non-negative")
     if initial_retry_delay is not None and initial_retry_delay < 0:
@@ -109,8 +111,8 @@ class BaseSessionConfig:
 class BaseRetryConfig:
     enable_retry: bool | None = None
     max_retries: int | None = None
-    initial_retry_delay: float | None = None
-    max_retry_delay: float | None = None
+    initial_retry_delay: float | int | None = None
+    max_retry_delay: float | int | None = None
 
     def __post_init__(self) -> None:
         _validate_retry_config(self.max_retries, self.initial_retry_delay, self.max_retry_delay)
@@ -118,7 +120,7 @@ class BaseRetryConfig:
 
 @dataclass(frozen=True, slots=True)
 class BaseOperationRetryConfig(BaseRetryConfig):
-    jitter: float | None = None
+    jitter: float | int | None = None
 
     def __post_init__(self) -> None:
         _validate_retry_config(self.max_retries, self.initial_retry_delay, self.max_retry_delay)

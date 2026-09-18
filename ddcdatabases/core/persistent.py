@@ -14,6 +14,7 @@ import time
 import weakref
 from .certs import build_client_ssl_context, verify_cert_paths
 from .configs import BaseOperationRetryConfig, BaseRetryConfig, merge_config_with_settings
+from .constants import CA_CERT_LABEL, CLIENT_CERT_LABEL, CLIENT_KEY_LABEL
 from .retry import retry_operation, retry_operation_async
 from .settings import (
     get_mongodb_settings,
@@ -80,6 +81,7 @@ class IdleCheckerMixin:
 
     def _start_idle_checker(self: Any) -> None:
         """Start the background idle checker thread."""
+
         if self._idle_checker_thread is None or not self._idle_checker_thread.is_alive():
             self._shutdown_event.clear()
             self._idle_checker_thread = threading.Thread(
@@ -91,6 +93,7 @@ class IdleCheckerMixin:
 
     def _idle_checker_loop(self: Any) -> None:
         """Background loop to check for idle connections and disconnect them."""
+
         while not self._shutdown_event.is_set():
             self._shutdown_event.wait(timeout=self._config.health_check_interval)
 
@@ -108,10 +111,12 @@ class IdleCheckerMixin:
 
     def _update_last_used(self: Any) -> None:
         """Update the last used timestamp."""
+
         self._last_used = time.time()
 
     def _disconnect_internal(self: Any) -> None:
         """Internal disconnect logic. Override in subclasses."""
+
         raise NotImplementedError
 
 
@@ -191,6 +196,7 @@ class BasePersistentConnection[SessionT: (Session, AsyncSession)](IdleCheckerMix
 
     def shutdown(self) -> None:
         """Shutdown the persistent connection and stop background threads."""
+
         self._shutdown_event.set()
         self.disconnect()
         if self._idle_checker_thread and self._idle_checker_thread.is_alive():
@@ -231,6 +237,7 @@ class PersistentSQLAlchemyConnection(BasePersistentConnection[Session]):
 
     def _create_engine(self) -> Engine:
         """Create the SQLAlchemy engine."""
+
         return create_engine(
             self._connection_url,
             **self._engine_args,
@@ -238,6 +245,7 @@ class PersistentSQLAlchemyConnection(BasePersistentConnection[Session]):
 
     def _create_session(self, engine: Engine) -> Session:
         """Create a session from the engine."""
+
         session_factory = sessionmaker(
             bind=engine,
             autoflush=self._autoflush,
@@ -247,6 +255,7 @@ class PersistentSQLAlchemyConnection(BasePersistentConnection[Session]):
 
     def _disconnect_internal(self) -> None:
         """Internal disconnect logic."""
+
         if self._session:
             try:
                 self._session.close()
@@ -269,11 +278,11 @@ class PersistentSQLAlchemyConnection(BasePersistentConnection[Session]):
 
         Uses retry logic for connection attempts.
         """
+
         with self._lock:
             self._update_last_used()
 
             if self._is_connected and self._session:
-                # Verify connection is still valid
                 try:
                     self._session.execute(text("SELECT 1"))
                     return self._session
@@ -301,6 +310,7 @@ class PersistentSQLAlchemyConnection(BasePersistentConnection[Session]):
 
     def disconnect(self) -> None:
         """Disconnect from the database."""
+
         with self._lock:
             self._disconnect_internal()
             self._logger.info(f"[{self._connection_key}] Disconnected")
@@ -398,6 +408,7 @@ class PersistentSQLAlchemyAsyncConnection(BasePersistentConnection[AsyncSession]
 
     def _create_engine(self) -> AsyncEngine:
         """Create the async SQLAlchemy engine."""
+
         return create_async_engine(
             self._connection_url,
             **self._engine_args,
@@ -405,6 +416,7 @@ class PersistentSQLAlchemyAsyncConnection(BasePersistentConnection[AsyncSession]
 
     def _create_session(self, engine: AsyncEngine) -> AsyncSession:
         """Create an async session from the engine."""
+
         from sqlalchemy.ext.asyncio import async_sessionmaker
 
         session_factory = async_sessionmaker(
@@ -418,12 +430,14 @@ class PersistentSQLAlchemyAsyncConnection(BasePersistentConnection[AsyncSession]
         """Internal disconnect logic (sync version for idle checker)."""
         # Note: This is called from the sync idle checker thread
         # Async cleanup will happen lazily on next connect
+
         self._session = None
         self._engine = None
         self._is_connected = False
 
     async def _async_disconnect_internal(self) -> None:
         """Internal async disconnect logic."""
+
         if self._session:
             try:
                 await self._session.close()
@@ -442,14 +456,15 @@ class PersistentSQLAlchemyAsyncConnection(BasePersistentConnection[AsyncSession]
 
     def connect(self) -> AsyncSession:
         """Sync connect raises error - use async_connect instead."""
+
         raise NotImplementedError("Use async_connect() for async connections")
 
     async def async_connect(self) -> AsyncSession:
         """
         Connect to the database asynchronously and return a session.
-
         Uses retry logic for connection attempts.
         """
+
         async with self._async_lock:
             self._update_last_used()
 
@@ -483,12 +498,14 @@ class PersistentSQLAlchemyAsyncConnection(BasePersistentConnection[AsyncSession]
 
     def disconnect(self) -> None:
         """Sync disconnect - marks as disconnected."""
+
         with self._lock:
             self._disconnect_internal()
             self._logger.info(f"[{self._connection_key}] Disconnected (sync)")
 
     async def async_disconnect(self) -> None:
         """Disconnect from the database asynchronously."""
+
         async with self._async_lock:
             await self._async_disconnect_internal()
             self._logger.info(f"[{self._connection_key}] Disconnected")
@@ -550,6 +567,7 @@ class PersistentSQLAlchemyAsyncConnection(BasePersistentConnection[AsyncSession]
 
     async def __aenter__(self) -> AsyncSession:
         """Async context manager entry."""
+
         return await self.async_connect()
 
     async def __aexit__(
@@ -559,6 +577,7 @@ class PersistentSQLAlchemyAsyncConnection(BasePersistentConnection[AsyncSession]
         exc_tb: Any,
     ) -> None:
         """Async context manager exit - updates last used but doesn't disconnect."""
+
         self._update_last_used()
 
 
@@ -631,6 +650,7 @@ class PersistentMongoDBConnection(IdleCheckerMixin):
 
         Uses retry logic for connection attempts.
         """
+
         from pymongo import MongoClient
         from pymongo.errors import PyMongoError
 
@@ -638,7 +658,6 @@ class PersistentMongoDBConnection(IdleCheckerMixin):
             self._update_last_used()
 
             if self._is_connected and self._client is not None and self._db is not None:
-                # Verify connection is still valid
                 try:
                     self._client.admin.command("ping")
                     return self._db
@@ -765,6 +784,7 @@ class PostgreSQLPersistent:
         **engine_kwargs: Any,
     ) -> PersistentSQLAlchemyConnection | PersistentSQLAlchemyAsyncConnection:
         """Create or return existing persistent PostgreSQL connection."""
+
         _settings = get_postgresql_settings()
         host = host or _settings.host
         port = port or int(_settings.port)
@@ -845,9 +865,9 @@ class PostgreSQLPersistent:
                 if ssl_mode and ssl_mode != "disable":
                     verify_cert_paths(
                         (
-                            (ssl_ca_cert_path, "CA certificate"),
-                            (ssl_client_cert_path, "client certificate"),
-                            (ssl_client_key_path, "client key"),
+                            (ssl_ca_cert_path, CA_CERT_LABEL),
+                            (ssl_client_cert_path, CLIENT_CERT_LABEL),
+                            (ssl_client_key_path, CLIENT_KEY_LABEL),
                         )
                     )
                     sync_connect_args["sslmode"] = ssl_mode
@@ -947,6 +967,7 @@ class MySQLPersistent:
         **engine_kwargs: Any,
     ) -> PersistentSQLAlchemyConnection | PersistentSQLAlchemyAsyncConnection:
         """Create or return existing persistent MySQL connection."""
+
         _settings = get_mysql_settings()
         host = host or _settings.host
         port = port or int(_settings.port)
@@ -975,9 +996,9 @@ class MySQLPersistent:
             if ssl_mode and ssl_mode != "DISABLED":
                 verify_cert_paths(
                     (
-                        (ssl_ca_cert_path, "CA certificate"),
-                        (ssl_client_cert_path, "client certificate"),
-                        (ssl_client_key_path, "client key"),
+                        (ssl_ca_cert_path, CA_CERT_LABEL),
+                        (ssl_client_cert_path, CLIENT_CERT_LABEL),
+                        (ssl_client_key_path, CLIENT_KEY_LABEL),
                     )
                 )
                 ssl_dict: dict[str, str] = {}
@@ -1103,6 +1124,7 @@ class MSSQLPersistent:
         **engine_kwargs: Any,
     ) -> PersistentSQLAlchemyConnection | PersistentSQLAlchemyAsyncConnection:
         """Create or return existing persistent MSSQL connection."""
+
         _settings = get_mssql_settings()
         host = host or _settings.host
         port = port or int(_settings.port)
@@ -1118,7 +1140,7 @@ class MSSQLPersistent:
         _query["Encrypt"] = "yes" if _settings.ssl_encrypt else "no"
         _query["TrustServerCertificate"] = "yes" if _settings.ssl_trust_server_certificate else "no"
         if _settings.ssl_ca_cert_path:
-            verify_cert_paths(((_settings.ssl_ca_cert_path, "CA certificate"),))
+            verify_cert_paths(((_settings.ssl_ca_cert_path, CA_CERT_LABEL),))
             _query["ServerCertificate"] = _settings.ssl_ca_cert_path
 
         with _registry_lock:
@@ -1198,6 +1220,7 @@ class OraclePersistent:
         **engine_kwargs: Any,
     ) -> PersistentSQLAlchemyConnection:
         """Create or return existing persistent Oracle connection."""
+
         _settings = get_oracle_settings()
         host = host or _settings.host
         port = port or int(_settings.port)
@@ -1260,6 +1283,7 @@ class MongoDBPersistent:
         logger: Any = None,
     ) -> PersistentMongoDBConnection:
         """Create or return existing persistent MongoDB connection."""
+
         _settings = get_mongodb_settings()
         host = host or _settings.host
         port = port or int(_settings.port)
@@ -1291,6 +1315,7 @@ class MongoDBPersistent:
 
 def close_all_persistent_connections() -> None:
     """Close all persistent connections and clean up resources."""
+
     with _registry_lock:
         for key, conn in tuple(_persistent_connections.items()):
             try:

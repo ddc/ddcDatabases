@@ -53,24 +53,24 @@ classifiers = [
 requires-python = ">=3.12"
 dependencies = [
     "pydantic-settings>=2.15.0",
-    "sqlalchemy[asyncio]>=2.0.52",
+    "sqlalchemy[asyncio]>=2.0.54",
 ]
 
 [project.optional-dependencies]
 mongodb = ["motor>=3.7.1"]
 oracle = ["oracledb>=4.0.2"]
 mssql = ["pyodbc>=5.3.0", "aioodbc>=0.5.0"]
-mysql = ["mysqlclient>=2.2.8", "aiomysql>=0.3.2"]
-postgres = ["psycopg[binary]>=3.3.5", "asyncpg>=0.31.0"]
+mysql = ["mysqlclient>=2.3.0", "aiomysql>=0.3.2"]
+postgres = ["psycopg[binary]>=3.3.6", "asyncpg>=0.31.0"]
 pgsql = ["ddcdatabases[postgres]"]
 mariadb = ["ddcdatabases[mysql]"]
 
 [dependency-groups]
 dev = [
-    "coverage>=7.16.0",
+    "coverage>=7.16.1",
     "poethepoet>=0.48.0",
     "pytest-asyncio>=1.4.0",
-    "ruff>=0.16.6",
+    "ruff>=0.16.8",
     "testcontainers[postgres,mysql,mssql,mongodb,oracle]>=4.15.0",
 ]
 

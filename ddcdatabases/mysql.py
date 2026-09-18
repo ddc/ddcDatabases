@@ -11,7 +11,7 @@ from .core.configs import (
     BaseSSLConfig,
     merge_config_with_settings,
 )
-from .core.constants import MYSQL_SSL_MODES
+from .core.constants import CA_CERT_LABEL, CLIENT_CERT_LABEL, CLIENT_KEY_LABEL, MYSQL_SSL_MODES
 from .core.settings import get_mysql_settings
 from dataclasses import dataclass
 from typing import Any
@@ -123,9 +123,9 @@ class MySQL(BaseConnection):
         _driver_cert_paths: tuple[tuple[str | None, str], ...] = ()
         if self._ssl_config.ssl_mode and self._ssl_config.ssl_mode != "DISABLED":
             _driver_cert_paths = (
-                (self._ssl_config.ssl_ca_cert_path, "CA certificate"),
-                (self._ssl_config.ssl_client_cert_path, "client certificate"),
-                (self._ssl_config.ssl_client_key_path, "client key"),
+                (self._ssl_config.ssl_ca_cert_path, CA_CERT_LABEL),
+                (self._ssl_config.ssl_client_cert_path, CLIENT_CERT_LABEL),
+                (self._ssl_config.ssl_client_key_path, CLIENT_KEY_LABEL),
             )
             ssl_dict = {}
             if self._ssl_config.ssl_ca_cert_path:
