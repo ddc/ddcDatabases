@@ -43,16 +43,16 @@ class _NetworkDBSettings(_BaseDBSettings):
     # Connection Retry settings
     connection_enable_retry: bool = Field(default=True, description=Msg.ENABLE_RETRY_DESCRIPTION)
     connection_max_retries: int = Field(default=3, description=Msg.MAX_RETRIES_DESCRIPTION)
-    connection_initial_retry_delay: float = Field(default=1.0, description=Msg.INITIAL_RETRY_DELAY_DESCRIPTION)
-    connection_max_retry_delay: float = Field(default=30.0, description=Msg.MAX_RETRY_DELAY_DESCRIPTION)
+    connection_initial_retry_delay: float | int = Field(default=1.0, description=Msg.INITIAL_RETRY_DELAY_DESCRIPTION)
+    connection_max_retry_delay: float | int = Field(default=30.0, description=Msg.MAX_RETRY_DELAY_DESCRIPTION)
     connection_disconnect_idle_timeout: int = Field(default=300, description=Msg.DISCONNECT_IDLE_TIMEOUT_DESCRIPTION)
 
     # Operation Retry settings
     operation_enable_retry: bool = Field(default=True, description=Msg.ENABLE_RETRY_DESCRIPTION)
     operation_max_retries: int = Field(default=3, description=Msg.MAX_RETRIES_DESCRIPTION)
-    operation_initial_retry_delay: float = Field(default=0.5, description=Msg.INITIAL_RETRY_DELAY_DESCRIPTION)
-    operation_max_retry_delay: float = Field(default=10.0, description=Msg.MAX_RETRY_DELAY_DESCRIPTION)
-    operation_jitter: float = Field(default=0.1, description=Msg.JITTER_DESCRIPTION)
+    operation_initial_retry_delay: float | int = Field(default=0.5, description=Msg.INITIAL_RETRY_DELAY_DESCRIPTION)
+    operation_max_retry_delay: float | int = Field(default=10.0, description=Msg.MAX_RETRY_DELAY_DESCRIPTION)
+    operation_jitter: float | int = Field(default=0.1, description=Msg.JITTER_DESCRIPTION)
 
     # Persistent connection settings
     persistent_idle_timeout: int = Field(default=300, description=Msg.PERSISTENT_IDLE_TIMEOUT_DESCRIPTION)
@@ -71,15 +71,15 @@ class SQLiteSettings(_BaseDBSettings):
     # Connection Retry settings (minimal for file-based database)
     connection_enable_retry: bool = Field(default=False, description=Msg.ENABLE_RETRY_DESCRIPTION)
     connection_max_retries: int = Field(default=1, description=Msg.MAX_RETRIES_DESCRIPTION)
-    connection_initial_retry_delay: float = Field(default=1.0, description=Msg.INITIAL_RETRY_DELAY_DESCRIPTION)
-    connection_max_retry_delay: float = Field(default=30.0, description=Msg.MAX_RETRY_DELAY_DESCRIPTION)
+    connection_initial_retry_delay: float | int = Field(default=1.0, description=Msg.INITIAL_RETRY_DELAY_DESCRIPTION)
+    connection_max_retry_delay: float | int = Field(default=30.0, description=Msg.MAX_RETRY_DELAY_DESCRIPTION)
 
     # Operation Retry settings
     operation_enable_retry: bool = Field(default=False, description=Msg.ENABLE_RETRY_DESCRIPTION)
     operation_max_retries: int = Field(default=1, description=Msg.MAX_RETRIES_DESCRIPTION)
-    operation_initial_retry_delay: float = Field(default=0.5, description=Msg.INITIAL_RETRY_DELAY_DESCRIPTION)
-    operation_max_retry_delay: float = Field(default=10.0, description=Msg.MAX_RETRY_DELAY_DESCRIPTION)
-    operation_jitter: float = Field(default=0.1, description=Msg.JITTER_DESCRIPTION)
+    operation_initial_retry_delay: float | int = Field(default=0.5, description=Msg.INITIAL_RETRY_DELAY_DESCRIPTION)
+    operation_max_retry_delay: float | int = Field(default=10.0, description=Msg.MAX_RETRY_DELAY_DESCRIPTION)
+    operation_jitter: float | int = Field(default=0.1, description=Msg.JITTER_DESCRIPTION)
 
     model_config = SettingsConfigDict(env_prefix="SQLITE_")
 
@@ -97,7 +97,7 @@ class PostgreSQLSettings(_NetworkDBSettings):
     echo: bool = Field(default=False, description=Msg.ECHO_DESCRIPTION)
     autoflush: bool = Field(default=False, description=Msg.AUTOFLUSH_DESCRIPTION)
     expire_on_commit: bool = Field(default=False, description=Msg.EXPIRE_ON_COMMIT_DESCRIPTION)
-    autocommit: bool = Field(default=False, description=Msg.AUTOCOMMIT_DESCRIPTION)
+    autocommit: bool = Field(default=True, description=Msg.AUTOCOMMIT_DESCRIPTION)
     connection_timeout: int = Field(default=30, description=Msg.CONNECTION_TIMEOUT_DESCRIPTION)
     pool_recycle: int = Field(default=3600, description=Msg.POOL_RECYCLE_DESCRIPTION)
     pool_size: int = Field(default=25, description=Msg.POOL_SIZE_DESCRIPTION)
@@ -127,7 +127,7 @@ class MSSQLSettings(_NetworkDBSettings):
     echo: bool = Field(default=False, description=Msg.ECHO_DESCRIPTION)
     autoflush: bool = Field(default=False, description=Msg.AUTOFLUSH_DESCRIPTION)
     expire_on_commit: bool = Field(default=False, description=Msg.EXPIRE_ON_COMMIT_DESCRIPTION)
-    autocommit: bool = Field(default=False, description=Msg.AUTOCOMMIT_DESCRIPTION)
+    autocommit: bool = Field(default=True, description=Msg.AUTOCOMMIT_DESCRIPTION)
     connection_timeout: int = Field(default=30, description=Msg.CONNECTION_TIMEOUT_DESCRIPTION)
     pool_recycle: int = Field(default=3600, description=Msg.POOL_RECYCLE_DESCRIPTION)
     pool_size: int = Field(default=25, description=Msg.POOL_SIZE_DESCRIPTION)
@@ -209,7 +209,7 @@ class OracleSettings(_NetworkDBSettings):
     echo: bool = Field(default=False, description=Msg.ECHO_DESCRIPTION)
     autoflush: bool = Field(default=False, description=Msg.AUTOFLUSH_DESCRIPTION)
     expire_on_commit: bool = Field(default=False, description=Msg.EXPIRE_ON_COMMIT_DESCRIPTION)
-    autocommit: bool = Field(default=False, description=Msg.AUTOCOMMIT_DESCRIPTION)
+    autocommit: bool = Field(default=True, description=Msg.AUTOCOMMIT_DESCRIPTION)
     connection_timeout: int = Field(default=30, description=Msg.CONNECTION_TIMEOUT_DESCRIPTION)
     pool_recycle: int = Field(default=3600, description=Msg.POOL_RECYCLE_DESCRIPTION)
     pool_size: int = Field(default=10, description=Msg.POOL_SIZE_DESCRIPTION)
