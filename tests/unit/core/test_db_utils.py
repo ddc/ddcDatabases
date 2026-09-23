@@ -422,6 +422,23 @@ class TestDBUtils:
         mock_session.execute.assert_called_once_with(stmt)
         mock_session.commit.assert_called_once()
 
+    def test_execute_returns_the_result_so_callers_can_read_rowcount(self):
+        """execute() must hand back the CursorResult rather than swallow it.
+
+        Returning None makes `getattr(result, "rowcount", 0) or 0` evaluate to 0 for every
+        caller. A batched write loop using that for control flow reads it as a short batch
+        and stops after a single pass while reporting success.
+        """
+        mock_session = MagicMock()
+        sentinel = MagicMock(rowcount=42)
+        mock_session.execute.return_value = sentinel
+
+        out = self.DBUtils(mock_session).execute(sa.text("UPDATE test_model SET name = 'x'"))
+
+        assert out is sentinel
+        assert out.rowcount == 42
+        mock_session.commit.assert_called_once()
+
     def test_execute_exception(self):
         """Test execute with exception"""
         mock_session = MagicMock()
@@ -614,6 +631,19 @@ class TestDBUtilsAsync:
         await db_utils.execute(stmt)
 
         mock_session.execute.assert_called_once_with(stmt)
+        mock_session.commit.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_execute_returns_the_result_so_callers_can_read_rowcount(self):
+        """Async counterpart - see the sync test for why None is not acceptable here."""
+        mock_session = AsyncMock()
+        sentinel = MagicMock(rowcount=42)
+        mock_session.execute.return_value = sentinel
+
+        out = await self.DBUtilsAsync(mock_session).execute(sa.text("UPDATE test_model SET name = 'x'"))
+
+        assert out is sentinel
+        assert out.rowcount == 42
         mock_session.commit.assert_called_once()
 
     @pytest.mark.asyncio
