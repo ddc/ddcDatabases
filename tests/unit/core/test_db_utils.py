@@ -439,6 +439,16 @@ class TestDBUtils:
         assert out.rowcount == 42
         mock_session.commit.assert_called_once()
 
+    def test_execute_can_defer_the_commit(self):
+        """commit=False leaves the transaction open so a caller can make several
+        statements atomic - delete-then-insert cannot be torn in half by a crash."""
+        mock_session = MagicMock()
+
+        self.DBUtils(mock_session).execute(sa.text("DELETE FROM test_model"), commit=False)
+
+        mock_session.execute.assert_called_once()
+        mock_session.commit.assert_not_called()
+
     def test_execute_exception(self):
         """Test execute with exception"""
         mock_session = MagicMock()
@@ -645,6 +655,16 @@ class TestDBUtilsAsync:
         assert out is sentinel
         assert out.rowcount == 42
         mock_session.commit.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_execute_can_defer_the_commit(self):
+        """Async counterpart - see the sync test."""
+        mock_session = AsyncMock()
+
+        await self.DBUtilsAsync(mock_session).execute(sa.text("DELETE FROM test_model"), commit=False)
+
+        mock_session.execute.assert_called_once()
+        mock_session.commit.assert_not_called()
 
     @pytest.mark.asyncio
     async def test_execute_exception(self):
