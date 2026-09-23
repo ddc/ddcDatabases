@@ -13,7 +13,7 @@ packages = ["ddcdatabases"]
 
 [project]
 name = "ddcdatabases"
-version = "5.0.1"
+version = "5.0.2"
 description = "Simplified database ORM connections with support for multiple database engines"
 urls.Repository = "https://github.com/ddc/ddcDatabases"
 urls.Homepage = "https://pypi.org/project/ddcDatabases"
@@ -58,7 +58,7 @@ dependencies = [
 
 [project.optional-dependencies]
 mongodb = ["motor>=3.7.1"]
-oracle = ["oracledb>=4.0.2"]
+oracle = ["oracledb>=26.0.1"]
 mssql = ["pyodbc>=5.3.0", "aioodbc>=0.5.0"]
 mysql = ["mysqlclient>=2.3.0", "aiomysql>=0.3.2"]
 postgres = ["psycopg[binary]>=3.3.6", "asyncpg>=0.31.0"]

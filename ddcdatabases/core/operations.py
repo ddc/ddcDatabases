@@ -12,7 +12,7 @@ from .exceptions import (
 )
 from .retry import retry_operation, retry_operation_async
 from collections.abc import Callable, Sequence
-from sqlalchemy import RowMapping
+from sqlalchemy import CursorResult, RowMapping
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
 from typing import Any
@@ -83,10 +83,6 @@ class DBUtils:
     def fetchvalue(self, stmt: Any) -> Any:
         """
         Execute a SELECT statement and fetch a single scalar value.
-
-        Changed in 5.0.0: returns the value with its native type. Previously every value
-        was coerced with str(), so a timestamptz came back as text and a COUNT(*) as "42".
-        Wrap the call in str() if the old behaviour is wanted.
 
         Args:
             stmt: SQLAlchemy statement or raw SQL string to execute
@@ -184,21 +180,25 @@ class DBUtils:
 
         return self._execute_with_retry(lambda: self._deleteall_impl(model), "deleteall")
 
-    def _execute_impl(self, stmt: Any) -> None:
+    def _execute_impl(self, stmt: Any) -> CursorResult:
         try:
-            self.session.execute(stmt)
+            result = self.session.execute(stmt)
             self.session.commit()
+            return result
         except Exception as e:
             self.session.rollback()
             _logger.exception("execute failed")
             raise DBExecuteException(e) from e
 
-    def execute(self, stmt: Any) -> None:
+    def execute(self, stmt: Any) -> CursorResult:
         """
-        Execute a statement that doesn't return results (INSERT, UPDATE, DELETE).
+        Execute a statement that doesn't return rows (INSERT, UPDATE, DELETE) and commit it.
 
         Args:
             stmt: SQLAlchemy statement or raw SQL string to execute
+
+        Returns:
+            CursorResult: the executed statement's result; `.rowcount` holds rows affected
 
         Raises:
             DBExecuteException: If statement execution fails
@@ -380,21 +380,29 @@ class DBUtilsAsync:
 
         return await self._execute_with_retry(lambda: self._deleteall_impl(model), "deleteall")
 
-    async def _execute_impl(self, stmt: Any) -> None:
+    async def _execute_impl(self, stmt: Any) -> CursorResult:
         try:
-            await self.session.execute(stmt)
+            result = await self.session.execute(stmt)
             await self.session.commit()
+            return result
         except Exception as e:
             await self.session.rollback()
             _logger.exception("async execute failed")
             raise DBExecuteException(e) from e
 
-    async def execute(self, stmt: Any) -> None:
+    async def execute(self, stmt: Any) -> CursorResult:
         """
-        Execute a statement asynchronously that doesn't return results (INSERT, UPDATE, DELETE).
+        Execute a statement asynchronously that doesn't return rows (INSERT, UPDATE,
+        DELETE) and commit it.
+
+        Returns the CursorResult so callers can read `.rowcount`. See the sync counterpart:
+        returning None silently breaks any caller that sizes a write by its result.
 
         Args:
             stmt: SQLAlchemy statement or raw SQL string to execute
+
+        Returns:
+            CursorResult: the executed statement's result; `.rowcount` holds rows affected
 
         Raises:
             DBExecuteException: If statement execution fails
