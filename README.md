@@ -38,6 +38,7 @@
 - [Installation](#installation)
   - [Basic Installation (SQLite only)](#basic-installation-sqlite-only)
   - [Database-Specific Installations](#database-specific-installations)
+  - [MySQL/MariaDB Client Library (mysqlclient)](#mysqlmariadb-client-library-mysqlclient)
 - [Database Classes](#database-classes)
   - [SQLite](#sqlite)
   - [MSSQL (SQL Server)](#mssql-microsoft-sql-server)
@@ -317,6 +318,50 @@ pip install "ddcdatabases[mysql,postgres,mongodb]"
 - SQLite support is included by default (no extra installation required)
 - PostgreSQL extras may have compilation requirements on some systems
 - All extras support both synchronous and asynchronous operations where applicable
+
+## MySQL/MariaDB Client Library (mysqlclient)
+
+The sync driver (`mysql+mysqldb`, from `mysqlclient`) is a C extension that is compiled
+against whatever MySQL/MariaDB client library is installed on your system.
+The async driver (`aiomysql`) is pure Python and is not affected.
+
+> **MySQL 9 client libraries cannot connect to MariaDB.** MySQL 9 removed the
+> `mysql_native_password` authentication plugin, which MariaDB servers use. If
+> `mysqlclient` is built against a MySQL 9 client (e.g. `mysql-devel` on Fedora 45+,
+> Homebrew `mysql-client`), connecting to MariaDB fails with:
+>
+> `(2059, "Authentication plugin 'mysql_native_password' cannot be loaded ...")`
+
+Build `mysqlclient` against **MariaDB Connector/C** instead. It supports both
+`mysql_native_password` and `caching_sha2_password`, so it works with MariaDB **and**
+MySQL 8/9 servers:
+
+```shell
+# Fedora / RHEL (conflicts with mysql-devel; `dnf swap` replaces it)
+sudo dnf swap mysql-devel mariadb-connector-c-devel    # or: sudo dnf install mariadb-connector-c-devel
+sudo dnf install pkg-config
+
+# Debian / Ubuntu
+sudo apt-get install libmariadb-dev pkg-config
+
+# macOS (Homebrew)
+brew install mariadb-connector-c pkg-config
+export PKG_CONFIG_PATH="$(brew --prefix mariadb-connector-c)/lib/pkgconfig"
+```
+
+If `mysqlclient` was already installed, rebuild it so it links the new library
+(clear the cached build first, it was compiled against the old one):
+
+```shell
+uv cache clean mysqlclient
+uv pip install --reinstall --no-deps mysqlclient    # or: pip install --force-reinstall --no-cache-dir --no-deps mysqlclient
+```
+
+Check which library it uses (Linux): the output should show `libmariadb.so`, not `libmysqlclient.so`:
+
+```shell
+ldd "$(python -c 'import MySQLdb._mysql as m; print(m.__file__)')" | grep -E 'mariadb|mysqlclient'
+```
 
 
 # Database Classes

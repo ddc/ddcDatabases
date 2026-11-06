@@ -13,7 +13,7 @@ packages = ["ddcdatabases"]
 
 [project]
 name = "ddcdatabases"
-version = "5.0.3"
+version = "5.0.4"
 description = "Simplified database ORM connections with support for multiple database engines"
 urls.Repository = "https://github.com/ddc/ddcDatabases"
 urls.Homepage = "https://pypi.org/project/ddcDatabases"
@@ -45,6 +45,7 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: 3.14",
+    "Programming Language :: Python :: 3.15",
     "Operating System :: OS Independent",
     "Environment :: Other Environment",
     "Intended Audience :: Developers",

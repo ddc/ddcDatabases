@@ -15,7 +15,7 @@ from collections.abc import Callable, Sequence
 from sqlalchemy import CursorResult, RowMapping
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
-from typing import Any
+from typing import Any, Literal, overload
 
 _logger = logging.getLogger(__name__)
 _logger.addHandler(logging.NullHandler())
@@ -35,7 +35,7 @@ class DBUtils:
             return retry_operation(operation, self.retry_config, operation_name)
         return operation()
 
-    def _fetchall_impl(self, stmt: Any, as_dict: bool = False) -> list[RowMapping] | list[dict]:
+    def _fetchall_impl(self, stmt: Any, as_dict: bool = False) -> list[RowMapping] | list[dict[str, Any]]:
         try:
             cursor = self.session.execute(stmt)
             if as_dict:
@@ -52,7 +52,16 @@ class DBUtils:
             _logger.exception("fetchall failed")
             raise DBFetchAllException(e) from e
 
-    def fetchall(self, stmt: Any, as_dict: bool = False) -> list[RowMapping] | list[dict]:
+    @overload
+    def fetchall(self, stmt: Any, as_dict: Literal[False] = False) -> list[RowMapping]: ...
+
+    @overload
+    def fetchall(self, stmt: Any, as_dict: Literal[True]) -> list[dict[str, Any]]: ...
+
+    @overload
+    def fetchall(self, stmt: Any, as_dict: bool) -> list[RowMapping] | list[dict[str, Any]]: ...
+
+    def fetchall(self, stmt: Any, as_dict: bool = False) -> list[RowMapping] | list[dict[str, Any]]:
         """
         Execute a SELECT statement and fetch all results.
 
@@ -222,7 +231,7 @@ class DBUtilsAsync:
             return await retry_operation_async(operation, self.retry_config, operation_name)
         return await operation()
 
-    async def _fetchall_impl(self, stmt: Any, as_dict: bool = False) -> list[RowMapping] | list[dict]:
+    async def _fetchall_impl(self, stmt: Any, as_dict: bool = False) -> list[RowMapping] | list[dict[str, Any]]:
         try:
             cursor = await self.session.execute(stmt)
             if as_dict:
@@ -239,7 +248,16 @@ class DBUtilsAsync:
             _logger.exception("async fetchall failed")
             raise DBFetchAllException(e) from e
 
-    async def fetchall(self, stmt: Any, as_dict: bool = False) -> list[RowMapping] | list[dict]:
+    @overload
+    async def fetchall(self, stmt: Any, as_dict: Literal[False] = False) -> list[RowMapping]: ...
+
+    @overload
+    async def fetchall(self, stmt: Any, as_dict: Literal[True]) -> list[dict[str, Any]]: ...
+
+    @overload
+    async def fetchall(self, stmt: Any, as_dict: bool) -> list[RowMapping] | list[dict[str, Any]]: ...
+
+    async def fetchall(self, stmt: Any, as_dict: bool = False) -> list[RowMapping] | list[dict[str, Any]]:
         """
         Execute a SELECT statement asynchronously and fetch all results.
 
